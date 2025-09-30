@@ -115,6 +115,14 @@ const modules: DashboardModule[] = [
     color: "bg-warning"
   },
   {
+    id: "usuarios",
+    title: "Usuários",
+    description: "Gerenciar usuários e permissões",
+    icon: <Users className="h-6 w-6" />,
+    roles: ["admin"],
+    color: "bg-info"
+  },
+  {
     id: "configuracoes",
     title: "Configurações",
     description: "Configurações avançadas do sistema",
