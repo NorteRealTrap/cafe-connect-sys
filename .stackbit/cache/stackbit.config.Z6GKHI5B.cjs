@@ -29,11 +29,6 @@ var stackbit_config_default = (0, import_types.defineStackbitConfig)({
   // Adicionando a versão obrigatória do Stackbit
   contentSources: [
     new import_cms_git.GitContentSource({
-      localDevSync: {
-        repoUrl: "git@github.com:NorteRealTrap/cafe-connect-sys.git",
-        repoWorkingBranch: "main",
-        repoPublishBranch: "main"
-      },
       rootPath: "C:\\Users\\Windows\\Documents\\cafe-connect-sys-main",
       contentDirs: ["conte\xFAdo"],
       // Diretório de conteúdo
@@ -71,4 +66,4 @@ var stackbit_config_default = (0, import_types.defineStackbitConfig)({
     }).filter(Boolean);
   }
 });
-//# sourceMappingURL=stackbit.config.IRZIN2DE.cjs.map
+//# sourceMappingURL=stackbit.config.Z6GKHI5B.cjs.map
