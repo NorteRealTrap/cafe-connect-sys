@@ -17,6 +17,7 @@ import {
 import { UserRole } from "@/components/auth/LoginForm";
 import { MetricsCards } from "@/components/analytics/MetricsCards";
 import { RevenueChart } from "@/components/analytics/RevenueChart";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 
 interface DashboardModule {
   id: string;
@@ -157,7 +158,14 @@ export const DashboardGrid = ({ userRole, onModuleClick }: DashboardGridProps) =
       {/* Analytics Overview */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Visão Geral</h2>
-        <MetricsCards />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3">
+            <MetricsCards />
+          </div>
+          <div>
+            <QuickActions onModuleClick={onModuleClick} />
+          </div>
+        </div>
       </div>
       
       {/* Revenue Charts */}
