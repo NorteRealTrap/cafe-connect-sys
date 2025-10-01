@@ -87,19 +87,19 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               </div>
             </div>
             
-            <h1 className="text-4xl font-bold mb-2">
-              <span className="bg-gradient-to-r from-white via-purple-200 to-cyan-200 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-bold mb-2 tracking-tight">
+              <span className="text-gradient-primary">
                 CCPServices
               </span>
             </h1>
             
-            <div className="flex items-center justify-center gap-2 text-purple-200/80 mb-2">
+            <div className="flex items-center justify-center gap-2 text-slate-200 mb-2">
               <Globe className="h-4 w-4" />
-              <span className="text-sm font-medium">Sistema de Gestão Comercial</span>
+              <span className="text-sm font-semibold tracking-wide">Sistema de Gestão Comercial</span>
               <Sparkles className="h-4 w-4" />
             </div>
             
-            <p className="text-slate-400 text-sm">
+            <p className="text-slate-300 text-base font-medium">
               Tecnologia avançada para seu negócio
             </p>
           </div>
@@ -110,7 +110,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
             <div className="relative bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="text-slate-200 font-medium">Nível de Acesso</Label>
+                  <Label className="text-slate-100 font-semibold tracking-wide">Nível de Acesso</Label>
                   <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
                     <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
                       <SelectValue />
@@ -139,7 +139,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="text-slate-200 font-medium">Email</Label>
+                  <Label className="text-slate-100 font-semibold tracking-wide">Email</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
@@ -154,7 +154,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="text-slate-200 font-medium">Senha</Label>
+                  <Label className="text-slate-100 font-semibold tracking-wide">Senha</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <Input
@@ -176,9 +176,9 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 </div>
                 
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                  <div className="flex items-center gap-2 p-3 bg-red-500/15 border border-red-400/30 rounded-lg text-red-300 text-sm font-medium">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    <span>{error}</span>
+                    <span className="leading-relaxed">{error}</span>
                   </div>
                 )}
                 

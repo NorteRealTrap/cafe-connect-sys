@@ -145,16 +145,16 @@ export const BusinessSelector = ({ onSelect, onBack }: BusinessSelectorProps) =>
             </div>
           </div>
           
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-white via-purple-200 to-cyan-200 bg-clip-text text-transparent">
+          <h1 className="text-6xl font-bold mb-4 tracking-tight">
+            <span className="text-gradient-primary">
               Escolha seu Negócio
             </span>
           </h1>
           
-          <p className="text-slate-400 text-lg leading-relaxed">
+          <p className="text-slate-200 text-xl leading-relaxed font-medium">
             Selecione a categoria que melhor representa seu estabelecimento
             <br />
-            <span className="text-slate-500 text-base">para uma experiência personalizada</span>
+            <span className="text-slate-300 text-lg font-normal">para uma experiência personalizada</span>
           </p>
         </div>
 
@@ -191,19 +191,19 @@ export const BusinessSelector = ({ onSelect, onBack }: BusinessSelectorProps) =>
                         {category.icon}
                       </div>
                     </div>
-                    <CardTitle className={`text-lg font-semibold ${category.color} mb-2`}>
+                    <CardTitle className={`text-xl font-bold ${category.color} mb-2 tracking-tight`}>
                       {category.name}
                     </CardTitle>
                   </CardHeader>
                   
                   <CardContent className="text-center space-y-4 pb-8">
-                    <p className="text-sm text-slate-400 leading-relaxed px-2">
+                    <p className="text-sm text-slate-300 leading-relaxed px-2 font-medium">
                       {category.description}
                     </p>
                     
                     <div className="flex flex-wrap gap-1 justify-center">
                       {category.features.slice(0, 2).map((feature, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs bg-slate-700/50 text-slate-300 border-slate-600/50">
+                        <Badge key={idx} variant="secondary" className="text-xs bg-slate-700/50 text-slate-200 border-slate-600/50 font-semibold">
                           {feature}
                         </Badge>
                       ))}
@@ -213,7 +213,7 @@ export const BusinessSelector = ({ onSelect, onBack }: BusinessSelectorProps) =>
                       <div className="mt-3 space-y-2 animate-in fade-in duration-300">
                         <div className="flex flex-wrap gap-1 justify-center">
                           {category.features.slice(2).map((feature, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs border-slate-600 text-slate-400">
+                            <Badge key={idx} variant="outline" className="text-xs border-slate-600 text-slate-300 font-medium">
                               {feature}
                             </Badge>
                           ))}
@@ -236,7 +236,7 @@ export const BusinessSelector = ({ onSelect, onBack }: BusinessSelectorProps) =>
                   {selectedCategory.icon}
                 </div>
               </div>
-              <span className="font-semibold text-white text-lg">
+              <span className="font-bold text-white text-xl tracking-tight">
                 Iniciando {selectedCategory.name}...
               </span>
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -255,7 +255,7 @@ export const BusinessSelector = ({ onSelect, onBack }: BusinessSelectorProps) =>
               <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
               Voltar ao Login
             </Button>
-            <p className="text-sm text-slate-500 mt-4">
+            <p className="text-sm text-slate-400 mt-4 font-medium">
               Você poderá alterar a categoria a qualquer momento
             </p>
           </div>
