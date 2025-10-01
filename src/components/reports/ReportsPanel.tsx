@@ -1,15 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Download } from "lucide-react";
+import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Download, FileText, Calendar } from "lucide-react";
 import { MetricsCards } from "@/components/analytics/MetricsCards";
 import { RevenueChart } from "@/components/analytics/RevenueChart";
 import { FinancialDashboard } from "@/components/analytics/FinancialDashboard";
 import { PaymentReports } from "@/components/analytics/PaymentReports";
 import { analyticsEngine } from "@/lib/analytics";
 import { financialSystem } from "@/lib/financial";
+import { reportsDatabase, ReportData } from "@/lib/database-reports";
 
 interface ReportsPanelProps {
   onBack: () => void;
@@ -17,6 +18,17 @@ interface ReportsPanelProps {
 
 export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
   const [period, setPeriod] = useState("hoje");
+  const [reports, setReports] = useState<ReportData[]>([]);
+  const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
+  
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = () => {
+    const allReports = reportsDatabase.getAllReports();
+    setReports(allReports);
+  };
   
   const metrics = analyticsEngine.getRevenueMetrics();
   const topProducts = metrics.topProducts;
@@ -99,6 +111,7 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
           <TabsTrigger value="vendas">Vendas</TabsTrigger>
           <TabsTrigger value="produtos">Produtos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="relatorios">Relatórios Salvos</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard Integrado</TabsTrigger>
         </TabsList>
 
@@ -195,6 +208,118 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="relatorios" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Relatórios Gerados</h3>
+            <div className="flex gap-2">
+              <Button 
+                variant="success" 
+                onClick={() => {
+                  const today = new Date();
+                  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+                  reportsDatabase.generateReport('daily', startOfDay, endOfDay);
+                  loadReports();
+                }}
+              >
+                <FileText className="h-4 w-4" />
+                Gerar Diário
+              </Button>
+              <Button 
+                variant="info" 
+                onClick={() => {
+                  const today = new Date();
+                  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                  reportsDatabase.generateReport('monthly', startOfMonth, endOfMonth);
+                  loadReports();
+                }}
+              >
+                <Calendar className="h-4 w-4" />
+                Gerar Mensal
+              </Button>
+            </div>
+          </div>
+          
+          <div className="grid gap-4">
+            {reports.map((report) => (
+              <Card key={report.id} className="cursor-pointer hover:shadow-md" onClick={() => setSelectedReport(report)}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="capitalize">
+                        Relatório {report.type === 'daily' ? 'Diário' : report.type === 'monthly' ? 'Mensal' : report.type}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Período: {report.period}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">
+                        {formatCurrency(report.metrics.netRevenue)}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {report.metrics.totalOrders} pedidos
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Receita Bruta:</span>
+                      <div className="font-bold">{formatCurrency(report.metrics.grossRevenue)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Taxas:</span>
+                      <div className="font-bold text-red-600">{formatCurrency(report.metrics.totalFees)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Ticket Médio:</span>
+                      <div className="font-bold">{formatCurrency(report.metrics.averageTicket)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Lucro:</span>
+                      <div className="font-bold text-green-600">{formatCurrency(report.metrics.profit)}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          {selectedReport && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Detalhes do Relatório</CardTitle>
+                <Button variant="outline" onClick={() => setSelectedReport(null)}>Fechar</Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-2">Métodos de Pagamento</h4>
+                    {Object.entries(selectedReport.paymentBreakdown).map(([method, amount]) => (
+                      <div key={method} className="flex justify-between">
+                        <span className="capitalize">{method.replace('_', ' ')}</span>
+                        <span className="font-bold">{formatCurrency(amount as number)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Top Produtos</h4>
+                    {selectedReport.topProducts.slice(0, 5).map((product) => (
+                      <div key={product.product} className="flex justify-between">
+                        <span>{product.product}</span>
+                        <span className="font-bold">{formatCurrency(product.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="dashboard" className="space-y-4">

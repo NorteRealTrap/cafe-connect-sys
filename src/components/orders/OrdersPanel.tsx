@@ -93,6 +93,24 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       tempo: "Agora"
     };
     setOrders(prev => [newOrder, ...prev]);
+    
+    // Registrar transação pendente no banco de relatórios
+    import('@/lib/database-reports').then(({ reportsDatabase }) => {
+      reportsDatabase.addTransaction({
+        orderId: newOrder.numero.toString(),
+        amount: newOrder.total,
+        method: 'dinheiro', // Padrão, será atualizado no pagamento
+        status: 'pending',
+        date: new Date(),
+        category: 'restaurante',
+        products: newOrder.itens.map(item => ({
+          name: item.nome,
+          quantity: item.quantidade,
+          price: item.preco
+        })),
+        metadata: { orderType: newOrder.tipo }
+      });
+    });
   };
 
   const getFilteredOrders = () => {
@@ -125,9 +143,30 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     if (newStatus === 'entregue' || newStatus === 'retirado') {
       const order = orders.find(o => o.id === orderId);
       if (order) {
+        // Processar pagamento no sistema financeiro
         import('@/lib/financial').then(({ financialSystem }) => {
-          // Simular pagamento em dinheiro por padrão
           financialSystem.processPayment(order.numero.toString(), order.total, 'dinheiro');
+        });
+        
+        // Atualizar transação no banco de relatórios
+        import('@/lib/database-reports').then(({ reportsDatabase }) => {
+          reportsDatabase.addTransaction({
+            orderId: order.numero.toString(),
+            amount: order.total,
+            method: 'dinheiro',
+            status: 'completed',
+            date: new Date(),
+            category: 'restaurante',
+            products: order.itens.map(item => ({
+              name: item.nome,
+              quantity: item.quantidade,
+              price: item.preco
+            })),
+            metadata: { 
+              orderType: order.tipo,
+              completedAt: new Date().toISOString()
+            }
+          });
         });
         
         // Registrar venda completa no analytics
