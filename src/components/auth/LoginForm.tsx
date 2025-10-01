@@ -201,20 +201,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 </Button>
               </form>
               
-              <div className="mt-8 text-center">
-                <div className="text-xs text-slate-400 mb-3">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    <Sparkles className="h-3 w-3" />
-                    <span>Usuários de Demonstração</span>
-                    <Sparkles className="h-3 w-3" />
-                  </div>
-                  <div className="space-y-1 text-slate-500">
-                    <p><strong>Admin:</strong> admin@cafeconnect.com / admin123</p>
-                    <p><strong>Gabriel:</strong> gabriel.pereira@ccpservices.com.br / ccpservices123</p>
-                    <p><strong>Ferramenta:</strong> ferramentacega@ccpservices.com.br / ccpservices123</p>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
