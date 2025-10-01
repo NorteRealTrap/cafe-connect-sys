@@ -3,10 +3,11 @@ import { db, User, Product, Category, Order, InventoryItem, Table, Payment } fro
 
 // Hook para Users
 export const useUsers = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(() => db.getUsers());
 
   useEffect(() => {
-    setUsers(db.getUsers());
+    const loadedUsers = db.getUsers();
+    setUsers(loadedUsers);
   }, []);
 
   const addUser = (user: Omit<User, 'id' | 'createdAt'>) => {
@@ -39,10 +40,11 @@ export const useUsers = () => {
 
 // Hook para Products
 export const useProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => db.getProducts());
 
   useEffect(() => {
-    setProducts(db.getProducts());
+    const loadedProducts = db.getProducts();
+    setProducts(loadedProducts);
   }, []);
 
   const addProduct = (product: Omit<Product, 'id' | 'createdAt'>) => {
@@ -75,10 +77,11 @@ export const useProducts = () => {
 
 // Hook para Categories
 export const useCategories = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(() => db.getCategories());
 
   useEffect(() => {
-    setCategories(db.getCategories());
+    const loadedCategories = db.getCategories();
+    setCategories(loadedCategories);
   }, []);
 
   const addCategory = (category: Omit<Category, 'id' | 'createdAt'>) => {
@@ -168,10 +171,11 @@ export const useOrders = () => {
 
 // Hook para Inventory
 export const useInventory = () => {
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => db.getInventory());
 
   useEffect(() => {
-    setInventory(db.getInventory());
+    const loadedInventory = db.getInventory();
+    setInventory(loadedInventory);
   }, []);
 
   const addInventoryItem = (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
@@ -221,10 +225,11 @@ export const useInventory = () => {
 
 // Hook para Tables
 export const useTables = () => {
-  const [tables, setTables] = useState<Table[]>([]);
+  const [tables, setTables] = useState<Table[]>(() => db.getTables());
 
   useEffect(() => {
-    setTables(db.getTables());
+    const loadedTables = db.getTables();
+    setTables(loadedTables);
   }, []);
 
   const updateTable = (id: string, updates: Partial<Table>) => {
@@ -240,10 +245,11 @@ export const useTables = () => {
 
 // Hook para Payments
 export const usePayments = () => {
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>(() => db.getPayments());
 
   useEffect(() => {
-    setPayments(db.getPayments());
+    const loadedPayments = db.getPayments();
+    setPayments(loadedPayments);
   }, []);
 
   const addPayment = (payment: Omit<Payment, 'id' | 'createdAt'>) => {
