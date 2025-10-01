@@ -94,6 +94,19 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(sampleMenuItems);
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const addNewItem = () => {
+    const newItem: MenuItem = {
+      id: Date.now().toString(),
+      nome: "Novo Item",
+      descricao: "Descrição do novo item",
+      preco: 0.00,
+      categoria: selectedCategory === "todos" ? "restaurante" : selectedCategory,
+      disponivel: true,
+      destaque: false
+    };
+    setMenuItems(prev => [newItem, ...prev]);
+  };
 
   const getFilteredItems = () => {
     let filtered = menuItems;
@@ -126,7 +139,7 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           <p className="text-muted-foreground">Gerencie produtos, categorias e menu</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="pdv">
+          <Button variant="pdv" onClick={addNewItem}>
             <Plus className="h-4 w-4" />
             Novo Item
           </Button>
