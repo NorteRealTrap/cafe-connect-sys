@@ -6,9 +6,27 @@ import { LogOut, Bell, Settings } from "lucide-react";
 interface DashboardHeaderProps {
   userRole: UserRole;
   onLogout: () => void;
+  onNotifications?: () => void;
+  onSettings?: () => void;
 }
 
-export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ userRole, onLogout, onNotifications, onSettings }: DashboardHeaderProps) => {
+  
+  const handleNotifications = () => {
+    if (onNotifications) {
+      onNotifications();
+    } else {
+      alert('Notificações em desenvolvimento');
+    }
+  };
+  
+  const handleSettings = () => {
+    if (onSettings) {
+      onSettings();
+    } else {
+      alert('Configurações em desenvolvimento');
+    }
+  };
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case "admin": return "default";
@@ -36,10 +54,10 @@ export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) =>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleNotifications}>
             <Bell className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" onClick={handleSettings}>
             <Settings className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={onLogout}>
