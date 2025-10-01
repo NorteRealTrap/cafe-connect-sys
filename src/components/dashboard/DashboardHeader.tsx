@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/components/auth/LoginForm";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Bell, Settings } from "lucide-react";
+import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
+import { SettingsPanel } from "@/components/settings/SettingsPanel";
 
 interface DashboardHeaderProps {
   userRole: UserRole;
@@ -10,23 +13,9 @@ interface DashboardHeaderProps {
   onSettings?: () => void;
 }
 
-export const DashboardHeader = ({ userRole, onLogout, onNotifications, onSettings }: DashboardHeaderProps) => {
-  
-  const handleNotifications = () => {
-    if (onNotifications) {
-      onNotifications();
-    } else {
-      alert('Notificações em desenvolvimento');
-    }
-  };
-  
-  const handleSettings = () => {
-    if (onSettings) {
-      onSettings();
-    } else {
-      alert('Configurações em desenvolvimento');
-    }
-  };
+export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) => {
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case "admin": return "default";
@@ -54,10 +43,10 @@ export const DashboardHeader = ({ userRole, onLogout, onNotifications, onSetting
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleNotifications}>
+          <Button variant="ghost" size="icon" onClick={() => setShowNotifications(true)}>
             <Bell className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleSettings}>
+          <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
             <Settings className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" onClick={onLogout}>
@@ -65,6 +54,14 @@ export const DashboardHeader = ({ userRole, onLogout, onNotifications, onSetting
           </Button>
         </div>
       </div>
+      
+      {showNotifications && (
+        <NotificationsPanel onClose={() => setShowNotifications(false)} />
+      )}
+      
+      {showSettings && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
+      )}
     </header>
   );
 };
