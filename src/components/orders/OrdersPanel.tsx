@@ -93,6 +93,22 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       tempo: "Agora"
     };
     setOrders(prev => [newOrder, ...prev]);
+    
+    // Registrar venda no analytics
+    import('@/lib/analytics').then(({ analyticsEngine }) => {
+      orderData.itens.forEach((item: any) => {
+        analyticsEngine.addSale({
+          date: new Date(),
+          category: 'restaurante', // Categoria padrão, pode ser melhorada
+          product: item.nome,
+          quantity: item.quantidade,
+          unitPrice: item.preco,
+          totalValue: item.quantidade * item.preco,
+          paymentMethod: 'pendente',
+          status: 'pending'
+        });
+      });
+    });
   };
 
   const getFilteredOrders = () => {

@@ -15,6 +15,8 @@ import {
   Truck
 } from "lucide-react";
 import { UserRole } from "@/components/auth/LoginForm";
+import { MetricsCards } from "@/components/analytics/MetricsCards";
+import { RevenueChart } from "@/components/analytics/RevenueChart";
 
 interface DashboardModule {
   id: string;
@@ -143,36 +145,62 @@ export const DashboardGrid = ({ userRole, onModuleClick }: DashboardGridProps) =
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
-      {availableModules.map((module) => (
-        <Card 
-          key={module.id} 
-          className="group hover:shadow-pdv transition-all duration-200 cursor-pointer border-border/50"
-          onClick={() => onModuleClick(module.id)}
-        >
-          <CardHeader className="pb-3">
-            <div className={`w-12 h-12 ${module.color} rounded-xl flex items-center justify-center text-white mb-3 group-hover:scale-110 transition-transform duration-200`}>
-              {module.icon}
-            </div>
-            <CardTitle className="text-lg">{module.title}</CardTitle>
-            <CardDescription className="text-sm">
-              {module.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-primary hover:text-primary-hover"
-              onClick={(e) => {
-                e.stopPropagation();
-                onModuleClick(module.id);
-              }}
+    <div className="space-y-6 p-6">
+      {/* Analytics Overview */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Visão Geral</h2>
+        <MetricsCards />
+      </div>
+      
+      {/* Revenue Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <RevenueChart 
+          type="daily" 
+          title="Receita Diária" 
+          description="Últimos 30 dias" 
+        />
+        <RevenueChart 
+          type="category" 
+          title="Receita por Categoria" 
+          description="Distribuição por tipo" 
+        />
+      </div>
+      
+      {/* Modules Grid */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Módulos do Sistema</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {availableModules.map((module) => (
+            <Card 
+              key={module.id} 
+              className="group hover:shadow-pdv transition-all duration-200 cursor-pointer border-border/50"
+              onClick={() => onModuleClick(module.id)}
             >
-              Acessar
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+              <CardHeader className="pb-3">
+                <div className={`w-12 h-12 ${module.color} rounded-xl flex items-center justify-center text-white mb-3 group-hover:scale-110 transition-transform duration-200`}>
+                  {module.icon}
+                </div>
+                <CardTitle className="text-lg">{module.title}</CardTitle>
+                <CardDescription className="text-sm">
+                  {module.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start text-primary hover:text-primary-hover"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onModuleClick(module.id);
+                  }}
+                >
+                  Acessar
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
