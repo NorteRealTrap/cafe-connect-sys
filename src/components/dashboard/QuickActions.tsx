@@ -5,7 +5,7 @@ import { useState } from "react";
 import { NewOrderForm } from "@/components/orders/NewOrderForm";
 import { NewItemModal } from "@/components/menu/NewItemModal";
 import { ordersDatabase } from "@/lib/orders-database";
-import { menuDatabase } from "@/lib/database";
+
 import { toast } from "sonner";
 
 interface QuickActionsProps {
@@ -54,6 +54,7 @@ export const QuickActions = ({ onModuleClick }: QuickActionsProps) => {
 
   const handleNewItem = (itemData: any) => {
     try {
+      const { menuDatabase } = require('@/lib/database');
       menuDatabase.addItem(itemData);
       toast.success('Item adicionado ao cardápio!');
     } catch (error) {
