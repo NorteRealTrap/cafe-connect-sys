@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
 import { Clock, MapPin, Home, Package, Plus, AlertTriangle, CreditCard } from "lucide-react";
-import { NewOrderModal } from "./NewOrderModal";
+import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
 import { CheckoutModal } from "@/components/checkout/CheckoutModal";
 import { ordersDatabase, Order } from "@/lib/orders-database";
@@ -341,11 +341,12 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         </TabsContent>
       </Tabs>
       
-      <NewOrderModal
-        open={showNewOrderForm}
-        onClose={() => setShowNewOrderForm(false)}
-        onSubmit={handleNewOrder}
-      />
+      {showNewOrderForm && (
+        <NewOrderForm 
+          onClose={() => setShowNewOrderForm(false)}
+          onSubmit={handleNewOrder}
+        />
+      )}
       
       {showHistoryPanel && (
         <div className="fixed inset-0 bg-background z-50">
