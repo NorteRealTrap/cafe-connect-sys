@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, EyeOff, Zap, User, Lock, Sparkles, Rocket, Globe } from "lucide-react";
+import { Eye, EyeOff, Zap, User, Lock, Sparkles, Rocket, Globe, AlertCircle } from "lucide-react";
+import { db } from "@/lib/database";
 
 export type UserRole = 'admin' | 'caixa' | 'atendente';
 
@@ -17,15 +18,44 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
   const [role, setRole] = useState<UserRole>("admin");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
     
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    onLogin(role);
-    setIsLoading(false);
+    try {
+      // Simular delay de autenticação
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Buscar usuários do banco de dados
+      const users = db.getUsers();
+      
+      // Validar credenciais
+      const user = users.find(u => 
+        u.email.toLowerCase() === email.toLowerCase().trim() && 
+        u.password === password &&
+        u.role === role &&
+        u.status === 'ativo'
+      );
+      
+      if (user) {
+        // Atualizar último login
+        const updatedUsers = users.map(u => 
+          u.id === user.id ? { ...u, lastLogin: new Date().toISOString() } : u
+        );
+        db.saveUsers(updatedUsers);
+        
+        onLogin(role);
+      } else {
+        setError("Email, senha ou nível de acesso inválidos. Verifique suas credenciais.");
+      }
+    } catch (err) {
+      setError("Erro interno do sistema. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -145,6 +175,13 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                   </div>
                 </div>
                 
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
@@ -172,8 +209,9 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                     <Sparkles className="h-3 w-3" />
                   </div>
                   <div className="space-y-1 text-slate-500">
-                    <p>admin@ccpservices.com • caixa@ccpservices.com</p>
-                    <p>atendente@ccpservices.com</p>
+                    <p><strong>Admin:</strong> admin@cafeconnect.com / admin123</p>
+                    <p><strong>Gabriel:</strong> gabriel.pereira@ccpservices.com.br / ccpservices123</p>
+                    <p><strong>Ferramenta:</strong> ferramentacega@ccpservices.com.br / ccpservices123</p>
                   </div>
                 </div>
               </div>
