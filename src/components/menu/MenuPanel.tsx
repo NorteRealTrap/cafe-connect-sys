@@ -1,22 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Star, Coffee, Pizza, Cake, Wine, Utensils } from "lucide-react";
-import { MenuItem, menuDatabase } from "@/lib/database";
-import { NewItemModal } from "./NewItemModal";
-import { financialSystem } from "@/lib/financial";
+import { useProducts } from "@/hooks/useDatabase";
 
 const categories = [
   { id: "todos", label: "Todos", icon: <Utensils className="h-4 w-4" /> },
-  { id: "restaurante", label: "Restaurante", icon: <Pizza className="h-4 w-4" /> },
-  { id: "lanchonete", label: "Lanchonete", icon: <Utensils className="h-4 w-4" /> },
-  { id: "confeitaria", label: "Confeitaria", icon: <Cake className="h-4 w-4" /> },
-  { id: "bar", label: "Bar", icon: <Wine className="h-4 w-4" /> },
-  { id: "japonesa", label: "Japonesa", icon: <Utensils className="h-4 w-4" /> },
-  { id: "cafeteria", label: "Cafeteria", icon: <Coffee className="h-4 w-4" /> }
+  { id: "Bebidas", label: "Bebidas", icon: <Coffee className="h-4 w-4" /> },
+  { id: "Lanches", label: "Lanches", icon: <Pizza className="h-4 w-4" /> },
+  { id: "Doces", label: "Doces", icon: <Cake className="h-4 w-4" /> },
+  { id: "Bar", label: "Bar", icon: <Wine className="h-4 w-4" /> }
 ];
 
 interface MenuPanelProps {
@@ -24,44 +20,21 @@ interface MenuPanelProps {
 }
 
 export const MenuPanel = ({ onBack }: MenuPanelProps) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const { products: menuItems, updateProduct } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showNewItemModal, setShowNewItemModal] = useState(false);
-  
-  useEffect(() => {
-    loadMenuItems();
-  }, []);
-
-  const loadMenuItems = () => {
-    const items = menuDatabase.getAllItems();
-    setMenuItems(items);
-  };
-
-  const handleAddNewItem = (itemData: Omit<MenuItem, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newItem = menuDatabase.addItem(itemData);
-    loadMenuItems();
-    
-    // Registrar como despesa de estoque/produto
-    financialSystem.addFinancialRecord({
-      type: 'expense',
-      category: 'estoque',
-      description: `Novo item adicionado: ${newItem.nome}`,
-      amount: newItem.preco * 0.6 // Custo estimado (60% do preço de venda)
-    });
-  };
 
   const getFilteredItems = () => {
     let filtered = menuItems;
     
     if (selectedCategory !== "todos") {
-      filtered = filtered.filter(item => item.categoria === selectedCategory);
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
     
     if (searchTerm) {
       filtered = filtered.filter(item => 
-        item.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -69,9 +42,10 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
   };
 
   const toggleAvailability = (itemId: string) => {
-    setMenuItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, disponivel: !item.disponivel } : item
-    ));
+    const item = menuItems.find(i => i.id === itemId);
+    if (item) {
+      updateProduct(itemId, { available: !item.available });
+    }
   };
 
   return (
@@ -81,15 +55,9 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           <h2 className="text-2xl font-bold">Cardápio Digital</h2>
           <p className="text-muted-foreground">Gerencie produtos, categorias e menu</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="pdv" onClick={() => setShowNewItemModal(true)}>
-            <Plus className="h-4 w-4" />
-            Novo Item
-          </Button>
-          <Button variant="outline" onClick={onBack}>
-            Voltar
-          </Button>
-        </div>
+        <Button variant="outline" onClick={onBack}>
+          Voltar
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -105,7 +73,7 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
       </div>
 
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-5">
           {categories.map((category) => (
             <TabsTrigger key={category.id} value={category.id} className="flex items-center gap-1">
               {category.icon}
@@ -122,34 +90,28 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
                       <CardTitle className="flex items-center gap-2">
-                        {item.nome}
-                        {item.destaque && (
+                        {item.name}
+                        {item.featured && (
                           <Badge variant="outline" className="flex items-center gap-1">
                             <Star className="h-3 w-3" />
                             Destaque
                           </Badge>
                         )}
                       </CardTitle>
-                      <CardDescription>{item.descricao}</CardDescription>
+                      <CardDescription>{item.description}</CardDescription>
                     </div>
                     <Badge 
-                      variant={item.disponivel ? "default" : "secondary"}
-                      className={!item.disponivel ? "opacity-50" : ""}
+                      variant={item.available ? "default" : "secondary"}
+                      className={!item.available ? "opacity-50" : ""}
                     >
-                      {item.disponivel ? "Disponível" : "Indisponível"}
+                      {item.available ? "Disponível" : "Indisponível"}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {item.ingredientes && (
-                    <div className="text-xs text-muted-foreground">
-                      <strong>Ingredientes:</strong> {item.ingredientes.join(", ")}
-                    </div>
-                  )}
-                  
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-primary">
-                      R$ {item.preco.toFixed(2)}
+                      R$ {item.price.toFixed(2)}
                     </span>
                     <div className="flex gap-2">
                       <Button 
@@ -157,7 +119,7 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
                         variant="outline"
                         onClick={() => toggleAvailability(item.id)}
                       >
-                        {item.disponivel ? "Desativar" : "Ativar"}
+                        {item.available ? "Desativar" : "Ativar"}
                       </Button>
                       <Button size="sm" variant="ghost">
                         <Edit className="h-4 w-4" />
@@ -176,12 +138,6 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           )}
         </TabsContent>
       </Tabs>
-
-      <NewItemModal
-        open={showNewItemModal}
-        onClose={() => setShowNewItemModal(false)}
-        onSave={handleAddNewItem}
-      />
     </div>
   );
 };

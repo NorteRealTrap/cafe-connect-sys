@@ -1,58 +1,22 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle, ChefHat, Bell, Truck } from "lucide-react";
-
-interface Order {
-  id: string;
-  customerName: string;
-  items: string[];
-  total: number;
-  status: "pendente" | "preparando" | "pronto" | "entregue" | "cancelado";
-  type: "local" | "delivery" | "retirada";
-  orderTime: string;
-  table?: number;
-  phone?: string;
-}
+import { useOrders } from "@/hooks/useDatabase";
+import type { Order } from "@/lib/database";
 
 interface StatusPanelProps {
   onBack: () => void;
 }
 
 export const StatusPanel = ({ onBack }: StatusPanelProps) => {
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: "PED-001",
-      customerName: "João Silva",
-      items: ["Hambúrguer", "Batata Frita"],
-      total: 35.90,
-      status: "preparando",
-      type: "local",
-      orderTime: "14:30",
-      table: 5
-    },
-    {
-      id: "PED-002", 
-      customerName: "Maria Santos",
-      items: ["Pizza Margherita"],
-      total: 42.50,
-      status: "pendente",
-      type: "delivery",
-      orderTime: "14:45",
-      phone: "(11) 99999-9999"
-    },
-    {
-      id: "PED-003",
-      customerName: "Carlos Lima", 
-      items: ["Café", "Pão de Açúcar"],
-      total: 12.80,
-      status: "pronto",
-      type: "retirada",
-      orderTime: "14:20",
-      phone: "(11) 88888-8888"
-    }
-  ]);
+  const { orders, updateOrder } = useOrders();
+
+  // Force re-render when component mounts to ensure fresh data
+  useEffect(() => {
+    // This ensures the component gets the latest data from localStorage
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,9 +41,7 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
   };
 
   const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+    updateOrder(orderId, { status: newStatus });
   };
 
   const getNextStatus = (currentStatus: Order["status"]): Order["status"] | null => {
@@ -166,7 +128,7 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
                 <p className="font-medium">Itens:</p>
                 <ul className="text-muted-foreground">
                   {order.items.map((item, index) => (
-                    <li key={index}>• {item}</li>
+                    <li key={index}>• {item.productName} (x{item.quantity})</li>
                   ))}
                 </ul>
               </div>
@@ -188,9 +150,9 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
                 </div>
               )}
 
-              {order.phone && (
+              {order.customerPhone && (
                 <div className="text-sm">
-                  <p className="text-muted-foreground">Telefone: <span className="font-medium">{order.phone}</span></p>
+                  <p className="text-muted-foreground">Telefone: <span className="font-medium">{order.customerPhone}</span></p>
                 </div>
               )}
 

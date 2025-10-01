@@ -4,93 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Edit, Trash2, Package, AlertTriangle, TrendingUp, Search } from "lucide-react";
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  currentStock: number;
-  minStock: number;
-  maxStock: number;
-  unit: string;
-  costPrice: number;
-  supplier: string;
-  lastUpdated: string;
-  status: "normal" | "low" | "critical" | "excess";
-}
+import { useInventory } from "@/hooks/useDatabase";
+import type { InventoryItem } from "@/lib/database";
 
 interface InventoryPanelProps {
   onBack: () => void;
 }
 
 export const InventoryPanel = ({ onBack }: InventoryPanelProps) => {
-  const [items, setItems] = useState<InventoryItem[]>(() => {
-    const saved = localStorage.getItem('pdv-inventory');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Erro ao carregar estoque:', e);
-      }
-    }
-    
-    return [
-      {
-        id: "1",
-        name: "Café em Grãos Premium",
-        category: "Bebidas",
-        currentStock: 25,
-        minStock: 10,
-        maxStock: 100,
-        unit: "kg",
-        costPrice: 45.90,
-        supplier: "Café Brasil Ltda",
-        lastUpdated: "2024-01-15 14:30",
-        status: "normal"
-      },
-      {
-        id: "2",
-        name: "Açúcar Cristal",
-        category: "Ingredientes",
-        currentStock: 5,
-        minStock: 20,
-        maxStock: 200,
-        unit: "kg",
-        costPrice: 3.50,
-        supplier: "Doce Vida",
-        lastUpdated: "2024-01-15 10:15",
-        status: "critical"
-      },
-      {
-        id: "3",
-        name: "Leite Integral",
-        category: "Laticínios",
-        currentStock: 8,
-        minStock: 15,
-        maxStock: 50,
-        unit: "L",
-        costPrice: 4.20,
-        supplier: "Fazenda Feliz",
-        lastUpdated: "2024-01-15 09:00",
-        status: "low"
-      },
-      {
-        id: "4",
-        name: "Pão Francês",
-        category: "Padaria",
-        currentStock: 150,
-        minStock: 50,
-        maxStock: 100,
-        unit: "unid",
-        costPrice: 0.80,
-        supplier: "Padaria Central",
-        lastUpdated: "2024-01-15 06:00",
-        status: "excess"
-      }
-    ];
-  });
+  const { inventory: items, addInventoryItem, updateInventoryItem, deleteInventoryItem } = useInventory();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -104,11 +27,6 @@ export const InventoryPanel = ({ onBack }: InventoryPanelProps) => {
     costPrice: 0,
     supplier: ""
   });
-
-  const saveItems = (updatedItems: InventoryItem[]) => {
-    setItems(updatedItems);
-    localStorage.setItem('pdv-inventory', JSON.stringify(updatedItems));
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -130,41 +48,13 @@ export const InventoryPanel = ({ onBack }: InventoryPanelProps) => {
   };
 
   const updateStock = (itemId: string, newStock: number) => {
-    const updated = items.map(item => {
-      if (item.id === itemId) {
-        let status: InventoryItem["status"] = "normal";
-        if (newStock <= item.minStock * 0.5) status = "critical";
-        else if (newStock <= item.minStock) status = "low";
-        else if (newStock > item.maxStock) status = "excess";
-        
-        return {
-          ...item,
-          currentStock: newStock,
-          status,
-          lastUpdated: new Date().toLocaleString('pt-BR')
-        };
-      }
-      return item;
-    });
-    saveItems(updated);
+    updateInventoryItem(itemId, { currentStock: newStock });
   };
 
   const addItem = () => {
     if (!newItem.name.trim()) return;
     
-    let status: InventoryItem["status"] = "normal";
-    if (newItem.currentStock <= newItem.minStock * 0.5) status = "critical";
-    else if (newItem.currentStock <= newItem.minStock) status = "low";
-    else if (newItem.currentStock > newItem.maxStock) status = "excess";
-    
-    const item: InventoryItem = {
-      id: Date.now().toString(),
-      ...newItem,
-      status,
-      lastUpdated: new Date().toLocaleString('pt-BR')
-    };
-    
-    saveItems([...items, item]);
+    addInventoryItem(newItem);
     setNewItem({
       name: "",
       category: "",
@@ -180,8 +70,7 @@ export const InventoryPanel = ({ onBack }: InventoryPanelProps) => {
 
   const deleteItem = (itemId: string) => {
     if (confirm('Tem certeza que deseja excluir este item?')) {
-      const updated = items.filter(item => item.id !== itemId);
-      saveItems(updated);
+      deleteInventoryItem(itemId);
     }
   };
 

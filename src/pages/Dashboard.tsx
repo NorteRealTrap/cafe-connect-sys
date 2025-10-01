@@ -12,7 +12,7 @@ import { ReportsPanel } from "@/components/reports/ReportsPanel";
 import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
 import { InventoryPanel } from "@/components/inventory/InventoryPanel";
 import { StatusPanel } from "@/components/status/StatusPanel";
-import { DatabaseStatus } from "@/components/debug/DatabaseStatus";
+
 import { UserRole } from "@/components/auth/LoginForm";
 
 interface DashboardProps {
