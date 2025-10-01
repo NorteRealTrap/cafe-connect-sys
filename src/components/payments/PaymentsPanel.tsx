@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, DollarSign, Smartphone, Receipt } from "lucide-react";
+import { financialSystem, Payment } from "@/lib/financial";
+import { analyticsEngine } from "@/lib/analytics";
 
 interface Payment {
   id: string;
@@ -20,77 +22,81 @@ interface PaymentsPanelProps {
 }
 
 export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
-  const [payments, setPayments] = useState<Payment[]>([
-    {
-      id: "1",
-      orderId: "001",
-      amount: 45.90,
-      method: "cartao",
-      status: "aprovado",
-      timestamp: "14:30",
-      customer: "João Silva"
-    },
-    {
-      id: "2",
-      orderId: "002",
-      amount: 28.50,
-      method: "pix",
-      status: "processando",
-      timestamp: "14:25",
-      customer: "Maria Santos"
-    },
-    {
-      id: "3",
-      orderId: "003",
-      amount: 67.80,
-      method: "dinheiro",
-      status: "pendente",
-      timestamp: "14:20",
-      customer: "Carlos Lima"
-    }
-  ]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [summary, setSummary] = useState<any>({});
+
+  useEffect(() => {
+    loadPayments();
+    loadSummary();
+  }, []);
+
+  const loadPayments = () => {
+    const allPayments = financialSystem.getAllPayments();
+    setPayments(allPayments);
+  };
+
+  const loadSummary = () => {
+    const financialSummary = financialSystem.getFinancialSummary();
+    setSummary(financialSummary);
+  };
 
   const getMethodIcon = (method: string) => {
     switch (method) {
-      case "cartao": return <CreditCard className="h-4 w-4" />;
+      case "cartao_credito":
+      case "cartao_debito": return <CreditCard className="h-4 w-4" />;
       case "pix": return <Smartphone className="h-4 w-4" />;
       case "dinheiro": return <DollarSign className="h-4 w-4" />;
-      case "vale": return <Receipt className="h-4 w-4" />;
-      default: return null;
+      default: return <Receipt className="h-4 w-4" />;
     }
   };
 
   const getMethodLabel = (method: string) => {
     switch (method) {
-      case "cartao": return "Cartão";
+      case "cartao_credito": return "Cartão Crédito";
+      case "cartao_debito": return "Cartão Débito";
       case "pix": return "PIX";
       case "dinheiro": return "Dinheiro";
-      case "vale": return "Vale";
       default: return method;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "aprovado": return "bg-green-100 text-green-800";
-      case "processando": return "bg-yellow-100 text-yellow-800";
-      case "pendente": return "bg-blue-100 text-blue-800";
-      case "rejeitado": return "bg-red-100 text-red-800";
+      case "completed": return "bg-green-100 text-green-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "failed": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const processPayment = (paymentId: string) => {
-    setPayments(prev => prev.map(payment => 
-      payment.id === paymentId 
-        ? { ...payment, status: "aprovado" as const }
-        : payment
-    ));
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "completed": return "Aprovado";
+      case "pending": return "Pendente";
+      case "failed": return "Rejeitado";
+      default: return status;
+    }
   };
 
-  const todayTotal = payments
-    .filter(p => p.status === "aprovado")
-    .reduce((sum, p) => sum + p.amount, 0);
+  const processPayment = (orderId: string, amount: number, method: Payment['method']) => {
+    financialSystem.processPayment(orderId, amount, method);
+    loadPayments();
+    loadSummary();
+    
+    // Atualizar analytics
+    analyticsEngine.addSale({
+      date: new Date(),
+      category: 'vendas',
+      product: `Pedido #${orderId}`,
+      quantity: 1,
+      unitPrice: amount,
+      totalValue: amount,
+      paymentMethod: method,
+      status: 'completed'
+    });
+  };
+
+  const todayTotal = summary.netRevenue || 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -119,31 +125,31 @@ export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {payments.filter(p => p.status === "pendente").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Processando</CardTitle>
+            <CardTitle className="text-sm font-medium">Receita Bruta</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {payments.filter(p => p.status === "processando").length}
+              R$ {(summary.grossRevenue || 0).toFixed(2)}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
+            <CardTitle className="text-sm font-medium">Taxas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              R$ {(summary.totalFees || 0).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Lucro</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {payments.filter(p => p.status === "aprovado").length}
+              R$ {(summary.profit || 0).toFixed(2)}
             </div>
           </CardContent>
         </Card>
@@ -152,9 +158,9 @@ export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
       <Tabs defaultValue="todos" className="space-y-4">
         <TabsList>
           <TabsTrigger value="todos">Todos</TabsTrigger>
-          <TabsTrigger value="pendente">Pendentes</TabsTrigger>
-          <TabsTrigger value="processando">Processando</TabsTrigger>
-          <TabsTrigger value="aprovado">Aprovados</TabsTrigger>
+          <TabsTrigger value="pending">Pendentes</TabsTrigger>
+          <TabsTrigger value="completed">Aprovados</TabsTrigger>
+          <TabsTrigger value="failed">Rejeitados</TabsTrigger>
         </TabsList>
 
         <TabsContent value="todos" className="space-y-4">
@@ -169,10 +175,10 @@ export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
                       </div>
                       <div>
                         <CardTitle className="text-lg">
-                          Pedido #{payment.orderId} - {payment.customer}
+                          Pedido #{payment.orderId}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
-                          {getMethodLabel(payment.method)} • {payment.timestamp}
+                          {getMethodLabel(payment.method)} • {payment.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -181,31 +187,28 @@ export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
                         R$ {payment.amount.toFixed(2)}
                       </div>
                       <Badge className={getStatusColor(payment.status)}>
-                        {payment.status}
+                        {getStatusLabel(payment.status)}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-end gap-2">
-                    {payment.status === "pendente" && (
+                    {payment.status === "pending" && (
                       <Button 
                         size="sm" 
                         variant="success"
-                        onClick={() => processPayment(payment.id)}
-                      >
-                        Processar Pagamento
-                      </Button>
-                    )}
-                    {payment.status === "processando" && (
-                      <Button 
-                        size="sm" 
-                        variant="success"
-                        onClick={() => processPayment(payment.id)}
+                        onClick={() => processPayment(payment.orderId, payment.amount, payment.method)}
                       >
                         Confirmar Pagamento
                       </Button>
                     )}
+                    <Button size="sm" variant="outline">
+                      Taxa: R$ {payment.fees.toFixed(2)}
+                    </Button>
+                    <Button size="sm" variant="ghost">
+                      Líquido: R$ {payment.netAmount.toFixed(2)}
+                    </Button>
                     <Button size="sm" variant="outline">
                       Ver Detalhes
                     </Button>

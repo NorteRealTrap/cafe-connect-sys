@@ -93,22 +93,6 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       tempo: "Agora"
     };
     setOrders(prev => [newOrder, ...prev]);
-    
-    // Registrar venda no analytics
-    import('@/lib/analytics').then(({ analyticsEngine }) => {
-      orderData.itens.forEach((item: any) => {
-        analyticsEngine.addSale({
-          date: new Date(),
-          category: 'restaurante', // Categoria padrão, pode ser melhorada
-          product: item.nome,
-          quantity: item.quantidade,
-          unitPrice: item.preco,
-          totalValue: item.quantidade * item.preco,
-          paymentMethod: 'pendente',
-          status: 'pending'
-        });
-      });
-    });
   };
 
   const getFilteredOrders = () => {
@@ -136,6 +120,33 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
+    
+    // Se o pedido foi finalizado, processar pagamento
+    if (newStatus === 'entregue' || newStatus === 'retirado') {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        import('@/lib/financial').then(({ financialSystem }) => {
+          // Simular pagamento em dinheiro por padrão
+          financialSystem.processPayment(order.numero.toString(), order.total, 'dinheiro');
+        });
+        
+        // Registrar venda completa no analytics
+        import('@/lib/analytics').then(({ analyticsEngine }) => {
+          order.itens.forEach((item: any) => {
+            analyticsEngine.addSale({
+              date: new Date(),
+              category: 'restaurante',
+              product: item.nome,
+              quantity: item.quantidade,
+              unitPrice: item.preco,
+              totalValue: item.quantidade * item.preco,
+              paymentMethod: 'dinheiro',
+              status: 'completed'
+            });
+          });
+        });
+      }
+    }
   };
 
   return (

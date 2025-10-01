@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Download } from "lucide-react";
 import { MetricsCards } from "@/components/analytics/MetricsCards";
 import { RevenueChart } from "@/components/analytics/RevenueChart";
+import { FinancialDashboard } from "@/components/analytics/FinancialDashboard";
 import { analyticsEngine } from "@/lib/analytics";
+import { financialSystem } from "@/lib/financial";
 
 interface ReportsPanelProps {
   onBack: () => void;
@@ -65,6 +67,7 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
           <TabsTrigger value="vendas">Vendas</TabsTrigger>
           <TabsTrigger value="produtos">Produtos</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard Integrado</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-4">
@@ -172,6 +175,10 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="space-y-4">
+          <FinancialDashboard />
         </TabsContent>
       </Tabs>
     </div>

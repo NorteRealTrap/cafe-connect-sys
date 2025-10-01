@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Star, Coffee, Pizza, Cake, Wine, Utensils } from "lucide-react";
 import { MenuItem, menuDatabase } from "@/lib/database";
 import { NewItemModal } from "./NewItemModal";
+import { financialSystem } from "@/lib/financial";
 
 const categories = [
   { id: "todos", label: "Todos", icon: <Utensils className="h-4 w-4" /> },
@@ -38,8 +39,16 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
   };
 
   const handleAddNewItem = (itemData: Omit<MenuItem, 'id' | 'createdAt' | 'updatedAt'>) => {
-    menuDatabase.addItem(itemData);
+    const newItem = menuDatabase.addItem(itemData);
     loadMenuItems();
+    
+    // Registrar como despesa de estoque/produto
+    financialSystem.addFinancialRecord({
+      type: 'expense',
+      category: 'estoque',
+      description: `Novo item adicionado: ${newItem.nome}`,
+      amount: newItem.preco * 0.6 // Custo estimado (60% do preço de venda)
+    });
   };
 
   const getFilteredItems = () => {
