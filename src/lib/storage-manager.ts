@@ -30,12 +30,18 @@ class StorageManager {
       'cafe-connect-payments',
       'cafe-connect-financial-records',
       'cafe-connect-transactions',
-      'cafe-connect-reports'
+      'cafe-connect-reports',
+      'cafe-connect-orders',
+      'cafe-connect-order-counter'
     ];
 
     keys.forEach(key => {
       if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, JSON.stringify([]));
+        if (key === 'cafe-connect-order-counter') {
+          localStorage.setItem(key, '0');
+        } else {
+          localStorage.setItem(key, JSON.stringify([]));
+        }
       }
     });
 
@@ -166,7 +172,8 @@ class StorageManager {
       const keys = [
         'cafe-connect-menu-items',
         'cafe-connect-sales-data',
-        'cafe-connect-transactions'
+        'cafe-connect-transactions',
+        'cafe-connect-orders'
       ];
 
       for (const key of keys) {
@@ -187,6 +194,12 @@ class StorageManager {
         }
       }
       
+      // Verificar contador de pedidos
+      const counter = localStorage.getItem('cafe-connect-order-counter');
+      if (!counter) {
+        localStorage.setItem('cafe-connect-order-counter', '0');
+      }
+      
       return true;
     } catch (error) {
       console.error('Erro na validação do storage:', error);
@@ -203,13 +216,19 @@ class StorageManager {
       'cafe-connect-payments',
       'cafe-connect-financial-records',
       'cafe-connect-transactions',
-      'cafe-connect-reports'
+      'cafe-connect-reports',
+      'cafe-connect-orders',
+      'cafe-connect-order-counter'
     ];
 
     keys.forEach(key => {
       const data = localStorage.getItem(key);
       if (data) {
-        backup[key] = JSON.parse(data);
+        if (key === 'cafe-connect-order-counter') {
+          backup[key] = data;
+        } else {
+          backup[key] = JSON.parse(data);
+        }
       }
     });
 
