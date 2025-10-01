@@ -63,6 +63,14 @@ export const UsersPanel = ({ onBack }: UsersPanelProps) => {
         role: "atendente",
         status: "inativo",
         lastLogin: "2024-01-14 18:20"
+      },
+      {
+        id: "4",
+        name: "Ferramenta Cega",
+        email: "ferramentacega@ccpservices.com.br",
+        role: "admin",
+        status: "ativo",
+        lastLogin: "Nunca"
       }
     ];
   });
