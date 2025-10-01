@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import { LoginForm, UserRole } from "@/components/auth/LoginForm";
 import { Dashboard } from "./Dashboard";
+import { storageManager } from "@/lib/storage-manager";
 
 const Index = () => {
   const [user, setUser] = useState<{ role: UserRole } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Inicializar storage manager
+    storageManager.init();
+    
+    // Validar integridade dos dados
+    if (!storageManager.validateStorage()) {
+      console.log('Dados reinicializados devido à corrupção');
+    }
+    
     // Verificar se há sessão salva
     const savedSession = localStorage.getItem('ccpservices-session');
     if (savedSession) {

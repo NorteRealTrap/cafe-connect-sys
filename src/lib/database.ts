@@ -42,7 +42,7 @@ class MenuDatabase {
 
   private getDefaultItems(): MenuItem[] {
     const now = new Date();
-    return [
+    const defaultItems = [
       {
         id: "1",
         nome: "Hambúrguer Artesanal",
@@ -111,6 +111,10 @@ class MenuDatabase {
         updatedAt: now
       }
     ];
+    
+    // Forçar salvar os dados padrão
+    this.saveItems(defaultItems);
+    return defaultItems;
   }
 
   getAllItems(): MenuItem[] {
