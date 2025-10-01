@@ -1,117 +1,104 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
-import { Clock, MapPin, Home, Package, Plus } from "lucide-react";
+import { Clock, MapPin, Home, Package, Plus, AlertTriangle } from "lucide-react";
 import { NewOrderForm } from "./NewOrderForm";
+import { OrdersHistory } from "./OrdersHistory";
+import { ordersDatabase, Order } from "@/lib/orders-database";
+import { toast } from "sonner";
 
-interface Order {
-  id: string;
-  numero: number;
-  tipo: "local" | "delivery" | "retirada";
-  status: OrderStatus;
-  mesa?: string;
-  cliente: string;
-  itens: Array<{
-    nome: string;
-    quantidade: number;
-    preco: number;
-    observacoes?: string;
-  }>;
-  total: number;
-  tempo: string;
-  endereco?: string;
-}
 
-const sampleOrders: Order[] = [
-  {
-    id: "1",
-    numero: 1,
-    tipo: "local",
-    status: "preparando",
-    mesa: "Mesa 5",
-    cliente: "João Silva",
-    itens: [
-      { nome: "Hambúrguer Artesanal", quantidade: 2, preco: 28.90 },
-      { nome: "Batata Frita", quantidade: 1, preco: 12.90 },
-      { nome: "Refrigerante 350ml", quantidade: 2, preco: 6.50 }
-    ],
-    total: 75.20,
-    tempo: "15 min"
-  },
-  {
-    id: "2",
-    numero: 2,
-    tipo: "delivery",
-    status: "aceito",
-    cliente: "Maria Santos",
-    endereco: "Rua das Flores, 123",
-    itens: [
-      { nome: "Pizza Margherita", quantidade: 1, preco: 42.90 },
-      { nome: "Coca-Cola 600ml", quantidade: 1, preco: 8.90 }
-    ],
-    total: 51.80,
-    tempo: "5 min"
-  },
-  {
-    id: "3",
-    numero: 3,
-    tipo: "retirada",
-    status: "pronto",
-    cliente: "Carlos Lima",
-    itens: [
-      { nome: "Açaí 500ml", quantidade: 1, preco: 18.50 },
-      { nome: "Granola", quantidade: 1, preco: 3.50 }
-    ],
-    total: 22.00,
-    tempo: "2 min"
-  }
-];
 
 interface OrdersPanelProps {
   onBack: () => void;
 }
 
 export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
-  const [orders, setOrders] = useState<Order[]>(sampleOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [selectedTab, setSelectedTab] = useState("todos");
   const [showNewOrderForm, setShowNewOrderForm] = useState(false);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = () => {
+    const allOrders = ordersDatabase.getAllOrders();
+    const orderStats = ordersDatabase.getOrdersStats();
+    setOrders(allOrders);
+    setStats(orderStats);
+  };
+
+  const getTimeElapsed = (createdAt: Date): string => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
+    if (diff < 1) return "Agora";
+    if (diff < 60) return `${diff} min`;
+    const hours = Math.floor(diff / 60);
+    return `${hours}h ${diff % 60}min`;
+  };
   
   const handleNewOrder = (orderData: any) => {
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      numero: orders.length + 1,
-      tipo: orderData.tipo,
-      status: "aceito",
-      mesa: orderData.mesa,
-      endereco: orderData.endereco,
-      cliente: orderData.cliente,
-      itens: orderData.itens,
-      total: orderData.total,
-      tempo: "Agora"
-    };
-    setOrders(prev => [newOrder, ...prev]);
-    
-    // Registrar transação pendente no banco de relatórios
-    (async () => {
-      const { reportsDatabase } = await import('@/lib/database-reports');
-      reportsDatabase.addTransaction({
-        orderId: newOrder.numero.toString(),
-        amount: newOrder.total,
-        method: 'dinheiro',
-        status: 'pending',
-        date: new Date(),
-        category: 'restaurante',
-        products: newOrder.itens.map(item => ({
-          name: item.nome,
-          quantity: item.quantidade,
-          price: item.preco
+    // Verificar duplicação
+    const duplicate = ordersDatabase.checkDuplicateOrder(
+      orderData.cliente,
+      orderData.itens,
+      5 // 5 minutos de janela
+    );
+
+    if (duplicate) {
+      toast.error(`Pedido similar já existe (#${duplicate.numero}) - criado há ${getTimeElapsed(duplicate.createdAt)}`);
+      return;
+    }
+
+    try {
+      const newOrder = ordersDatabase.createOrder({
+        tipo: orderData.tipo,
+        mesa: orderData.mesa,
+        endereco: orderData.endereco,
+        cliente: orderData.cliente,
+        telefone: orderData.telefone,
+        itens: orderData.itens.map((item: any) => ({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          nome: item.nome,
+          quantidade: item.quantidade,
+          preco: item.preco,
+          observacoes: item.observacoes
         })),
-        metadata: { orderType: newOrder.tipo }
+        total: orderData.total,
+        observacoes: orderData.observacoes
       });
-    })();
+
+      loadOrders();
+      toast.success(`Pedido #${newOrder.numero} criado com sucesso!`);
+      
+      // Registrar transação pendente no banco de relatórios
+      (async () => {
+        const { reportsDatabase } = await import('@/lib/database-reports');
+        reportsDatabase.addTransaction({
+          orderId: newOrder.numero.toString(),
+          amount: newOrder.total,
+          method: 'dinheiro',
+          status: 'pending',
+          date: new Date(),
+          category: 'restaurante',
+          products: newOrder.itens.map(item => ({
+            name: item.nome,
+            quantity: item.quantidade,
+            price: item.preco
+          })),
+          metadata: { orderType: newOrder.tipo }
+        });
+      })();
+    } catch (error) {
+      console.error('Erro ao criar pedido:', error);
+      toast.error('Erro ao criar pedido. Tente novamente.');
+    }
   };
 
   const getFilteredOrders = () => {
@@ -136,41 +123,45 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   };
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    
-    // Se o pedido foi finalizado, processar pagamento
-    if (newStatus === 'entregue' || newStatus === 'retirado') {
-      const order = orders.find(o => o.id === orderId);
-      if (order) {
-        // Processar tudo de forma síncrona
+    try {
+      const updatedOrder = ordersDatabase.updateOrderStatus(orderId, newStatus);
+      
+      if (!updatedOrder) {
+        toast.error('Erro ao atualizar status do pedido');
+        return;
+      }
+
+      loadOrders();
+      toast.success(`Pedido #${updatedOrder.numero} ${newStatus}!`);
+      
+      // Se o pedido foi finalizado, processar pagamento
+      if (newStatus === 'entregue' || newStatus === 'retirado') {
         (async () => {
           const { financialSystem } = await import('@/lib/financial');
           const { reportsDatabase } = await import('@/lib/database-reports');
           const { analyticsEngine } = await import('@/lib/analytics');
           
-          financialSystem.processPayment(order.numero.toString(), order.total, 'dinheiro');
+          financialSystem.processPayment(updatedOrder.numero.toString(), updatedOrder.total, 'dinheiro');
           
           reportsDatabase.addTransaction({
-            orderId: order.numero.toString(),
-            amount: order.total,
+            orderId: updatedOrder.numero.toString(),
+            amount: updatedOrder.total,
             method: 'dinheiro',
             status: 'completed',
             date: new Date(),
             category: 'restaurante',
-            products: order.itens.map(item => ({
+            products: updatedOrder.itens.map(item => ({
               name: item.nome,
               quantity: item.quantidade,
               price: item.preco
             })),
             metadata: { 
-              orderType: order.tipo,
+              orderType: updatedOrder.tipo,
               completedAt: new Date().toISOString()
             }
           });
           
-          order.itens.forEach((item: any) => {
+          updatedOrder.itens.forEach((item: any) => {
             analyticsEngine.addSale({
               date: new Date(),
               category: 'restaurante',
@@ -184,6 +175,9 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           });
         })();
       }
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast.error('Erro ao atualizar status do pedido');
     }
   };
 
@@ -193,8 +187,19 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         <div>
           <h2 className="text-2xl font-bold">Gerenciamento de Pedidos</h2>
           <p className="text-muted-foreground">Acompanhe todos os pedidos em tempo real</p>
+          {stats && (
+            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+              <span>Total: {stats.total}</span>
+              <span>Hoje: {stats.today}</span>
+              <span>Ativos: {stats.active}</span>
+              <span>Finalizados: {stats.completed}</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowHistoryPanel(true)}>
+            Histórico
+          </Button>
           <Button variant="pdv" onClick={() => setShowNewOrderForm(true)}>
             <Plus className="h-4 w-4" />
             Novo Pedido
@@ -236,7 +241,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {order.tempo}
+                        {getTimeElapsed(order.createdAt)}
                       </Badge>
                       <OrderStatusBadge status={order.status} type={order.tipo} />
                     </div>
@@ -305,6 +310,12 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           onClose={() => setShowNewOrderForm(false)}
           onSubmit={handleNewOrder}
         />
+      )}
+      
+      {showHistoryPanel && (
+        <div className="fixed inset-0 bg-background z-50">
+          <OrdersHistory onBack={() => setShowHistoryPanel(false)} />
+        </div>
       )}
     </div>
   );

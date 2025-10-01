@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { LoginForm, UserRole } from "@/components/auth/LoginForm";
 import { Dashboard } from "./Dashboard";
 import { storageManager } from "@/lib/storage-manager";
+import { ordersDatabase } from "@/lib/orders-database";
 
 const Index = () => {
   const [user, setUser] = useState<{ role: UserRole } | null>(null);
@@ -15,6 +16,9 @@ const Index = () => {
     if (!storageManager.validateStorage()) {
       console.log('Dados reinicializados devido à corrupção');
     }
+    
+    // Limpar pedidos antigos (mais de 30 dias) na inicialização
+    ordersDatabase.cleanOldOrders(30);
     
     // Verificar se há sessão salva
     const savedSession = localStorage.getItem('ccpservices-session');

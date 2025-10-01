@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Minus } from "lucide-react";
+import { toast } from "sonner";
 
 interface MenuItem {
   id: string;
@@ -38,6 +39,7 @@ const menuItems: MenuItem[] = [
 export const NewOrderForm = ({ onClose, onSubmit }: NewOrderFormProps) => {
   const [orderData, setOrderData] = useState({
     cliente: "",
+    telefone: "",
     tipo: "local" as "local" | "delivery" | "retirada",
     mesa: "",
     endereco: ""
@@ -79,12 +81,23 @@ export const NewOrderForm = ({ onClose, onSubmit }: NewOrderFormProps) => {
 
   const handleSubmit = () => {
     if (!orderData.cliente || selectedItems.length === 0) {
-      alert("Preencha o cliente e adicione pelo menos um item");
+      toast.error("Preencha o cliente e adicione pelo menos um item");
+      return;
+    }
+
+    if (orderData.tipo === "local" && !orderData.mesa) {
+      toast.error("Informe a mesa para pedidos locais");
+      return;
+    }
+
+    if (orderData.tipo === "delivery" && !orderData.endereco) {
+      toast.error("Informe o endereço para delivery");
       return;
     }
 
     const newOrder = {
       cliente: orderData.cliente,
+      telefone: orderData.telefone,
       tipo: orderData.tipo,
       mesa: orderData.tipo === "local" ? orderData.mesa : undefined,
       endereco: orderData.tipo === "delivery" ? orderData.endereco : undefined,
@@ -116,6 +129,14 @@ export const NewOrderForm = ({ onClose, onSubmit }: NewOrderFormProps) => {
                 value={orderData.cliente}
                 onChange={(e) => setOrderData(prev => ({ ...prev, cliente: e.target.value }))}
                 placeholder="Nome do cliente"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={orderData.telefone}
+                onChange={(e) => setOrderData(prev => ({ ...prev, telefone: e.target.value }))}
+                placeholder="(11) 99999-9999"
               />
             </div>
             <div className="space-y-2">
