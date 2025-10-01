@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
 import { Clock, MapPin, Home, Package, Plus } from "lucide-react";
+import { NewOrderForm } from "./NewOrderForm";
 
 interface Order {
   id: string;
@@ -76,19 +77,19 @@ interface OrdersPanelProps {
 export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [orders, setOrders] = useState<Order[]>(sampleOrders);
   const [selectedTab, setSelectedTab] = useState("todos");
+  const [showNewOrderForm, setShowNewOrderForm] = useState(false);
   
-  const addNewOrder = () => {
+  const handleNewOrder = (orderData: any) => {
     const newOrder: Order = {
       id: Date.now().toString(),
       numero: orders.length + 1,
-      tipo: "local",
+      tipo: orderData.tipo,
       status: "aceito",
-      mesa: `Mesa ${Math.floor(Math.random() * 20) + 1}`,
-      cliente: "Novo Cliente",
-      itens: [
-        { nome: "Item Exemplo", quantidade: 1, preco: 25.90 }
-      ],
-      total: 25.90,
+      mesa: orderData.mesa,
+      endereco: orderData.endereco,
+      cliente: orderData.cliente,
+      itens: orderData.itens,
+      total: orderData.total,
       tempo: "Agora"
     };
     setOrders(prev => [newOrder, ...prev]);
@@ -129,7 +130,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           <p className="text-muted-foreground">Acompanhe todos os pedidos em tempo real</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="pdv" onClick={addNewOrder}>
+          <Button variant="pdv" onClick={() => setShowNewOrderForm(true)}>
             <Plus className="h-4 w-4" />
             Novo Pedido
           </Button>
@@ -233,6 +234,13 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {showNewOrderForm && (
+        <NewOrderForm 
+          onClose={() => setShowNewOrderForm(false)}
+          onSubmit={handleNewOrder}
+        />
+      )}
     </div>
   );
 };
