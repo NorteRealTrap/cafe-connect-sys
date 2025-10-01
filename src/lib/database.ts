@@ -410,5 +410,10 @@ export const db = new Database();
 
 // Initialize database on first load
 if (typeof window !== 'undefined') {
-  db.initializeDatabase();
+  // Ensure initialization happens after DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => db.initializeDatabase());
+  } else {
+    db.initializeDatabase();
+  }
 }

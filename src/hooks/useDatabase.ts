@@ -48,14 +48,19 @@ export const useProducts = () => {
   }, []);
 
   const addProduct = (product: Omit<Product, 'id' | 'createdAt'>) => {
-    const newProduct: Product = {
-      ...product,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    db.saveProducts(updatedProducts);
+    try {
+      const newProduct: Product = {
+        ...product,
+        id: `prod_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        createdAt: new Date().toISOString()
+      };
+      const updatedProducts = [...products, newProduct];
+      setProducts(updatedProducts);
+      db.saveProducts(updatedProducts);
+      console.log('Produto adicionado:', newProduct.name);
+    } catch (error) {
+      console.error('Erro ao adicionar produto:', error);
+    }
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
