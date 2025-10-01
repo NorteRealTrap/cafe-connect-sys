@@ -66,6 +66,14 @@ export const UsersPanel = ({ onBack }: UsersPanelProps) => {
       },
       {
         id: "4",
+        name: "Gabriel Pereira",
+        email: "gabriel.pereira@ccpservices.com.br",
+        role: "admin",
+        status: "ativo",
+        lastLogin: "Nunca"
+      },
+      {
+        id: "5",
         name: "Ferramenta Cega",
         email: "ferramentacega@ccpservices.com.br",
         role: "admin",
