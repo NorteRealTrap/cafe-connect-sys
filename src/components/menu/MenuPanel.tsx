@@ -1,80 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Star, Coffee, Pizza, Cake, Wine, Utensils } from "lucide-react";
-
-interface MenuItem {
-  id: string;
-  nome: string;
-  descricao: string;
-  preco: number;
-  categoria: string;
-  disponivel: boolean;
-  destaque: boolean;
-  imagem?: string;
-  ingredientes?: string[];
-}
-
-const sampleMenuItems: MenuItem[] = [
-  {
-    id: "1",
-    nome: "Hambúrguer Artesanal",
-    descricao: "Pão brioche, carne 180g, queijo cheddar, alface, tomate",
-    preco: 28.90,
-    categoria: "lanchonete",
-    disponivel: true,
-    destaque: true,
-    ingredientes: ["Pão brioche", "Carne bovina", "Queijo cheddar", "Alface", "Tomate"]
-  },
-  {
-    id: "2",
-    nome: "Pizza Margherita",
-    descricao: "Molho de tomate, mozzarella, manjericão fresco",
-    preco: 42.90,
-    categoria: "restaurante",
-    disponivel: true,
-    destaque: false
-  },
-  {
-    id: "3",
-    nome: "Bolo de Chocolate",
-    descricao: "Bolo fofinho com cobertura de brigadeiro",
-    preco: 8.50,
-    categoria: "confeitaria",
-    disponivel: true,
-    destaque: true
-  },
-  {
-    id: "4",
-    nome: "Caipirinha",
-    descricao: "Cachaça, limão, açúcar",
-    preco: 12.90,
-    categoria: "bar",
-    disponivel: true,
-    destaque: false
-  },
-  {
-    id: "5",
-    nome: "Sushi Combo",
-    descricao: "10 peças variadas de sushi e sashimi",
-    preco: 48.90,
-    categoria: "japonesa",
-    disponivel: true,
-    destaque: true
-  },
-  {
-    id: "6",
-    nome: "Café Espresso",
-    descricao: "Café especial torrado na casa",
-    preco: 4.50,
-    categoria: "cafeteria",
-    disponivel: true,
-    destaque: false
-  }
-];
+import { MenuItem, menuDatabase } from "@/lib/database";
+import { NewItemModal } from "./NewItemModal";
 
 const categories = [
   { id: "todos", label: "Todos", icon: <Utensils className="h-4 w-4" /> },
@@ -91,21 +23,23 @@ interface MenuPanelProps {
 }
 
 export const MenuPanel = ({ onBack }: MenuPanelProps) => {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(sampleMenuItems);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewItemModal, setShowNewItemModal] = useState(false);
   
-  const addNewItem = () => {
-    const newItem: MenuItem = {
-      id: Date.now().toString(),
-      nome: "Novo Item",
-      descricao: "Descrição do novo item",
-      preco: 0.00,
-      categoria: selectedCategory === "todos" ? "restaurante" : selectedCategory,
-      disponivel: true,
-      destaque: false
-    };
-    setMenuItems(prev => [newItem, ...prev]);
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
+
+  const loadMenuItems = () => {
+    const items = menuDatabase.getAllItems();
+    setMenuItems(items);
+  };
+
+  const handleAddNewItem = (itemData: Omit<MenuItem, 'id' | 'createdAt' | 'updatedAt'>) => {
+    menuDatabase.addItem(itemData);
+    loadMenuItems();
   };
 
   const getFilteredItems = () => {
@@ -139,7 +73,7 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           <p className="text-muted-foreground">Gerencie produtos, categorias e menu</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="pdv" onClick={addNewItem}>
+          <Button variant="pdv" onClick={() => setShowNewItemModal(true)}>
             <Plus className="h-4 w-4" />
             Novo Item
           </Button>
@@ -233,6 +167,12 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           )}
         </TabsContent>
       </Tabs>
+
+      <NewItemModal
+        open={showNewItemModal}
+        onClose={() => setShowNewItemModal(false)}
+        onSave={handleAddNewItem}
+      />
     </div>
   );
 };
