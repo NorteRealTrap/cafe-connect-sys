@@ -23,7 +23,33 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
   
   useEffect(() => {
     loadReports();
+    // Forçar sincronização de dados
+    syncAllData();
   }, []);
+
+  const syncAllData = () => {
+    // Sincronizar dados entre sistemas
+    const payments = financialSystem.getAllPayments();
+    const transactions = reportsDatabase.getAllTransactions();
+    
+    // Se não há transações mas há pagamentos, sincronizar
+    if (payments.length > 0 && transactions.length === 0) {
+      payments.forEach(payment => {
+        if (payment.status === 'completed') {
+          reportsDatabase.addTransaction({
+            orderId: payment.orderId,
+            amount: payment.amount,
+            method: payment.method,
+            status: 'completed',
+            date: payment.date,
+            category: 'vendas',
+            products: [{ name: `Pedido #${payment.orderId}`, quantity: 1, price: payment.amount }],
+            metadata: { gateway: 'sync' }
+          });
+        }
+      });
+    }
+  };
 
   const loadReports = () => {
     const allReports = reportsDatabase.getAllReports();
@@ -116,38 +142,88 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <RevenueChart 
+              type="daily" 
+              title="Receita Diária" 
+              description="Últimos 30 dias" 
+            />
+            <RevenueChart 
+              type="category" 
+              title="Receita por Categoria" 
+              description="Distribuição por tipo" 
+            />
+          </div>
           <PaymentReports />
         </TabsContent>
 
         <TabsContent value="produtos" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Produtos Mais Vendidos</CardTitle>
-              <Button size="sm" variant="outline">
-                <Download className="h-4 w-4" />
-                Exportar
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topProducts.map((product) => (
-                  <div key={product.product} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">{product.product}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {product.quantity} unidades vendidas
-                      </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Produtos Mais Vendidos</CardTitle>
+                <Button size="sm" variant="outline">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {topProducts.slice(0, 10).map((product) => (
+                    <div key={product.product} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{product.product}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {product.quantity} unidades vendidas
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-primary">
+                          {formatCurrency(product.revenue)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary">
-                        {formatCurrency(product.revenue)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Vendas por Categoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(metrics.categoryBreakdown).map(([category, revenue]) => {
+                    const percentage = metrics.totalRevenue > 0 ? ((revenue / metrics.totalRevenue) * 100).toFixed(1) : '0';
+                    const categoryNames = {
+                      'restaurante': 'Restaurante',
+                      'lanchonete': 'Lanchonete', 
+                      'confeitaria': 'Confeitaria',
+                      'bar': 'Bar',
+                      'japonesa': 'Japonesa',
+                      'cafeteria': 'Cafeteria'
+                    };
+                    return (
+                      <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{categoryNames[category as keyof typeof categoryNames] || category}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {percentage}% do total
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-primary">
+                            {formatCurrency(revenue)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="financeiro" className="space-y-4">
@@ -217,11 +293,13 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
               <Button 
                 variant="success" 
                 onClick={() => {
+                  syncAllData(); // Sincronizar antes de gerar
                   const today = new Date();
                   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-                  reportsDatabase.generateReport('daily', startOfDay, endOfDay);
+                  const report = reportsDatabase.generateReport('daily', startOfDay, endOfDay);
                   loadReports();
+                  alert(`Relatório diário gerado! Receita: ${formatCurrency(report.metrics.netRevenue)}`);
                 }}
               >
                 <FileText className="h-4 w-4" />
@@ -230,11 +308,13 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
               <Button 
                 variant="info" 
                 onClick={() => {
+                  syncAllData(); // Sincronizar antes de gerar
                   const today = new Date();
                   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                  reportsDatabase.generateReport('monthly', startOfMonth, endOfMonth);
+                  const report = reportsDatabase.generateReport('monthly', startOfMonth, endOfMonth);
                   loadReports();
+                  alert(`Relatório mensal gerado! Receita: ${formatCurrency(report.metrics.netRevenue)}`);
                 }}
               >
                 <Calendar className="h-4 w-4" />
