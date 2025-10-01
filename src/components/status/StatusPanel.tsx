@@ -1,21 +1,121 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, XCircle, ChefHat, Bell, Truck } from "lucide-react";
-import { useOrders } from "@/hooks/useDatabase";
-import type { Order } from "@/lib/database";
+
+interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+interface Order {
+  id: string;
+  customerName: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  items: OrderItem[];
+  total: number;
+  status: "pendente" | "preparando" | "pronto" | "entregue" | "cancelado";
+  type: "local" | "delivery" | "retirada";
+  table?: number;
+  orderTime: string;
+  estimatedTime: number;
+  createdAt: string;
+}
 
 interface StatusPanelProps {
   onBack: () => void;
 }
 
-export const StatusPanel = ({ onBack }: StatusPanelProps) => {
-  const { orders, updateOrder } = useOrders();
+const STORAGE_KEY = 'ccpservices-orders';
 
-  // Force re-render when component mounts to ensure fresh data
+const getInitialOrders = (): Order[] => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Erro ao carregar pedidos:', error);
+  }
+  
+  // Dados iniciais se não houver nada salvo
+  return [
+    {
+      id: 'PED-001',
+      customerName: 'João Silva',
+      customerPhone: '(11) 99999-1111',
+      items: [
+        { productId: '1', productName: 'Hambúrguer Artesanal', quantity: 1, price: 25.90, total: 25.90 },
+        { productId: '2', productName: 'Café Expresso', quantity: 2, price: 4.50, total: 9.00 }
+      ],
+      total: 34.90,
+      status: 'preparando',
+      type: 'local',
+      table: 3,
+      orderTime: '14:30',
+      estimatedTime: 15,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'PED-002',
+      customerName: 'Maria Santos',
+      customerPhone: '(11) 88888-2222',
+      customerAddress: 'Rua das Flores, 123',
+      items: [
+        { productId: '3', productName: 'Bolo de Chocolate', quantity: 1, price: 8.90, total: 8.90 }
+      ],
+      total: 8.90,
+      status: 'pendente',
+      type: 'delivery',
+      orderTime: '14:45',
+      estimatedTime: 30,
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: 'PED-003',
+      customerName: 'Carlos Lima',
+      customerPhone: '(11) 77777-3333',
+      items: [
+        { productId: '1', productName: 'Café Expresso', quantity: 1, price: 4.50, total: 4.50 }
+      ],
+      total: 4.50,
+      status: 'pronto',
+      type: 'retirada',
+      orderTime: '14:20',
+      estimatedTime: 5,
+      createdAt: new Date().toISOString()
+    }
+  ];
+};
+
+export const StatusPanel = ({ onBack }: StatusPanelProps) => {
+  const [orders, setOrders] = useState<Order[]>(getInitialOrders);
+
+  // Salvar no localStorage sempre que orders mudar
   useEffect(() => {
-    // This ensures the component gets the latest data from localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  }, [orders]);
+
+  // Carregar dados do localStorage ao montar o componente
+  useEffect(() => {
+    const loadOrders = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsedOrders = JSON.parse(saved);
+          setOrders(parsedOrders);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar pedidos:', error);
+      }
+    };
+
+    loadOrders();
   }, []);
 
   const getStatusColor = (status: string) => {
@@ -41,7 +141,14 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
   };
 
   const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
-    updateOrder(orderId, { status: newStatus });
+    setOrders(prevOrders => {
+      const updatedOrders = prevOrders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      );
+      // Salvar imediatamente
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
+      return updatedOrders;
+    });
   };
 
   const getNextStatus = (currentStatus: Order["status"]): Order["status"] | null => {

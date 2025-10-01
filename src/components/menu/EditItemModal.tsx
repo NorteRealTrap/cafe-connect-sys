@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,21 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import type { Product } from "@/lib/database";
 
-interface NewItemModalProps {
+interface EditItemModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (item: {
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    available: boolean;
-    featured: boolean;
-  }) => void;
+  onSave: (id: string, updates: Partial<Product>) => void;
+  item: Product | null;
 }
 
-export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
+export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -30,19 +25,24 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
     featured: false
   });
 
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        available: item.available,
+        featured: item.featured
+      });
+    }
+  }, [item]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || formData.price <= 0) return;
+    if (!item || !formData.name.trim() || formData.price <= 0) return;
     
-    onSave(formData);
-    setFormData({
-      name: "",
-      description: "",
-      price: 0,
-      category: "Bebidas",
-      available: true,
-      featured: false
-    });
+    onSave(item.id, formData);
     onClose();
   };
 
@@ -62,7 +62,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Novo Item do Cardápio</DialogTitle>
+          <DialogTitle>Editar Item do Cardápio</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -146,7 +146,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
               Cancelar
             </Button>
             <Button type="submit" variant="pdv">
-              Salvar Item
+              Salvar Alterações
             </Button>
           </div>
         </form>

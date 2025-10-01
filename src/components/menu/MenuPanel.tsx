@@ -6,6 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Star, Coffee, Pizza, Cake, Wine, Utensils } from "lucide-react";
 import { useProducts } from "@/hooks/useDatabase";
+import { NewItemModal } from "./NewItemModal";
+import { EditItemModal } from "./EditItemModal";
+import type { Product } from "@/lib/database";
 
 const categories = [
   { id: "todos", label: "Todos", icon: <Utensils className="h-4 w-4" /> },
@@ -20,9 +23,12 @@ interface MenuPanelProps {
 }
 
 export const MenuPanel = ({ onBack }: MenuPanelProps) => {
-  const { products: menuItems, updateProduct } = useProducts();
+  const { products: menuItems, addProduct, updateProduct } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<Product | null>(null);
 
   const getFilteredItems = () => {
     let filtered = menuItems;
@@ -48,6 +54,28 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
     }
   };
 
+  const handleAddItem = (itemData: {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    available: boolean;
+    featured: boolean;
+  }) => {
+    addProduct(itemData);
+  };
+
+  const handleEditItem = (item: Product) => {
+    setEditingItem(item);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateItem = (id: string, updates: Partial<Product>) => {
+    updateProduct(id, updates);
+    setShowEditModal(false);
+    setEditingItem(null);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -55,9 +83,15 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           <h2 className="text-2xl font-bold">Cardápio Digital</h2>
           <p className="text-muted-foreground">Gerencie produtos, categorias e menu</p>
         </div>
-        <Button variant="outline" onClick={onBack}>
-          Voltar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="pdv" onClick={() => setShowNewModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Item
+          </Button>
+          <Button variant="outline" onClick={onBack}>
+            Voltar
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -121,7 +155,11 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
                       >
                         {item.available ? "Desativar" : "Ativar"}
                       </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => handleEditItem(item)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
@@ -138,6 +176,22 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
           )}
         </TabsContent>
       </Tabs>
+
+      <NewItemModal
+        open={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        onSave={handleAddItem}
+      />
+
+      <EditItemModal
+        open={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingItem(null);
+        }}
+        onSave={handleUpdateItem}
+        item={editingItem}
+      />
     </div>
   );
 };
