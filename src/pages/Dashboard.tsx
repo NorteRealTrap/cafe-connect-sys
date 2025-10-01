@@ -17,12 +17,13 @@ import { UserRole } from "@/components/auth/LoginForm";
 
 interface DashboardProps {
   userRole: UserRole;
+  businessCategory?: any;
   onLogout: () => void;
 }
 
 type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios" | "debug";
 
-export const Dashboard = ({ userRole, onLogout }: DashboardProps) => {
+export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardProps) => {
   const [activeModule, setActiveModule] = useState<ActiveModule>("dashboard");
 
   const handleModuleClick = (moduleId: string) => {

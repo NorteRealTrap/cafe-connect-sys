@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { LoginForm, UserRole } from "@/components/auth/LoginForm";
+import { BusinessSelector } from "@/components/business/BusinessSelector";
 import { Dashboard } from "./Dashboard";
 import { storageManager } from "@/lib/storage-manager";
 import { ordersDatabase } from "@/lib/orders-database";
 
 const Index = () => {
   const [user, setUser] = useState<{ role: UserRole } | null>(null);
+  const [businessCategory, setBusinessCategory] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,6 +35,9 @@ const Index = () => {
           
           if (sessionAge < maxAge) {
             setUser({ role: session.role });
+            if (session.businessCategory) {
+              setBusinessCategory(session.businessCategory);
+            }
           } else {
             localStorage.removeItem('ccpservices-session');
           }
@@ -45,12 +50,22 @@ const Index = () => {
   }, []);
 
   const handleLogin = (role: UserRole) => {
+    setUser({ role });
+  };
+
+  const handleBusinessSelect = (category: any) => {
     const session = {
-      role,
+      role: user?.role,
+      businessCategory: category,
       timestamp: Date.now()
     };
     localStorage.setItem('ccpservices-session', JSON.stringify(session));
-    setUser({ role });
+    setBusinessCategory(category);
+  };
+
+  const handleBackToLogin = () => {
+    setUser(null);
+    setBusinessCategory(null);
   };
 
   const handleLogout = () => {
@@ -73,7 +88,16 @@ const Index = () => {
     return <LoginForm onLogin={handleLogin} />;
   }
 
-  return <Dashboard userRole={user.role} onLogout={handleLogout} />;
+  if (!businessCategory) {
+    return (
+      <BusinessSelector 
+        onSelect={handleBusinessSelect}
+        onBack={handleBackToLogin}
+      />
+    );
+  }
+
+  return <Dashboard userRole={user.role} businessCategory={businessCategory} onLogout={handleLogout} />;
 };
 
 export default Index;
