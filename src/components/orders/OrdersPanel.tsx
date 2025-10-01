@@ -76,6 +76,23 @@ interface OrdersPanelProps {
 export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [orders, setOrders] = useState<Order[]>(sampleOrders);
   const [selectedTab, setSelectedTab] = useState("todos");
+  
+  const addNewOrder = () => {
+    const newOrder: Order = {
+      id: Date.now().toString(),
+      numero: orders.length + 1,
+      tipo: "local",
+      status: "aceito",
+      mesa: `Mesa ${Math.floor(Math.random() * 20) + 1}`,
+      cliente: "Novo Cliente",
+      itens: [
+        { nome: "Item Exemplo", quantidade: 1, preco: 25.90 }
+      ],
+      total: 25.90,
+      tempo: "Agora"
+    };
+    setOrders(prev => [newOrder, ...prev]);
+  };
 
   const getFilteredOrders = () => {
     if (selectedTab === "todos") return orders;
@@ -112,7 +129,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           <p className="text-muted-foreground">Acompanhe todos os pedidos em tempo real</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="pdv">
+          <Button variant="pdv" onClick={addNewOrder}>
             <Plus className="h-4 w-4" />
             Novo Pedido
           </Button>
