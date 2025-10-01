@@ -12,6 +12,7 @@ import { ReportsPanel } from "@/components/reports/ReportsPanel";
 import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
 import { InventoryPanel } from "@/components/inventory/InventoryPanel";
 import { StatusPanel } from "@/components/status/StatusPanel";
+import { DatabaseStatus } from "@/components/debug/DatabaseStatus";
 import { UserRole } from "@/components/auth/LoginForm";
 
 interface DashboardProps {
@@ -19,7 +20,7 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios";
+type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios" | "debug";
 
 export const Dashboard = ({ userRole, onLogout }: DashboardProps) => {
   const [activeModule, setActiveModule] = useState<ActiveModule>("dashboard");
@@ -54,6 +55,20 @@ export const Dashboard = ({ userRole, onLogout }: DashboardProps) => {
         return <InventoryPanel onBack={handleBackToDashboard} />;
       case "status":
         return <StatusPanel onBack={handleBackToDashboard} />;
+      case "debug":
+        return (
+          <div className="p-6">
+            <DatabaseStatus />
+            <div className="mt-6">
+              <button 
+                onClick={handleBackToDashboard}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Voltar ao Dashboard
+              </button>
+            </div>
+          </div>
+        );
       case "dashboard":
       default:
         return <DashboardGrid userRole={userRole} onModuleClick={handleModuleClick} />;

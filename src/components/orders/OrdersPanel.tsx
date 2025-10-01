@@ -95,11 +95,12 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     setOrders(prev => [newOrder, ...prev]);
     
     // Registrar transação pendente no banco de relatórios
-    import('@/lib/database-reports').then(({ reportsDatabase }) => {
+    (async () => {
+      const { reportsDatabase } = await import('@/lib/database-reports');
       reportsDatabase.addTransaction({
         orderId: newOrder.numero.toString(),
         amount: newOrder.total,
-        method: 'dinheiro', // Padrão, será atualizado no pagamento
+        method: 'dinheiro',
         status: 'pending',
         date: new Date(),
         category: 'restaurante',
@@ -110,7 +111,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         })),
         metadata: { orderType: newOrder.tipo }
       });
-    });
+    })();
   };
 
   const getFilteredOrders = () => {
@@ -143,13 +144,14 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     if (newStatus === 'entregue' || newStatus === 'retirado') {
       const order = orders.find(o => o.id === orderId);
       if (order) {
-        // Processar pagamento no sistema financeiro
-        import('@/lib/financial').then(({ financialSystem }) => {
+        // Processar tudo de forma síncrona
+        (async () => {
+          const { financialSystem } = await import('@/lib/financial');
+          const { reportsDatabase } = await import('@/lib/database-reports');
+          const { analyticsEngine } = await import('@/lib/analytics');
+          
           financialSystem.processPayment(order.numero.toString(), order.total, 'dinheiro');
-        });
-        
-        // Atualizar transação no banco de relatórios
-        import('@/lib/database-reports').then(({ reportsDatabase }) => {
+          
           reportsDatabase.addTransaction({
             orderId: order.numero.toString(),
             amount: order.total,
@@ -167,10 +169,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
               completedAt: new Date().toISOString()
             }
           });
-        });
-        
-        // Registrar venda completa no analytics
-        import('@/lib/analytics').then(({ analyticsEngine }) => {
+          
           order.itens.forEach((item: any) => {
             analyticsEngine.addSale({
               date: new Date(),
@@ -183,7 +182,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
               status: 'completed'
             });
           });
-        });
+        })();
       }
     }
   };
