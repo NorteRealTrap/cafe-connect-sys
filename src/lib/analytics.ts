@@ -108,24 +108,96 @@ class AnalyticsEngine {
   }
 
   getRevenueMetrics(startDate?: Date, endDate?: Date): RevenueMetrics {
-    const data = this.getSalesData().filter(sale => sale.status === 'completed');
-    
-    let filteredData = data;
-    if (startDate && endDate) {
-      filteredData = data.filter(sale => 
-        sale.date >= startDate && sale.date <= endDate
-      );
-    }
+    // Integrar com sistema financeiro para dados reais
+    try {
+      const financialSystem = JSON.parse(localStorage.getItem('cafe-connect-payments') || '[]');
+      const payments = financialSystem.map((p: any) => ({ ...p, date: new Date(p.date) }));
+      
+      const today = new Date();
+      const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const thisYear = new Date(today.getFullYear(), 0, 1);
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
 
-    const totalRevenue = filteredData.reduce((sum, sale) => sum + sale.totalValue, 0);
-    const totalOrders = filteredData.length;
+      // Filtrar pagamentos completados
+      const completedPayments = payments.filter((p: any) => p.status === 'completed');
+      
+      const totalRevenue = completedPayments.reduce((sum: number, p: any) => sum + p.netAmount, 0);
+      const totalOrders = completedPayments.length;
+      const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      const dailyRevenue = completedPayments
+        .filter((p: any) => p.date.toDateString() === today.toDateString())
+        .reduce((sum: number, p: any) => sum + p.netAmount, 0);
+
+      const monthlyRevenue = completedPayments
+        .filter((p: any) => p.date >= thisMonth)
+        .reduce((sum: number, p: any) => sum + p.netAmount, 0);
+
+      const yearlyRevenue = completedPayments
+        .filter((p: any) => p.date >= thisYear)
+        .reduce((sum: number, p: any) => sum + p.netAmount, 0);
+
+      const lastMonthRevenue = completedPayments
+        .filter((p: any) => p.date >= lastMonth && p.date <= lastMonthEnd)
+        .reduce((sum: number, p: any) => sum + p.netAmount, 0);
+
+      const growthRate = lastMonthRevenue > 0 ? 
+        ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
+
+      // Breakdown por método de pagamento
+      const paymentMethodBreakdown: { [key: string]: number } = {};
+      completedPayments.forEach((p: any) => {
+        paymentMethodBreakdown[p.method] = (paymentMethodBreakdown[p.method] || 0) + p.netAmount;
+      });
+
+      // Usar dados de vendas para categorias e produtos
+      const salesData = this.getSalesData().filter(sale => sale.status === 'completed');
+      
+      const categoryBreakdown: { [key: string]: number } = {};
+      salesData.forEach(sale => {
+        categoryBreakdown[sale.category] = (categoryBreakdown[sale.category] || 0) + sale.totalValue;
+      });
+
+      const productStats: { [key: string]: { revenue: number; quantity: number } } = {};
+      salesData.forEach(sale => {
+        if (!productStats[sale.product]) {
+          productStats[sale.product] = { revenue: 0, quantity: 0 };
+        }
+        productStats[sale.product].revenue += sale.totalValue;
+        productStats[sale.product].quantity += sale.quantity;
+      });
+
+      const topProducts = Object.entries(productStats)
+        .map(([product, stats]) => ({ product, ...stats }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      return {
+        totalRevenue,
+        dailyRevenue,
+        monthlyRevenue,
+        yearlyRevenue,
+        averageTicket,
+        totalOrders,
+        categoryBreakdown,
+        paymentMethodBreakdown,
+        topProducts,
+        growthRate
+      };
+    } catch {
+      // Fallback para dados simulados se não houver dados reais
+      return this.getDefaultMetrics();
+    }
+  }
+
+  private getDefaultMetrics(): RevenueMetrics {
+    const data = this.getSalesData().filter(sale => sale.status === 'completed');
+    const totalRevenue = data.reduce((sum, sale) => sum + sale.totalValue, 0);
+    const totalOrders = data.length;
     const averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    // Revenue por período
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
     const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const thisYear = new Date(today.getFullYear(), 0, 1);
 
@@ -141,21 +213,18 @@ class AnalyticsEngine {
       sale.date >= thisYear
     ).reduce((sum, sale) => sum + sale.totalValue, 0);
 
-    // Breakdown por categoria
     const categoryBreakdown: { [key: string]: number } = {};
-    filteredData.forEach(sale => {
+    data.forEach(sale => {
       categoryBreakdown[sale.category] = (categoryBreakdown[sale.category] || 0) + sale.totalValue;
     });
 
-    // Breakdown por método de pagamento
     const paymentMethodBreakdown: { [key: string]: number } = {};
-    filteredData.forEach(sale => {
+    data.forEach(sale => {
       paymentMethodBreakdown[sale.paymentMethod] = (paymentMethodBreakdown[sale.paymentMethod] || 0) + sale.totalValue;
     });
 
-    // Top produtos
     const productStats: { [key: string]: { revenue: number; quantity: number } } = {};
-    filteredData.forEach(sale => {
+    data.forEach(sale => {
       if (!productStats[sale.product]) {
         productStats[sale.product] = { revenue: 0, quantity: 0 };
       }
@@ -168,17 +237,6 @@ class AnalyticsEngine {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
-    // Taxa de crescimento (comparando com mês anterior)
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-    
-    const lastMonthRevenue = data.filter(sale => 
-      sale.date >= lastMonth && sale.date <= lastMonthEnd
-    ).reduce((sum, sale) => sum + sale.totalValue, 0);
-
-    const growthRate = lastMonthRevenue > 0 ? 
-      ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 : 0;
-
     return {
       totalRevenue,
       dailyRevenue,
@@ -189,11 +247,43 @@ class AnalyticsEngine {
       categoryBreakdown,
       paymentMethodBreakdown,
       topProducts,
-      growthRate
+      growthRate: 0
     };
   }
 
   getDailyRevenueChart(days: number = 30): { date: string; revenue: number }[] {
+    try {
+      // Usar dados reais do sistema financeiro
+      const financialSystem = JSON.parse(localStorage.getItem('cafe-connect-payments') || '[]');
+      const payments = financialSystem
+        .map((p: any) => ({ ...p, date: new Date(p.date) }))
+        .filter((p: any) => p.status === 'completed');
+      
+      const today = new Date();
+      const chartData: { date: string; revenue: number }[] = [];
+
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        
+        const dayRevenue = payments
+          .filter((p: any) => p.date.toDateString() === date.toDateString())
+          .reduce((sum: number, p: any) => sum + p.netAmount, 0);
+
+        chartData.push({
+          date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+          revenue: dayRevenue
+        });
+      }
+
+      return chartData;
+    } catch {
+      // Fallback para dados simulados
+      return this.getDefaultDailyChart(days);
+    }
+  }
+
+  private getDefaultDailyChart(days: number): { date: string; revenue: number }[] {
     const data = this.getSalesData().filter(sale => sale.status === 'completed');
     const today = new Date();
     const chartData: { date: string; revenue: number }[] = [];

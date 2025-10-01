@@ -1,10 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { analyticsEngine } from "@/lib/analytics";
+import { financialSystem } from "@/lib/financial";
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Target } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export const MetricsCards = () => {
-  const metrics = analyticsEngine.getRevenueMetrics();
+  const [metrics, setMetrics] = useState<any>({});
+  const [summary, setSummary] = useState<any>({});
+
+  useEffect(() => {
+    const analyticsMetrics = analyticsEngine.getRevenueMetrics();
+    const financialSummary = financialSystem.getFinancialSummary();
+    setMetrics(analyticsMetrics);
+    setSummary(financialSummary);
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -15,42 +25,41 @@ export const MetricsCards = () => {
 
   const cards = [
     {
-      title: "Receita Total",
-      value: formatCurrency(metrics.totalRevenue),
+      title: "Receita Bruta",
+      value: formatCurrency(summary.grossRevenue || 0),
       icon: <DollarSign className="h-4 w-4" />,
-      trend: metrics.growthRate,
-      description: "Total acumulado"
+      description: "Total de vendas"
+    },
+    {
+      title: "Receita Líquida",
+      value: formatCurrency(summary.netRevenue || 0),
+      icon: <TrendingUp className="h-4 w-4" />,
+      description: "Após taxas"
     },
     {
       title: "Receita Diária",
-      value: formatCurrency(metrics.dailyRevenue),
-      icon: <TrendingUp className="h-4 w-4" />,
+      value: formatCurrency(metrics.dailyRevenue || 0),
+      icon: <Target className="h-4 w-4" />,
       description: "Hoje"
     },
     {
-      title: "Receita Mensal",
-      value: formatCurrency(metrics.monthlyRevenue),
-      icon: <Target className="h-4 w-4" />,
-      trend: metrics.growthRate,
-      description: "Este mês"
-    },
-    {
       title: "Ticket Médio",
-      value: formatCurrency(metrics.averageTicket),
+      value: formatCurrency(metrics.averageTicket || 0),
       icon: <Users className="h-4 w-4" />,
       description: "Por pedido"
     },
     {
       title: "Total de Pedidos",
-      value: metrics.totalOrders.toString(),
+      value: (metrics.totalOrders || 0).toString(),
       icon: <ShoppingCart className="h-4 w-4" />,
       description: "Pedidos realizados"
     },
     {
-      title: "Receita Anual",
-      value: formatCurrency(metrics.yearlyRevenue),
+      title: "Lucro",
+      value: formatCurrency(summary.profit || 0),
       icon: <TrendingUp className="h-4 w-4" />,
-      description: "Este ano"
+      trend: summary.profit >= 0 ? 5 : -5,
+      description: "Receita - Despesas"
     }
   ];
 
@@ -73,7 +82,7 @@ export const MetricsCards = () => {
                   ) : (
                     <TrendingDown className="h-3 w-3" />
                   )}
-                  {Math.abs(card.trend).toFixed(1)}%
+                  {card.trend >= 0 ? 'Positivo' : 'Negativo'}
                 </Badge>
               )}
             </div>

@@ -7,6 +7,7 @@ import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Download } from "lucid
 import { MetricsCards } from "@/components/analytics/MetricsCards";
 import { RevenueChart } from "@/components/analytics/RevenueChart";
 import { FinancialDashboard } from "@/components/analytics/FinancialDashboard";
+import { PaymentReports } from "@/components/analytics/PaymentReports";
 import { analyticsEngine } from "@/lib/analytics";
 import { financialSystem } from "@/lib/financial";
 
@@ -28,13 +29,44 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
   };
 
   const currentData = useMemo(() => {
+    const summary = financialSystem.getFinancialSummary();
+    const today = new Date();
+    const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const payments = financialSystem.getAllPayments().filter(p => p.status === 'completed');
+    
     switch (period) {
-      case "hoje": return { total: metrics.dailyRevenue, orders: Math.floor(metrics.dailyRevenue / metrics.averageTicket), avgTicket: metrics.averageTicket };
-      case "semana": return { total: metrics.monthlyRevenue * 0.25, orders: Math.floor(metrics.totalOrders * 0.25), avgTicket: metrics.averageTicket };
-      case "mes": return { total: metrics.monthlyRevenue, orders: metrics.totalOrders, avgTicket: metrics.averageTicket };
-      default: return { total: metrics.dailyRevenue, orders: Math.floor(metrics.dailyRevenue / metrics.averageTicket), avgTicket: metrics.averageTicket };
+      case "hoje": {
+        const todayPayments = payments.filter(p => p.date.toDateString() === today.toDateString());
+        const total = todayPayments.reduce((sum, p) => sum + p.netAmount, 0);
+        const orders = todayPayments.length;
+        const avgTicket = orders > 0 ? total / orders : 0;
+        return { total, orders, avgTicket };
+      }
+      case "semana": {
+        const weekPayments = payments.filter(p => p.date >= thisWeek);
+        const total = weekPayments.reduce((sum, p) => sum + p.netAmount, 0);
+        const orders = weekPayments.length;
+        const avgTicket = orders > 0 ? total / orders : 0;
+        return { total, orders, avgTicket };
+      }
+      case "mes": {
+        const monthPayments = payments.filter(p => p.date >= thisMonth);
+        const total = monthPayments.reduce((sum, p) => sum + p.netAmount, 0);
+        const orders = monthPayments.length;
+        const avgTicket = orders > 0 ? total / orders : 0;
+        return { total, orders, avgTicket };
+      }
+      default: {
+        const todayPayments = payments.filter(p => p.date.toDateString() === today.toDateString());
+        const total = todayPayments.reduce((sum, p) => sum + p.netAmount, 0);
+        const orders = todayPayments.length;
+        const avgTicket = orders > 0 ? total / orders : 0;
+        return { total, orders, avgTicket };
+      }
     }
-  }, [period, metrics]);
+  }, [period]);
 
   return (
     <div className="p-6 space-y-6">
@@ -71,23 +103,7 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
         </TabsList>
 
         <TabsContent value="vendas" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <RevenueChart 
-              type="daily" 
-              title="Receita Diária" 
-              description="Últimos 30 dias" 
-            />
-            <RevenueChart 
-              type="hourly" 
-              title="Receita por Horário" 
-              description="Distribuição ao longo do dia" 
-            />
-          </div>
-          <RevenueChart 
-            type="category" 
-            title="Receita por Categoria" 
-            description="Distribuição por tipo de produto" 
-          />
+          <PaymentReports />
         </TabsContent>
 
         <TabsContent value="produtos" className="space-y-4">
@@ -157,20 +173,24 @@ export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span>Receita Bruta</span>
-                  <span className="font-bold text-green-600">{formatCurrency(currentData.total)}</span>
+                  <span className="font-bold text-green-600">{formatCurrency(currentData.total / 0.97)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Impostos</span>
-                  <span className="font-bold text-red-600">{formatCurrency(currentData.total * 0.1)}</span>
+                  <span>Taxas de Pagamento</span>
+                  <span className="font-bold text-red-600">{formatCurrency((currentData.total / 0.97) * 0.03)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Taxa de Serviço</span>
-                  <span className="font-bold text-blue-600">{formatCurrency(currentData.total * 0.1)}</span>
+                  <span>Impostos Estimados</span>
+                  <span className="font-bold text-orange-600">{formatCurrency(currentData.total * 0.08)}</span>
                 </div>
                 <hr />
                 <div className="flex justify-between">
                   <span className="font-bold">Receita Líquida</span>
-                  <span className="font-bold text-primary">{formatCurrency(currentData.total * 0.8)}</span>
+                  <span className="font-bold text-primary">{formatCurrency(currentData.total)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-bold">Lucro Estimado</span>
+                  <span className="font-bold text-green-600">{formatCurrency(currentData.total * 0.92)}</span>
                 </div>
               </CardContent>
             </Card>
