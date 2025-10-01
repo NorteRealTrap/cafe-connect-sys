@@ -227,21 +227,10 @@ class OrdersDatabase {
     };
   }
 
-  // Limpar pedidos antigos (mais de 30 dias)
+  // Limpar pedidos antigos (mais de 30 dias) - DESABILITADO para evitar perda de dados
   cleanOldOrders(daysToKeep: number = 30): number {
-    const orders = this.getOrders();
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
-    
-    const filteredOrders = orders.filter(order => order.createdAt >= cutoffDate);
-    const removedCount = orders.length - filteredOrders.length;
-    
-    if (removedCount > 0) {
-      this.saveOrders(filteredOrders);
-      console.log(`${removedCount} pedidos antigos removidos`);
-    }
-    
-    return removedCount;
+    // Não limpar pedidos automaticamente para evitar perda de dados
+    return 0;
   }
 }
 

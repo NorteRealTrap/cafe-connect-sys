@@ -17,8 +17,8 @@ const Index = () => {
       console.log('Dados reinicializados devido à corrupção');
     }
     
-    // Limpar pedidos antigos (mais de 30 dias) na inicialização
-    ordersDatabase.cleanOldOrders(30);
+    // Limpeza de pedidos desabilitada para evitar perda de dados
+    // ordersDatabase.cleanOldOrders(30);
     
     // Verificar se há sessão salva
     const savedSession = localStorage.getItem('ccpservices-session');
