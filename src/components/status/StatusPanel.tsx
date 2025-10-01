@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle, XCircle, ChefHat, Bell, Truck } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ChefHat, Bell, Truck, CreditCard } from "lucide-react";
+import { CheckoutModal } from "@/components/checkout/CheckoutModal";
 
 interface OrderItem {
   productId: string;
@@ -95,6 +96,8 @@ const getInitialOrders = (): Order[] => {
 
 export const StatusPanel = ({ onBack }: StatusPanelProps) => {
   const [orders, setOrders] = useState<Order[]>(getInitialOrders);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutOrder, setCheckoutOrder] = useState<Order | null>(null);
 
   // Salvar no localStorage sempre que orders mudar
   useEffect(() => {
@@ -158,6 +161,17 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
       case "pronto": return "entregue";
       default: return null;
     }
+  };
+
+  const handleCheckout = (order: Order) => {
+    setCheckoutOrder(order);
+    setShowCheckout(true);
+  };
+
+  const handlePaymentComplete = (orderId: string, paymentData: any) => {
+    updateOrderStatus(orderId, "entregue");
+    setShowCheckout(false);
+    setCheckoutOrder(null);
   };
 
   const pendingOrders = orders.filter(o => o.status === "pendente");
@@ -264,7 +278,19 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
               )}
 
               <div className="flex gap-2 pt-2">
-                {getNextStatus(order.status) && (
+                {order.status === "pronto" && (
+                  <Button 
+                    size="sm" 
+                    variant="pdv"
+                    onClick={() => handleCheckout(order)}
+                    className="flex items-center gap-1"
+                  >
+                    <CreditCard className="h-3 w-3" />
+                    Checkout
+                  </Button>
+                )}
+                
+                {getNextStatus(order.status) && order.status !== "pronto" && (
                   <Button 
                     size="sm" 
                     variant="pdv"
@@ -290,6 +316,16 @@ export const StatusPanel = ({ onBack }: StatusPanelProps) => {
           </Card>
         ))}
       </div>
+
+      <CheckoutModal
+        open={showCheckout}
+        onClose={() => {
+          setShowCheckout(false);
+          setCheckoutOrder(null);
+        }}
+        order={checkoutOrder}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </div>
   );
 };
