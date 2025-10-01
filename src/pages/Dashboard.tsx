@@ -10,6 +10,8 @@ import { TablesPanel } from "@/components/tables/TablesPanel";
 import { PaymentsPanel } from "@/components/payments/PaymentsPanel";
 import { ReportsPanel } from "@/components/reports/ReportsPanel";
 import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
+import { InventoryPanel } from "@/components/inventory/InventoryPanel";
+import { StatusPanel } from "@/components/status/StatusPanel";
 import { UserRole } from "@/components/auth/LoginForm";
 
 interface DashboardProps {
@@ -48,6 +50,10 @@ export const Dashboard = ({ userRole, onLogout }: DashboardProps) => {
         return <ReportsPanel onBack={handleBackToDashboard} />;
       case "categorias":
         return <CategoriesPanel onBack={handleBackToDashboard} />;
+      case "estoque":
+        return <InventoryPanel onBack={handleBackToDashboard} />;
+      case "status":
+        return <StatusPanel onBack={handleBackToDashboard} />;
       case "dashboard":
       default:
         return <DashboardGrid userRole={userRole} onModuleClick={handleModuleClick} />;

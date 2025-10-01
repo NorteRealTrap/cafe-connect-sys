@@ -15,8 +15,8 @@ interface ConfigPanelProps {
 }
 
 export const ConfigPanel = ({ onBack }: ConfigPanelProps) => {
-  const [config, setConfig] = useState(() => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [config, setConfig] = useState(() => {
     // Carrega configurações salvas do localStorage
     const saved = localStorage.getItem('pdv-config');
     if (saved) {

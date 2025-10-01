@@ -29,7 +29,7 @@ export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) =>
     <header className="bg-card border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-semibold text-foreground">Sistema PDV</h1>
+          <h1 className="text-xl font-semibold text-foreground">CCPServices</h1>
           <Badge variant={getRoleBadgeVariant(userRole)}>
             {getRoleLabel(userRole)}
           </Badge>

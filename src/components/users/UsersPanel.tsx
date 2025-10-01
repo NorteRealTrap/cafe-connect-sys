@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Shield, ShoppingCart, UserCheck } from "lucide-react";
@@ -20,6 +21,14 @@ interface UsersPanelProps {
 }
 
 export const UsersPanel = ({ onBack }: UsersPanelProps) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "atendente" as User["role"],
+    password: ""
+  });
+  
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('pdv-users');
     if (saved) {
@@ -98,6 +107,34 @@ export const UsersPanel = ({ onBack }: UsersPanelProps) => {
     }
   };
 
+  const addUser = () => {
+    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.password.trim()) {
+      alert('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    if (users.some(user => user.email === newUser.email)) {
+      alert('Email já cadastrado');
+      return;
+    }
+
+    const user: User = {
+      id: Date.now().toString(),
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      status: "ativo",
+      lastLogin: "Nunca"
+    };
+
+    const updatedUsers = [...users, user];
+    setUsers(updatedUsers);
+    localStorage.setItem('pdv-users', JSON.stringify(updatedUsers));
+    
+    setNewUser({ name: "", email: "", role: "atendente", password: "" });
+    setShowAddForm(false);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -106,7 +143,7 @@ export const UsersPanel = ({ onBack }: UsersPanelProps) => {
           <p className="text-muted-foreground">Gerencie usuários e permissões do sistema</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="pdv">
+          <Button variant="pdv" onClick={() => setShowAddForm(!showAddForm)}>
             <Plus className="h-4 w-4" />
             Novo Usuário
           </Button>
@@ -115,6 +152,85 @@ export const UsersPanel = ({ onBack }: UsersPanelProps) => {
           </Button>
         </div>
       </div>
+
+      {showAddForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Adicionar Novo Usuário</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="userName">Nome Completo</Label>
+                <Input
+                  id="userName"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Ex: João Silva"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="userEmail">Email</Label>
+                <Input
+                  id="userEmail"
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="joao@cafeconnect.com"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="userRole">Função</Label>
+                <Select value={newUser.role} onValueChange={(value) => setNewUser(prev => ({ ...prev, role: value as User["role"] }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Administrador
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="caixa">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4" />
+                        Caixa
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="atendente">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4" />
+                        Atendente
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="userPassword">Senha Temporária</Label>
+                <Input
+                  id="userPassword"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={addUser} variant="success">
+                Adicionar Usuário
+              </Button>
+              <Button onClick={() => setShowAddForm(false)} variant="outline">
+                Cancelar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4">
         {users.map((user) => (

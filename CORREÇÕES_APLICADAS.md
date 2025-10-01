@@ -24,7 +24,7 @@
 
 ## 🚀 Status do Deploy
 
-**URL de Produção:** https://shimmering-chebakia-2351c2.netlify.app
+**URL de Produção:** https://cafe-connect-sys.vercel.app
 
 **Lighthouse Scores:**
 - Performance: 97/100
@@ -76,7 +76,7 @@
 - **UI:** shadcn/ui + Tailwind CSS
 - **Roteamento:** React Router DOM
 - **Estado:** React Hooks
-- **Deploy:** Netlify
+- **Deploy:** Vercel
 - **Build:** Vite
 
 Todas as funcionalidades principais do sistema estão operacionais e o site está disponível em produção.

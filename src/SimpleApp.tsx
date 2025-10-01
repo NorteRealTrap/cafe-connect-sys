@@ -25,7 +25,7 @@ const SimpleApp = () => {
           maxWidth: '400px'
         }}>
           <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#1f2937' }}>
-            Sistema PDV
+            CCPServices
           </h1>
           <form onSubmit={(e) => {
             e.preventDefault();
@@ -177,7 +177,7 @@ const SimpleApp = () => {
   return (
     <div style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Dashboard - Sistema PDV</h1>
+        <h1>Dashboard - CCPServices</h1>
         <button 
           onClick={() => setUser(null)}
           style={{

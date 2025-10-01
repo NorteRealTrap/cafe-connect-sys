@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Shield, UserCheck } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
 export type UserRole = "admin" | "caixa" | "atendente";
 
@@ -15,28 +14,50 @@ interface LoginFormProps {
 export const LoginForm = ({ onLogin }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("caixa");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(role);
-  };
-
-  const getRoleIcon = (role: UserRole) => {
-    switch (role) {
-      case "admin": return <Shield className="h-5 w-5" />;
-      case "caixa": return <ShoppingCart className="h-5 w-5" />;
-      case "atendente": return <UserCheck className="h-5 w-5" />;
+    
+    if (!email.trim() || !password.trim()) {
+      alert('Preencha email e senha');
+      return;
+    }
+    
+    try {
+      // Tentar autenticação via API
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        onLogin(result.user.role as UserRole);
+        return;
+      }
+    } catch (error) {
+      console.warn('API falhou, usando fallback localStorage:', error);
+    }
+    
+    // Fallback para localStorage
+    const emailLower = email.toLowerCase().trim();
+    
+    if (emailLower === 'admin@cafeconnect.com' && password === 'admin123') {
+      onLogin('admin');
+    } else if (emailLower === 'gabriel.pereira@ccpservices.com.br' && password === 'ccpservices123') {
+      onLogin('admin');
+    } else if (emailLower === 'ferramentacega@ccpservices.com.br' && password === 'ccpservices123') {
+      onLogin('admin');
+    } else {
+      alert('Email ou senha inválidos.\nCredenciais disponíveis:\n- admin@cafeconnect.com / admin123\n- gabriel.pereira@ccpservices.com.br / ccpservices123\n- ferramentacega@ccpservices.com.br / ccpservices123');
     }
   };
 
-  const getRoleDescription = (role: UserRole) => {
-    switch (role) {
-      case "admin": return "Acesso completo ao sistema";
-      case "caixa": return "Gestão de vendas e pagamentos";
-      case "atendente": return "Atendimento e pedidos";
-    }
-  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero p-4">
@@ -46,46 +67,14 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
             <ShoppingCart className="h-10 w-10 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Sistema PDV</CardTitle>
+            <CardTitle className="text-2xl font-bold">CCPServices</CardTitle>
             <CardDescription>
-              Faça login para acessar o sistema
+              Entre com suas credenciais cadastradas
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="role">Tipo de Usuário</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Administrador
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="caixa">
-                    <div className="flex items-center gap-2">
-                      <ShoppingCart className="h-4 w-4" />
-                      Caixa
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="atendente">
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4" />
-                      Atendente
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {getRoleIcon(role)}
-                {getRoleDescription(role)}
-              </p>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -118,6 +107,18 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               Entrar no Sistema
             </Button>
           </form>
+          
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-xs text-muted-foreground text-center mb-2">
+              <strong>Login Padrão (primeira vez):</strong>
+            </p>
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p><strong>Credenciais disponíveis:</strong></p>
+              <p>admin@cafeconnect.com / admin123</p>
+              <p>gabriel.pereira@ccpservices.com.br / ccpservices123</p>
+              <p>ferramentacega@ccpservices.com.br / ccpservices123</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

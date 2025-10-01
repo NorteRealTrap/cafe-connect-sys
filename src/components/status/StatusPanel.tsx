@@ -1,182 +1,219 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Clock, CheckCircle, AlertCircle } from "lucide-react";
-import { OrderStatusBadge } from "@/components/orders/OrderStatus";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Clock, CheckCircle, XCircle, ChefHat, Bell, Truck } from "lucide-react";
+
+interface Order {
+  id: string;
+  customerName: string;
+  items: string[];
+  total: number;
+  status: "pendente" | "preparando" | "pronto" | "entregue" | "cancelado";
+  type: "local" | "delivery" | "retirada";
+  orderTime: string;
+  table?: number;
+  phone?: string;
+}
 
 interface StatusPanelProps {
   onBack: () => void;
 }
 
-interface OrderTracking {
-  id: string;
-  customerName: string;
-  items: string[];
-  status: "aceito" | "preparando" | "pronto" | "entregue" | "retirado";
-  type: "local" | "delivery" | "retirada";
-  estimatedTime: string;
-  currentTime: string;
-}
-
-const mockTracking: OrderTracking[] = [
-  {
-    id: "PDV-001",
-    customerName: "João Silva",
-    items: ["Hambúrguer Especial", "Batata Frita"],
-    status: "preparando",
-    type: "local",
-    estimatedTime: "15 min",
-    currentTime: "8 min"
-  },
-  {
-    id: "PDV-002", 
-    customerName: "Maria Santos",
-    items: ["Pizza Margherita", "Refrigerante"],
-    status: "pronto",
-    type: "retirada",
-    estimatedTime: "20 min",
-    currentTime: "18 min"
-  },
-  {
-    id: "PDV-003",
-    customerName: "Carlos Lima",
-    items: ["Lasanha", "Salada Caesar"],
-    status: "aceito",
-    type: "delivery",
-    estimatedTime: "35 min",
-    currentTime: "2 min"
-  }
-];
-
 export const StatusPanel = ({ onBack }: StatusPanelProps) => {
-  const [orders, setOrders] = useState<OrderTracking[]>(mockTracking);
+  const [orders, setOrders] = useState<Order[]>([
+    {
+      id: "PED-001",
+      customerName: "João Silva",
+      items: ["Hambúrguer", "Batata Frita"],
+      total: 35.90,
+      status: "preparando",
+      type: "local",
+      orderTime: "14:30",
+      table: 5
+    },
+    {
+      id: "PED-002", 
+      customerName: "Maria Santos",
+      items: ["Pizza Margherita"],
+      total: 42.50,
+      status: "pendente",
+      type: "delivery",
+      orderTime: "14:45",
+      phone: "(11) 99999-9999"
+    },
+    {
+      id: "PED-003",
+      customerName: "Carlos Lima", 
+      items: ["Café", "Pão de Açúcar"],
+      total: 12.80,
+      status: "pronto",
+      type: "retirada",
+      orderTime: "14:20",
+      phone: "(11) 88888-8888"
+    }
+  ]);
 
-  // Simular atualização em tempo real
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOrders(prevOrders => 
-        prevOrders.map(order => {
-          const currentMinutes = parseInt(order.currentTime);
-          const estimatedMinutes = parseInt(order.estimatedTime);
-          
-          if (currentMinutes < estimatedMinutes) {
-            return {
-              ...order,
-              currentTime: `${currentMinutes + 1} min`
-            };
-          }
-          return order;
-        })
-      );
-    }, 10000); // Atualiza a cada 10 segundos para demonstração
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pendente": return "bg-yellow-100 text-yellow-800";
+      case "preparando": return "bg-blue-100 text-blue-800";
+      case "pronto": return "bg-green-100 text-green-800";
+      case "entregue": return "bg-gray-100 text-gray-800";
+      case "cancelado": return "bg-red-100 text-red-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "pendente": return <Clock className="h-4 w-4" />;
+      case "preparando": return <ChefHat className="h-4 w-4" />;
+      case "pronto": return <Bell className="h-4 w-4" />;
+      case "entregue": return <CheckCircle className="h-4 w-4" />;
+      case "cancelado": return <XCircle className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderTracking["status"]) => {
-    setOrders(orders.map(order => 
+  const updateOrderStatus = (orderId: string, newStatus: Order["status"]) => {
+    setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
   };
 
-  const getProgressPercentage = (current: string, estimated: string) => {
-    const currentMin = parseInt(current);
-    const estimatedMin = parseInt(estimated);
-    return Math.min((currentMin / estimatedMin) * 100, 100);
+  const getNextStatus = (currentStatus: Order["status"]): Order["status"] | null => {
+    switch (currentStatus) {
+      case "pendente": return "preparando";
+      case "preparando": return "pronto";
+      case "pronto": return "entregue";
+      default: return null;
+    }
   };
 
-  const getTypeLabel = (type: OrderTracking["type"]) => {
-    const labels = {
-      local: "Mesa",
-      delivery: "Delivery", 
-      retirada: "Retirada"
-    };
-    return labels[type];
-  };
+  const pendingOrders = orders.filter(o => o.status === "pendente");
+  const preparingOrders = orders.filter(o => o.status === "preparando");
+  const readyOrders = orders.filter(o => o.status === "pronto");
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Status dos Pedidos</h2>
+          <p className="text-muted-foreground">Acompanhe pedidos em tempo real</p>
+        </div>
+        <Button variant="outline" onClick={onBack}>
           Voltar
         </Button>
-        <h1 className="text-2xl font-bold">Status dos Pedidos - Tempo Real</h1>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Clock className="h-4 w-4 text-yellow-600" />
+              Pendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{pendingOrders.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <ChefHat className="h-4 w-4 text-blue-600" />
+              Preparando
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{preparingOrders.length}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Bell className="h-4 w-4 text-green-600" />
+              Prontos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{readyOrders.length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {orders.map((order) => (
-          <Card key={order.id} className="hover:shadow-pdv transition-shadow">
+          <Card key={order.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <CardTitle className="text-lg">{order.id}</CardTitle>
-                  <span className="text-muted-foreground">{getTypeLabel(order.type)}</span>
+                  {order.type === "delivery" && <Truck className="h-4 w-4 text-muted-foreground" />}
                 </div>
-                <OrderStatusBadge status={order.status} type={order.type} />
+                <Badge className={`flex items-center gap-1 ${getStatusColor(order.status)}`}>
+                  {getStatusIcon(order.status)}
+                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">Cliente: {order.customerName}</p>
+              <p className="text-sm text-muted-foreground">{order.customerName}</p>
             </CardHeader>
-            
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
               <div className="text-sm">
-                <span className="font-medium">Items:</span> {order.items.join(", ")}
+                <p className="font-medium">Itens:</p>
+                <ul className="text-muted-foreground">
+                  {order.items.map((item, index) => (
+                    <li key={index}>• {item}</li>
+                  ))}
+                </ul>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>Tempo: {order.currentTime} / {order.estimatedTime}</span>
-                  </div>
-                  <span className="text-muted-foreground">
-                    {getProgressPercentage(order.currentTime, order.estimatedTime).toFixed(0)}%
-                  </span>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Horário</p>
+                  <p className="font-medium">{order.orderTime}</p>
                 </div>
+                <div>
+                  <p className="text-muted-foreground">Total</p>
+                  <p className="font-bold text-primary">R$ {order.total.toFixed(2)}</p>
+                </div>
+              </div>
+
+              {order.table && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Mesa: <span className="font-medium">{order.table}</span></p>
+                </div>
+              )}
+
+              {order.phone && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground">Telefone: <span className="font-medium">{order.phone}</span></p>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                {getNextStatus(order.status) && (
+                  <Button 
+                    size="sm" 
+                    variant="pdv"
+                    onClick={() => updateOrderStatus(order.id, getNextStatus(order.status)!)}
+                  >
+                    {getNextStatus(order.status) === "preparando" && "Iniciar"}
+                    {getNextStatus(order.status) === "pronto" && "Pronto"}
+                    {getNextStatus(order.status) === "entregue" && "Entregar"}
+                  </Button>
+                )}
                 
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div 
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${getProgressPercentage(order.currentTime, order.estimatedTime)}%` }}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                {order.status === "aceito" && (
+                {order.status !== "cancelado" && order.status !== "entregue" && (
                   <Button 
                     size="sm" 
-                    onClick={() => updateOrderStatus(order.id, "preparando")}
+                    variant="destructive"
+                    onClick={() => updateOrderStatus(order.id, "cancelado")}
                   >
-                    Iniciar Preparo
-                  </Button>
-                )}
-                {order.status === "preparando" && (
-                  <Button 
-                    size="sm" 
-                    variant="success"
-                    onClick={() => updateOrderStatus(order.id, "pronto")}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Marcar como Pronto
-                  </Button>
-                )}
-                {order.status === "pronto" && order.type === "retirada" && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => updateOrderStatus(order.id, "retirado")}
-                  >
-                    Confirmar Retirada
-                  </Button>
-                )}
-                {order.status === "pronto" && order.type === "delivery" && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => updateOrderStatus(order.id, "entregue")}
-                  >
-                    Confirmar Entrega
+                    Cancelar
                   </Button>
                 )}
               </div>
