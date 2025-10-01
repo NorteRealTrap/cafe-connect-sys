@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
-import { Clock, MapPin, Home, Package, Plus, AlertTriangle } from "lucide-react";
+import { Clock, MapPin, Home, Package, Plus, AlertTriangle, CreditCard } from "lucide-react";
 import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
+import { CheckoutModal } from "@/components/checkout/CheckoutModal";
 import { ordersDatabase, Order } from "@/lib/orders-database";
 import { toast } from "sonner";
 
@@ -21,6 +22,8 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [selectedTab, setSelectedTab] = useState("todos");
   const [showNewOrderForm, setShowNewOrderForm] = useState(false);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutOrder, setCheckoutOrder] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
@@ -120,6 +123,46 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       case "delivery": return "Delivery";
       case "retirada": return "Retirada";
     }
+  };
+
+  const handleCheckout = (order: Order) => {
+    // Converter Order para formato compatível com CheckoutModal
+    const checkoutOrderData = {
+      id: order.numero.toString(),
+      customerName: order.cliente,
+      customerPhone: order.telefone,
+      customerAddress: order.endereco,
+      items: order.itens.map(item => ({
+        productId: item.id,
+        productName: item.nome,
+        quantity: item.quantidade,
+        price: item.preco,
+        total: item.quantidade * item.preco
+      })),
+      total: order.total,
+      status: order.status as any,
+      type: order.tipo as any,
+      table: order.mesa ? parseInt(order.mesa.replace('Mesa ', '')) : undefined,
+      orderTime: new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      estimatedTime: 0,
+      createdAt: order.createdAt.toISOString()
+    };
+    
+    setCheckoutOrder(checkoutOrderData);
+    setShowCheckout(true);
+  };
+
+  const handlePaymentComplete = (orderId: string, paymentData: any) => {
+    // Atualizar status do pedido para entregue/retirado
+    const order = orders.find(o => o.numero.toString() === orderId);
+    if (order) {
+      const finalStatus = order.tipo === 'delivery' ? 'entregue' : order.tipo === 'retirada' ? 'retirado' : 'entregue';
+      updateOrderStatus(order.id, finalStatus as OrderStatus);
+    }
+    
+    setShowCheckout(false);
+    setCheckoutOrder(null);
+    toast.success(`Pagamento processado via ${paymentData.method}!`);
   };
 
   const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
@@ -278,22 +321,15 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                           Marcar Pronto
                         </Button>
                       )}
-                      {order.status === "pronto" && order.tipo === "delivery" && (
+                      {order.status === "pronto" && (
                         <Button 
                           size="sm" 
-                          variant="info"
-                          onClick={() => updateOrderStatus(order.id, "entregue")}
+                          variant="pdv"
+                          onClick={() => handleCheckout(order)}
+                          className="flex items-center gap-1"
                         >
-                          Marcar Entregue
-                        </Button>
-                      )}
-                      {order.status === "pronto" && order.tipo === "retirada" && (
-                        <Button 
-                          size="sm" 
-                          variant="info"
-                          onClick={() => updateOrderStatus(order.id, "retirado")}
-                        >
-                          Marcar Retirado
+                          <CreditCard className="h-3 w-3" />
+                          Checkout
                         </Button>
                       )}
                     </div>
@@ -317,6 +353,16 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           <OrdersHistory onBack={() => setShowHistoryPanel(false)} />
         </div>
       )}
+      
+      <CheckoutModal
+        open={showCheckout}
+        onClose={() => {
+          setShowCheckout(false);
+          setCheckoutOrder(null);
+        }}
+        order={checkoutOrder}
+        onPaymentComplete={handlePaymentComplete}
+      />
     </div>
   );
 };
