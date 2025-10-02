@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { LoginForm, UserRole } from "@/components/auth/LoginForm";
+import { FuturisticLogin } from "@/components/auth/FuturisticLogin";
 import { BusinessSelector } from "@/components/business/BusinessSelector";
 import { Dashboard } from "./Dashboard";
 import { storageManager } from "@/lib/storage-manager";
 import { ordersDatabase } from "@/lib/orders-database";
+
+type UserRole = 'admin' | 'caixa' | 'atendente';
 
 const Index = () => {
   const [user, setUser] = useState<{ role: UserRole } | null>(null);
@@ -18,9 +20,6 @@ const Index = () => {
     if (!storageManager.validateStorage()) {
       console.log('Dados reinicializados devido à corrupção');
     }
-    
-    // Limpeza de pedidos desabilitada para evitar perda de dados
-    // ordersDatabase.cleanOldOrders(30);
     
     // Verificar se há sessão salva
     const savedSession = localStorage.getItem('ccpservices-session');
@@ -49,8 +48,8 @@ const Index = () => {
     setLoading(false);
   }, []);
 
-  const handleLogin = (role: UserRole) => {
-    setUser({ role });
+  const handleLogin = (credentials: { email: string; password: string; role: string }) => {
+    setUser({ role: credentials.role as UserRole });
   };
 
   const handleBusinessSelect = (category: any) => {
@@ -85,7 +84,7 @@ const Index = () => {
   }
 
   if (!user) {
-    return <LoginForm onLogin={handleLogin} />;
+    return <FuturisticLogin onLogin={handleLogin} />;
   }
 
   if (!businessCategory) {

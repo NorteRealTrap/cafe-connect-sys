@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+.futuristic-login {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', monospace;
+  overflow: hidden;
+}
+
+.dark .futuristic-login {
+  background: linear-gradient(135deg, #000000 0%, #0f0f23 50%, #1a1a2e 100%);
+}
+
+.particles-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.login-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.login-box {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #00ffff;
+  border-radius: 20px;
+  padding: 40px 30px;
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 0 30px rgba(0, 255, 255, 0.3),
+    inset 0 0 30px rgba(0, 255, 255, 0.1);
+  animation: glow-pulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1); }
+  100% { box-shadow: 0 0 50px rgba(0, 255, 255, 0.5), inset 0 0 50px rgba(0, 255, 255, 0.2); }
+}
+
+.logo-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo-icon {
+  width: 60px;
+  height: 60px;
+  color: #00ffff;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 0 10px #00ffff);
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo-text {
+  font-size: 28px;
+  font-weight: 900;
+  color: #00ffff;
+  margin: 0;
+  text-shadow: 0 0 20px #00ffff;
+  letter-spacing: 3px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+  letter-spacing: 1px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.input-group {
+  position: relative;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  width: 20px;
+  height: 20px;
+  color: #00ffff;
+  z-index: 3;
+  filter: drop-shadow(0 0 5px #00ffff);
+}
+
+.futuristic-input {
+  width: 100%;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 0 50px;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.futuristic-input:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.futuristic-input:focus + .floating-label,
+.futuristic-input:not(:placeholder-shown) + .floating-label {
+  transform: translateY(-35px) scale(0.8);
+  color: #00ffff;
+}
+
+.floating-label {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 14px;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0 5px;
+  font-family: 'Orbitron', monospace;
+}
+
+.futuristic-select {
+  width: 100%;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #333;
+  border-radius: 10px;
+  padding: 0 20px;
+  color: #fff;
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.futuristic-select:focus {
+  outline: none;
+  border-color: #00ffff;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.futuristic-select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.select-label {
+  position: absolute;
+  left: 20px;
+  top: -10px;
+  color: #00ffff;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0 5px;
+  font-family: 'Orbitron', monospace;
+}
+
+.futuristic-button {
+  height: 55px;
+  background: linear-gradient(45deg, #00ffff, #0080ff);
+  border: none;
+  border-radius: 10px;
+  color: #000;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.futuristic-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 255, 255, 0.5);
+}
+
+.futuristic-button:active {
+  transform: translateY(0);
+}
+
+.futuristic-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.footer-text {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 10px;
+  color: #555;
+  letter-spacing: 1px;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 10px;
+  }
+  
+  .login-box {
+    padding: 30px 20px;
+  }
+  
+  .logo-text {
+    font-size: 24px;
+  }
+  
+  .futuristic-input,
+  .futuristic-select,
+  .futuristic-button {
+    height: 45px;
+  }
+}
+
+/* Efeitos adicionais */
+.login-box::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #00ffff, transparent, #00ffff);
+  border-radius: 20px;
+  z-index: -1;
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+@keyframes border-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
