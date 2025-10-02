@@ -1,37 +1,65 @@
-import { authenticateUser, initializeDatabase, User } from './database';
+import { db, User } from './database';
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+  role: string;
+}
+
+export interface AuthResult {
+  success: boolean;
+  user?: User;
+  message?: string;
+}
 
 export class AuthService {
-  private static initialized = false;
+  static authenticate(credentials: LoginCredentials): AuthResult {
+    const users = db.getUsers();
+    
+    // Buscar usuário por email
+    const user = users.find(u => 
+      u.email.toLowerCase() === credentials.email.toLowerCase() && 
+      u.status === 'ativo'
+    );
 
-  static async initialize() {
-    if (!this.initialized) {
-      await initializeDatabase();
-      this.initialized = true;
+    if (!user) {
+      return {
+        success: false,
+        message: 'Usuário não encontrado ou inativo'
+      };
     }
+
+    // Verificar senha
+    if (user.password !== credentials.password) {
+      return {
+        success: false,
+        message: 'Senha incorreta'
+      };
+    }
+
+    // Verificar se o role corresponde
+    if (user.role !== credentials.role) {
+      return {
+        success: false,
+        message: 'Tipo de usuário incorreto'
+      };
+    }
+
+    // Atualizar último login
+    const updatedUsers = users.map(u => 
+      u.id === user.id 
+        ? { ...u, lastLogin: new Date().toISOString() }
+        : u
+    );
+    db.saveUsers(updatedUsers);
+
+    return {
+      success: true,
+      user: { ...user, lastLogin: new Date().toISOString() }
+    };
   }
 
-  static async login(email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> {
-    try {
-      await this.initialize();
-      
-      if (!email.trim() || !password.trim()) {
-        return { success: false, error: 'Email e senha são obrigatórios' };
-      }
-
-      if (password.length < 3) {
-        return { success: false, error: 'Senha deve ter pelo menos 3 caracteres' };
-      }
-
-      const user = await authenticateUser(email, password);
-      
-      if (!user) {
-        return { success: false, error: 'Email ou senha inválidos' };
-      }
-
-      return { success: true, user };
-    } catch (error) {
-      console.error('Erro no login:', error);
-      return { success: false, error: 'Erro interno do servidor' };
-    }
+  static getRegisteredUsers(): User[] {
+    return db.getUsers().filter(u => u.status === 'ativo');
   }
 }

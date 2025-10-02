@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Lock, Coffee } from 'lucide-react';
+import { AuthService } from '@/lib/auth';
+import { toast } from 'sonner';
 import './FuturisticLogin.css';
 
 interface FuturisticLoginProps {
@@ -14,6 +16,7 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('admin');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Criar partículas de fundo
@@ -89,12 +92,27 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    // Simular delay de autenticação
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    onLogin({ email, password, role });
-    setIsLoading(false);
+    try {
+      // Simular delay de autenticação
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const authResult = AuthService.authenticate({ email, password, role });
+      
+      if (authResult.success) {
+        toast.success(`Bem-vindo, ${authResult.user?.name}!`);
+        onLogin({ email, password, role });
+      } else {
+        setError(authResult.message || 'Erro na autenticação');
+        toast.error(authResult.message || 'Credenciais inválidas');
+      }
+    } catch (error) {
+      setError('Erro interno do sistema');
+      toast.error('Erro interno do sistema');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -155,6 +173,12 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
               </div>
             </div>
 
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
             <Button 
               type="submit" 
               className="futuristic-button"
@@ -170,6 +194,12 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
 
           <div className="footer-text">
             Tecnologia Avançada • Segurança Máxima
+          </div>
+
+          <div className="demo-users">
+            <div className="demo-title">Usuários de Demonstração:</div>
+            <div className="demo-user">admin@cafeconnect.com | admin123</div>
+            <div className="demo-user">gabriel.pereira@ccpservices.com.br | ccpservices123</div>
           </div>
         </div>
       </div>
