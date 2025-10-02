@@ -32,6 +32,12 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
       // Buscar usuários do banco de dados
       const users = db.getUsers();
       
+      // Validar se campos estão preenchidos
+      if (!email.trim() || !password.trim()) {
+        setError("Email e senha são obrigatórios.");
+        return;
+      }
+      
       // Validar credenciais
       const user = users.find(u => 
         u.email.toLowerCase() === email.toLowerCase().trim() && 
@@ -49,7 +55,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
         
         onLogin(role);
       } else {
-        setError("Email, senha ou nível de acesso inválidos. Verifique suas credenciais.");
+        setError("Credenciais inválidas. Verifique email, senha e nível de acesso.");
       }
     } catch (err) {
       setError("Erro interno do sistema. Tente novamente.");
