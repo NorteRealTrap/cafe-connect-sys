@@ -256,28 +256,7 @@
   75% { transform: translateX(5px); }
 }
 
-.demo-users {
-  margin-top: 20px;
-  padding: 15px;
-  background: rgba(0, 255, 255, 0.05);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  border-radius: 10px;
-  text-align: center;
-}
 
-.demo-title {
-  font-size: 11px;
-  color: #00ffff;
-  margin-bottom: 8px;
-  font-weight: 700;
-}
-
-.demo-user {
-  font-size: 9px;
-  color: #888;
-  margin: 3px 0;
-  font-family: 'Courier New', monospace;
-}
 
 /* Responsividade */
 @media (max-width: 480px) {

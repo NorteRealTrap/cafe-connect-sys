@@ -195,12 +195,6 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
           <div className="footer-text">
             Tecnologia Avançada • Segurança Máxima
           </div>
-
-          <div className="demo-users">
-            <div className="demo-title">Usuários de Demonstração:</div>
-            <div className="demo-user">admin@cafeconnect.com | admin123</div>
-            <div className="demo-user">gabriel.pereira@ccpservices.com.br | ccpservices123</div>
-          </div>
         </div>
       </div>
     </div>
