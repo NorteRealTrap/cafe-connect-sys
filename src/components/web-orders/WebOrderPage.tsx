@@ -63,24 +63,24 @@ export const WebOrderPage: React.FC = () => {
           ];
           
           // Atualizar status com dados da API
-          console.log('API Status recebidos:', apiStatuses);
-          console.log('Pedidos do cliente:', allOrders);
+          console.log(`🔍 Verificando status para cliente: ${customerData.phone}`);
+          console.log('API Status disponíveis:', apiStatuses.length);
           
           let hasUpdates = false;
           const updatedOrders = allOrders.map((order: any) => {
-            // Buscar status por múltiplos critérios mais amplos
+            // Buscar por chave do cliente ou critérios tradicionais
+            const customerKey = `customer_${customerData.phone}_${order.numero || order.id.split('-')[1]}`;
+            
             const statusUpdate = apiStatuses.find((s: any) => {
-              const matchById = s.orderId === order.id;
-              const matchByPhone = s.customerPhone === customerData.phone;
-              const matchByNumber = order.numero && s.orderNumber === order.numero;
-              const matchByWebId = s.orderId === `WEB-${order.numero}`;
-              
-              return matchById || matchByPhone || matchByNumber || matchByWebId;
+              return s.customerKey === customerKey || 
+                     s.customerPhone === customerData.phone ||
+                     s.orderNumber === order.numero ||
+                     s.orderId === order.id;
             });
             
             if (statusUpdate && statusUpdate.status !== order.status) {
               hasUpdates = true;
-              console.log(`✅ Atualizando pedido ${order.id} (#${order.numero}) de '${order.status}' para '${statusUpdate.status}'`);
+              console.log(`🔄 ATUALIZANDO: Pedido #${order.numero || order.id} de '${order.status}' → '${statusUpdate.status}'`);
               return { ...order, status: statusUpdate.status };
             }
             return order;

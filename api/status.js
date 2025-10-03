@@ -13,21 +13,29 @@ export default function handler(req, res) {
   try {
     if (req.method === 'POST') {
       // Atualizar status do pedido
-      const { orderId, status, timestamp, orderNumber, customerPhone } = req.body;
+      const { orderId, status, timestamp, orderNumber, customerPhone, customerKey, customerName } = req.body;
       
       const statusData = { 
         orderId, 
         status, 
         timestamp, 
         orderNumber, 
-        customerPhone 
+        customerPhone,
+        customerKey,
+        customerName
       };
       
-      const existingIndex = orderStatuses.findIndex(s => s.orderId === orderId);
+      // Atualizar ou adicionar status
+      const existingIndex = orderStatuses.findIndex(s => 
+        s.orderId === orderId || s.customerKey === customerKey
+      );
+      
       if (existingIndex >= 0) {
         orderStatuses[existingIndex] = statusData;
+        console.log(`API: Status atualizado para #${orderNumber}`);
       } else {
         orderStatuses.push(statusData);
+        console.log(`API: Novo status adicionado para #${orderNumber}`);
       }
       
       // Manter apenas os últimos 100 status para performance

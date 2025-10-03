@@ -206,35 +206,32 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       
       // Sincronizar status via API para todos os dispositivos
       try {
-        // Enviar múltiplas entradas para garantir que seja encontrado
-        const statusEntries = [
-          {
-            orderId: updatedOrder.id,
-            status: newStatus,
-            timestamp: new Date().toISOString(),
-            orderNumber: updatedOrder.numero,
-            customerPhone: updatedOrder.telefone
-          },
-          {
-            orderId: `WEB-${updatedOrder.numero}`,
-            status: newStatus,
-            timestamp: new Date().toISOString(),
-            orderNumber: updatedOrder.numero,
-            customerPhone: updatedOrder.telefone
-          }
-        ];
+        // Criar chave única baseada no telefone do cliente
+        const customerKey = `customer_${updatedOrder.telefone}_${updatedOrder.numero}`;
         
-        console.log('Enviando status para API:', statusEntries);
+        const statusData = {
+          orderId: updatedOrder.id,
+          customerKey: customerKey,
+          status: newStatus,
+          timestamp: new Date().toISOString(),
+          orderNumber: updatedOrder.numero,
+          customerPhone: updatedOrder.telefone,
+          customerName: updatedOrder.cliente
+        };
         
-        for (const statusData of statusEntries) {
-          await fetch('/api/status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(statusData)
-          });
+        console.log(`📤 Enviando status '${newStatus}' para pedido #${updatedOrder.numero} (${updatedOrder.cliente})`);
+        
+        const response = await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(statusData)
+        });
+        
+        if (response.ok) {
+          console.log(`✅ Status sincronizado com sucesso para #${updatedOrder.numero}`);
+        } else {
+          console.error(`❌ Erro ao sincronizar status para #${updatedOrder.numero}`);
         }
-        
-        console.log('Status sincronizado para pedido #' + updatedOrder.numero);
         
         // Atualizar pedidos web se for de origem web
         if (updatedOrder.source === 'web') {
