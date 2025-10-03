@@ -41,11 +41,12 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   useEffect(() => {
     loadWebOrders();
     
-    // Verificar API a cada 3 segundos
+    // Verificar novos pedidos e status a cada 2 segundos
     const interval = setInterval(async () => {
       try {
-        const response = await fetch('/api/orders');
-        const apiOrders = await response.json();
+        // Verificar novos pedidos
+        const ordersResponse = await fetch('/api/orders');
+        const apiOrders = await ordersResponse.json();
         
         const localOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
         const newOrders = apiOrders.filter((apiOrder: any) => 
@@ -56,13 +57,32 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           const updatedOrders = [...localOrders, ...newOrders];
           localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
           toast.success(`${newOrders.length} novo(s) pedido(s) recebido(s)!`);
-          loadWebOrders();
         }
+        
+        // Verificar atualizações de status
+        const statusResponse = await fetch('/api/status');
+        const apiStatuses = await statusResponse.json();
+        
+        let statusUpdated = false;
+        const currentOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+        const updatedOrders = currentOrders.map((order: any) => {
+          const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+          if (statusUpdate && statusUpdate.status !== order.status) {
+            statusUpdated = true;
+            return { ...order, status: statusUpdate.status };
+          }
+          return order;
+        });
+        
+        if (statusUpdated) {
+          localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
+        }
+        
+        loadWebOrders();
       } catch (error) {
-        // Fallback para localStorage
         loadWebOrders();
       }
-    }, 3000);
+    }, 2000);
     
     return () => clearInterval(interval);
   }, []);
@@ -132,6 +152,21 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
       
       updateWebOrderStatus(webOrder.id, 'aceito');
       
+      // Sincronizar status via API
+      try {
+        await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: webOrder.id,
+            status: 'aceito',
+            timestamp: now.toISOString()
+          })
+        });
+      } catch (error) {
+        console.log('Erro ao sincronizar status');
+      }
+      
       // Adicionar referência cruzada
       const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
       const updatedWebOrders = webOrders.map((order: WebOrder) => 
@@ -179,10 +214,24 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
     }
   };
 
-  const rejectWebOrder = (orderId: string) => {
+  const rejectWebOrder = async (orderId: string) => {
     updateWebOrderStatus(orderId, 'rejeitado');
     
-    // Emitir evento de mudança de status
+    // Sincronizar status via API
+    try {
+      await fetch('/api/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          status: 'rejeitado',
+          timestamp: new Date().toISOString()
+        })
+      });
+    } catch (error) {
+      console.log('Erro ao sincronizar status');
+    }
+    
     window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
       detail: { orderId, status: 'rejeitado' } 
     }));

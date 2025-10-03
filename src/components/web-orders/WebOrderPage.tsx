@@ -41,7 +41,35 @@ export const WebOrderPage: React.FC = () => {
   useEffect(() => {
     loadCustomerOrders();
     requestNotificationPermission();
-  }, [customerData.phone, requestNotificationPermission]);
+    
+    // Verificar status dos pedidos a cada 5 segundos
+    const statusInterval = setInterval(async () => {
+      if (customerOrders.length > 0) {
+        try {
+          const response = await fetch('/api/status');
+          const apiStatuses = await response.json();
+          
+          let updated = false;
+          const updatedOrders = customerOrders.map((order: any) => {
+            const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+            if (statusUpdate && statusUpdate.status !== order.status) {
+              updated = true;
+              return { ...order, status: statusUpdate.status };
+            }
+            return order;
+          });
+          
+          if (updated) {
+            setCustomerOrders(updatedOrders);
+          }
+        } catch (error) {
+          console.log('Erro ao verificar status');
+        }
+      }
+    }, 5000);
+    
+    return () => clearInterval(statusInterval);
+  }, [customerData.phone, requestNotificationPermission, customerOrders.length]);
 
   const loadCustomerOrders = () => {
     if (!customerData.phone) return;
