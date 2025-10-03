@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
+import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -33,6 +34,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/web-order" element={<WebOrder />} />
+              <Route path="/order-tracking" element={<OrderTracking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

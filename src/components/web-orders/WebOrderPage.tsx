@@ -124,7 +124,15 @@ export const WebOrderPage: React.FC = () => {
 
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
 
-      toast.success('Pedido enviado com sucesso! Aguarde confirmação.');
+      toast.success(`Pedido enviado com sucesso! Código: ${webOrder.id}`);
+      
+      // Mostrar link de acompanhamento
+      setTimeout(() => {
+        toast.success(
+          `Acompanhe seu pedido em: ${window.location.origin}/order-tracking`,
+          { duration: 10000 }
+        );
+      }, 2000);
       
       setSelectedItems([]);
       setCustomerData({ name: '', phone: '', address: '', notes: '' });
