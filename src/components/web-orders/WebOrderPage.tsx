@@ -63,7 +63,11 @@ export const WebOrderPage: React.FC = () => {
           
           // Atualizar status com dados da API
           const updatedOrders = phoneOrders.map((order: any) => {
-            const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+            // Buscar por ID do pedido ou por telefone do cliente
+            const statusUpdate = apiStatuses.find((s: any) => 
+              s.orderId === order.id || 
+              (s.customerPhone === order.customerPhone && s.orderNumber && order.id.includes(s.orderNumber))
+            );
             if (statusUpdate && statusUpdate.status !== order.status) {
               return { ...order, status: statusUpdate.status };
             }

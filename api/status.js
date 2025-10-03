@@ -13,13 +13,26 @@ export default function handler(req, res) {
   try {
     if (req.method === 'POST') {
       // Atualizar status do pedido
-      const { orderId, status, timestamp } = req.body;
+      const { orderId, status, timestamp, orderNumber, customerPhone } = req.body;
+      
+      const statusData = { 
+        orderId, 
+        status, 
+        timestamp, 
+        orderNumber, 
+        customerPhone 
+      };
       
       const existingIndex = orderStatuses.findIndex(s => s.orderId === orderId);
       if (existingIndex >= 0) {
-        orderStatuses[existingIndex] = { orderId, status, timestamp };
+        orderStatuses[existingIndex] = statusData;
       } else {
-        orderStatuses.push({ orderId, status, timestamp });
+        orderStatuses.push(statusData);
+      }
+      
+      // Manter apenas os últimos 100 status para performance
+      if (orderStatuses.length > 100) {
+        orderStatuses = orderStatuses.slice(-100);
       }
       
       return res.status(200).json({ success: true });

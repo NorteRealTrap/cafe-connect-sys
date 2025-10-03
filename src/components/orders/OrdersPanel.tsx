@@ -204,7 +204,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       loadOrders();
       toast.success(`Pedido #${updatedOrder.numero} ${newStatus}!`);
       
-      // Sincronizar status via API
+      // Sincronizar status via API para todos os dispositivos
       try {
         await fetch('/api/status', {
           method: 'POST',
@@ -212,9 +212,22 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           body: JSON.stringify({
             orderId: updatedOrder.id,
             status: newStatus,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            orderNumber: updatedOrder.numero,
+            customerPhone: updatedOrder.telefone
           })
         });
+        
+        // Atualizar pedidos web se for de origem web
+        if (updatedOrder.source === 'web') {
+          const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+          const updatedWebOrders = webOrders.map((order: any) => 
+            order.customerPhone === updatedOrder.telefone && order.total === updatedOrder.total
+              ? { ...order, status: newStatus }
+              : order
+          );
+          localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
+        }
       } catch (error) {
         console.log('Erro ao sincronizar status');
       }

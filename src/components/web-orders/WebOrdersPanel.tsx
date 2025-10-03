@@ -66,7 +66,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         let statusUpdated = false;
         const currentOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
         const updatedOrders = currentOrders.map((order: any) => {
-          const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+          const statusUpdate = apiStatuses.find((s: any) => 
+            s.orderId === order.id || 
+            (s.customerPhone === order.customerPhone && s.orderNumber)
+          );
           if (statusUpdate && statusUpdate.status !== order.status) {
             statusUpdated = true;
             return { ...order, status: statusUpdate.status };
