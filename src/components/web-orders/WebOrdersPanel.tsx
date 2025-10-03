@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Check, X, Clock, ExternalLink, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { useOrders } from '@/hooks/useDatabase';
+
 import { OrderTrackingInfo } from './OrderTrackingInfo';
 
 interface WebOrder {
@@ -35,7 +35,6 @@ interface WebOrdersPanelProps {
 export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   const [webOrders, setWebOrders] = useState<WebOrder[]>([]);
   const [showTrackingInfo, setShowTrackingInfo] = useState(false);
-  const { addOrder } = useOrders();
 
   useEffect(() => {
     loadWebOrders();
@@ -70,13 +69,17 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
 
   const acceptWebOrder = (webOrder: WebOrder) => {
     try {
+      // Importar ordersDatabase diretamente
+      const { ordersDatabase } = require('@/lib/orders-database');
+      
       // Converter pedido web para pedido do sistema
-      const systemOrder = {
+      const systemOrderData = {
         cliente: webOrder.customerName,
         telefone: webOrder.customerPhone,
         endereco: webOrder.customerAddress,
         tipo: 'delivery' as const,
         itens: webOrder.items.map(item => ({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           nome: item.productName,
           quantidade: item.quantity,
           preco: item.price,
@@ -86,20 +89,23 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         observacoes: `Pedido Web #${webOrder.id} - Aceito em ${new Date().toLocaleString('pt-BR')}`
       };
 
-      addOrder(systemOrder);
+      // Criar pedido diretamente no orders-database
+      const newOrder = ordersDatabase.createOrder(systemOrderData);
+      
       updateWebOrderStatus(webOrder.id, 'aceito');
       
       // Adicionar referência cruzada
       const orders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
       const updatedOrders = orders.map((order: WebOrder) => 
         order.id === webOrder.id 
-          ? { ...order, systemOrderId: `Será gerado automaticamente`, acceptedAt: new Date().toISOString() }
+          ? { ...order, systemOrderId: newOrder.numero.toString(), acceptedAt: new Date().toISOString() }
           : order
       );
       localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
       
-      toast.success('Pedido aceito e adicionado ao painel de Pedidos!');
+      toast.success(`Pedido aceito! Criado como Pedido #${newOrder.numero} no módulo Pedidos`);
     } catch (error) {
+      console.error('Erro ao aceitar pedido:', error);
       toast.error('Erro ao aceitar pedido');
     }
   };
@@ -275,7 +281,7 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
                       <span>Pedido aceito e enviado para o painel de Pedidos</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Acompanhe o status no módulo "Pedidos" do sistema
+                      Pedido #{(order as any).systemOrderId || 'Processando...'} criado no módulo "Pedidos"
                     </p>
                   </div>
                 )}
