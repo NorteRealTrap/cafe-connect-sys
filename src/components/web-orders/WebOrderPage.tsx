@@ -56,31 +56,39 @@ export const WebOrderPage: React.FC = () => {
           const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
           const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
           
-          const allOrders = [...webOrders, ...mainOrders.filter((o: any) => o.source === 'web')];
-          const phoneOrders = allOrders.filter((order: any) => 
-            order.customerPhone === customerData.phone
-          );
+          // Incluir todos os pedidos do cliente (web e principais)
+          const allOrders = [
+            ...webOrders.filter((o: any) => o.customerPhone === customerData.phone),
+            ...mainOrders.filter((o: any) => o.telefone === customerData.phone)
+          ];
           
           // Atualizar status com dados da API
-          const updatedOrders = phoneOrders.map((order: any) => {
-            // Buscar por ID do pedido ou por telefone do cliente
-            const statusUpdate = apiStatuses.find((s: any) => 
-              s.orderId === order.id || 
-              (s.customerPhone === order.customerPhone && s.orderNumber && order.id.includes(s.orderNumber))
-            );
+          let hasUpdates = false;
+          const updatedOrders = allOrders.map((order: any) => {
+            // Buscar status por múltiplos critérios
+            const statusUpdate = apiStatuses.find((s: any) => {
+              return s.orderId === order.id || 
+                     (s.customerPhone === customerData.phone) ||
+                     (order.numero && s.orderNumber === order.numero);
+            });
+            
             if (statusUpdate && statusUpdate.status !== order.status) {
+              hasUpdates = true;
+              console.log(`Atualizando pedido ${order.id} de ${order.status} para ${statusUpdate.status}`);
               return { ...order, status: statusUpdate.status };
             }
             return order;
           }).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           
-          setCustomerOrders(updatedOrders);
+          if (hasUpdates || updatedOrders.length !== customerOrders.length) {
+            setCustomerOrders(updatedOrders);
+          }
         } catch (error) {
           // Fallback para localStorage
           loadCustomerOrders();
         }
       }
-    }, 3000);
+    }, 2000); // Reduzir para 2 segundos para melhor responsividade
     
     return () => clearInterval(statusInterval);
   }, [customerData.phone]);

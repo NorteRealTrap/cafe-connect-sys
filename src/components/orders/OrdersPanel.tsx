@@ -206,30 +206,38 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       
       // Sincronizar status via API para todos os dispositivos
       try {
-        await fetch('/api/status', {
+        const statusData = {
+          orderId: updatedOrder.id,
+          status: newStatus,
+          timestamp: new Date().toISOString(),
+          orderNumber: updatedOrder.numero,
+          customerPhone: updatedOrder.telefone
+        };
+        
+        console.log('Enviando status para API:', statusData);
+        
+        const response = await fetch('/api/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: updatedOrder.id,
-            status: newStatus,
-            timestamp: new Date().toISOString(),
-            orderNumber: updatedOrder.numero,
-            customerPhone: updatedOrder.telefone
-          })
+          body: JSON.stringify(statusData)
         });
+        
+        if (response.ok) {
+          console.log('Status sincronizado com sucesso');
+        }
         
         // Atualizar pedidos web se for de origem web
         if (updatedOrder.source === 'web') {
           const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
           const updatedWebOrders = webOrders.map((order: any) => 
-            order.customerPhone === updatedOrder.telefone && order.total === updatedOrder.total
+            order.customerPhone === updatedOrder.telefone
               ? { ...order, status: newStatus }
               : order
           );
           localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
         }
       } catch (error) {
-        console.log('Erro ao sincronizar status');
+        console.error('Erro ao sincronizar status:', error);
       }
       
       // Se o pedido foi finalizado, processar pagamento
