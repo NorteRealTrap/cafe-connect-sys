@@ -351,7 +351,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                         <Button 
                           size="sm" 
                           variant="warning"
-                          onClick={() => updateOrderStatus(order.id, "saiu-entrega")}
+                          onClick={() => updateOrderStatus(order.id, "saiu-entrega" as OrderStatus)}
                         >
                           Saiu para Entrega
                         </Button>
@@ -360,7 +360,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                         <Button 
                           size="sm" 
                           variant="success"
-                          onClick={() => updateOrderStatus(order.id, "entregue")}
+                          onClick={() => updateOrderStatus(order.id, "entregue" as OrderStatus)}
                         >
                           Confirmar Entrega
                         </Button>

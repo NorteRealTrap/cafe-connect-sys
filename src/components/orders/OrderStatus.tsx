@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Clock, CheckCircle, Truck, Package } from "lucide-react";
 
-export type OrderStatus = "aceito" | "preparando" | "pronto" | "entregue" | "retirado";
+export type OrderStatus = "aceito" | "preparando" | "pronto" | "saiu-entrega" | "entregue" | "retirado";
 
 interface OrderStatusProps {
   status: OrderStatus;
@@ -32,11 +32,18 @@ export const OrderStatusBadge = ({ status, type = "local" }: OrderStatusProps) =
           icon: <Package className="h-3 w-3" />,
           className: "bg-green-100 text-green-800"
         };
+      case "saiu-entrega":
+        return {
+          label: "Saiu para Entrega",
+          variant: "default" as const,
+          icon: <Truck className="h-3 w-3" />,
+          className: "bg-orange-100 text-orange-800"
+        };
       case "entregue":
         return {
           label: "Entregue",
           variant: "secondary" as const,
-          icon: <Truck className="h-3 w-3" />,
+          icon: <CheckCircle className="h-3 w-3" />,
           className: "bg-gray-100 text-gray-800"
         };
       case "retirado":
