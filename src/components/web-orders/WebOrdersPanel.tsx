@@ -98,7 +98,8 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         total: webOrder.total,
         observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`,
         createdAt: now.toISOString(),
-        updatedAt: now.toISOString()
+        updatedAt: now.toISOString(),
+        source: 'web'
       };
       
       // Salvar no localStorage
@@ -117,8 +118,16 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
       );
       localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
       
+      // Emitir eventos de tempo real
+      window.dispatchEvent(new CustomEvent('dataChanged', { 
+        detail: { key: 'cafe-connect-orders', data: existingOrders } 
+      }));
+      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
+        detail: { orderId: webOrder.id, status: 'aceito', systemOrderId: nextNumber } 
+      }));
+      
       toast.success(`Pedido aceito! Criado como Pedido #${nextNumber} no módulo Pedidos`);
-      loadWebOrders(); // Recarregar para mostrar a referência
+      loadWebOrders();
     } catch (error) {
       console.error('Erro ao aceitar pedido:', error);
       toast.error('Erro ao aceitar pedido');
@@ -127,6 +136,12 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
 
   const rejectWebOrder = (orderId: string) => {
     updateWebOrderStatus(orderId, 'rejeitado');
+    
+    // Emitir evento de mudança de status
+    window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
+      detail: { orderId, status: 'rejeitado' } 
+    }));
+    
     toast.success('Pedido rejeitado');
   };
 

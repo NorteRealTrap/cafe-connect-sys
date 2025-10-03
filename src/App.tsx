@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 import { initializePersistence } from "@/lib/persistence";
+import { initializeRealtime } from "@/lib/realtime";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
 import OrderTracking from "./pages/OrderTracking";
@@ -23,6 +24,7 @@ const queryClient = new QueryClient({
 const App = () => {
   useEffect(() => {
     initializePersistence();
+    initializeRealtime();
   }, []);
 
   return (

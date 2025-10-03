@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { db, User, Product, Category, Order, InventoryItem, Table, Payment } from '@/lib/database';
 import { usePersistentState } from '@/lib/persistence';
+import { useRealtime } from '@/lib/realtime';
 
 // Hook para Users
 export const useUsers = () => {
-  const [users, setUsers] = usePersistentState<User[]>('ccpservices-users', []);
+  const [users, setUsers] = useRealtime<User[]>('ccpservices-users', []);
 
   useEffect(() => {
     const loadedUsers = db.getUsers();
@@ -43,7 +44,7 @@ export const useUsers = () => {
 
 // Hook para Products
 export const useProducts = () => {
-  const [products, setProducts] = usePersistentState<Product[]>('ccpservices-products', []);
+  const [products, setProducts] = useRealtime<Product[]>('ccpservices-products', []);
 
   useEffect(() => {
     const loadedProducts = db.getProducts();
@@ -124,7 +125,7 @@ export const useCategories = () => {
 
 // Hook para Orders
 export const useOrders = () => {
-  const [orders, setOrders] = usePersistentState<Order[]>('cafe-connect-orders', []);
+  const [orders, setOrders] = useRealtime<Order[]>('cafe-connect-orders', []);
 
   useEffect(() => {
     const loadedOrders = db.getOrders();
@@ -169,7 +170,7 @@ export const useOrders = () => {
 
 // Hook para Inventory
 export const useInventory = () => {
-  const [inventory, setInventory] = usePersistentState<InventoryItem[]>('ccpservices-inventory', []);
+  const [inventory, setInventory] = useRealtime<InventoryItem[]>('ccpservices-inventory', []);
 
   useEffect(() => {
     const loadedInventory = db.getInventory();

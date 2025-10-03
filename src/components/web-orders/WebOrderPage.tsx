@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, ShoppingCart, MapPin, Phone, User, CheckCircle, Clock, Truck, ChefHat } from 'lucide-react';
 import { useProducts } from '@/hooks/useDatabase';
-import { useAutoSave, usePersistentState } from '@/lib/persistence';
+import { useAutoSave } from '@/lib/persistence';
+import { useRealtime, useRealtimeNotifications } from '@/lib/realtime';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -29,16 +30,16 @@ export const WebOrderPage: React.FC = () => {
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerOrders, setCustomerOrders] = usePersistentState<any[]>('customer-orders-history', []);
+  const [customerOrders, setCustomerOrders] = useRealtime<any[]>('customer-orders-history', []);
+  const { requestNotificationPermission } = useRealtimeNotifications();
   const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
 
   useEffect(() => {
     loadCustomerOrders();
-    const interval = setInterval(loadCustomerOrders, 10000);
-    return () => clearInterval(interval);
-  }, [customerData.phone]);
+    requestNotificationPermission();
+  }, [customerData.phone, requestNotificationPermission]);
 
   const loadCustomerOrders = () => {
     if (!customerData.phone) return;
@@ -163,6 +164,9 @@ export const WebOrderPage: React.FC = () => {
       localStorage.setItem('ccpservices-web-orders', JSON.stringify(existingWebOrders));
 
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
+      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
+        detail: { orderId: webOrder.id, status: 'web-pendente' } 
+      }));
 
       toast.success(`Pedido enviado! Código: ${webOrder.id}`);
       
