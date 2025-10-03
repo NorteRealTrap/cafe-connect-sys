@@ -206,25 +206,35 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       
       // Sincronizar status via API para todos os dispositivos
       try {
-        const statusData = {
-          orderId: updatedOrder.id,
-          status: newStatus,
-          timestamp: new Date().toISOString(),
-          orderNumber: updatedOrder.numero,
-          customerPhone: updatedOrder.telefone
-        };
+        // Enviar múltiplas entradas para garantir que seja encontrado
+        const statusEntries = [
+          {
+            orderId: updatedOrder.id,
+            status: newStatus,
+            timestamp: new Date().toISOString(),
+            orderNumber: updatedOrder.numero,
+            customerPhone: updatedOrder.telefone
+          },
+          {
+            orderId: `WEB-${updatedOrder.numero}`,
+            status: newStatus,
+            timestamp: new Date().toISOString(),
+            orderNumber: updatedOrder.numero,
+            customerPhone: updatedOrder.telefone
+          }
+        ];
         
-        console.log('Enviando status para API:', statusData);
+        console.log('Enviando status para API:', statusEntries);
         
-        const response = await fetch('/api/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(statusData)
-        });
-        
-        if (response.ok) {
-          console.log('Status sincronizado com sucesso');
+        for (const statusData of statusEntries) {
+          await fetch('/api/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(statusData)
+          });
         }
+        
+        console.log('Status sincronizado para pedido #' + updatedOrder.numero);
         
         // Atualizar pedidos web se for de origem web
         if (updatedOrder.source === 'web') {
