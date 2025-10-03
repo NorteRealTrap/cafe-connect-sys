@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Check, X, Clock, ExternalLink, Copy } from 'lucide-react';
+import { Globe, Check, X, Clock, ExternalLink, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrders } from '@/hooks/useDatabase';
+import { OrderTrackingInfo } from './OrderTrackingInfo';
 
 interface WebOrder {
   id: string;
@@ -33,6 +34,7 @@ interface WebOrdersPanelProps {
 
 export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   const [webOrders, setWebOrders] = useState<WebOrder[]>([]);
+  const [showTrackingInfo, setShowTrackingInfo] = useState(false);
   const { addOrder } = useOrders();
 
   useEffect(() => {
@@ -75,19 +77,28 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         endereco: webOrder.customerAddress,
         tipo: 'delivery' as const,
         itens: webOrder.items.map(item => ({
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
+          nome: item.productName,
+          quantidade: item.quantity,
+          preco: item.price,
+          observacoes: ''
         })),
         total: webOrder.total,
-        observacoes: `Pedido Web #${webOrder.id}`
+        observacoes: `Pedido Web #${webOrder.id} - Aceito em ${new Date().toLocaleString('pt-BR')}`
       };
 
       addOrder(systemOrder);
       updateWebOrderStatus(webOrder.id, 'aceito');
-      toast.success('Pedido aceito e adicionado ao sistema!');
+      
+      // Adicionar referência cruzada
+      const orders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+      const updatedOrders = orders.map((order: WebOrder) => 
+        order.id === webOrder.id 
+          ? { ...order, systemOrderId: `Será gerado automaticamente`, acceptedAt: new Date().toISOString() }
+          : order
+      );
+      localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
+      
+      toast.success('Pedido aceito e adicionado ao painel de Pedidos!');
     } catch (error) {
       toast.error('Erro ao aceitar pedido');
     }
@@ -100,8 +111,8 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      'web-pendente': { label: 'Pendente', variant: 'secondary' as const },
-      'aceito': { label: 'Aceito', variant: 'success' as const },
+      'web-pendente': { label: 'Aguardando', variant: 'secondary' as const },
+      'aceito': { label: 'Aceito → Pedidos', variant: 'success' as const },
       'rejeitado': { label: 'Rejeitado', variant: 'destructive' as const }
     };
     
@@ -141,6 +152,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
             <ExternalLink className="h-4 w-4 mr-2" />
             Abrir Link
           </Button>
+          <Button variant="outline" onClick={() => setShowTrackingInfo(!showTrackingInfo)}>
+            <Info className="h-4 w-4 mr-2" />
+            {showTrackingInfo ? 'Ocultar' : 'Como Funciona'}
+          </Button>
           <Button variant="outline" onClick={onBack}>
             Voltar
           </Button>
@@ -168,6 +183,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           </p>
         </CardContent>
       </Card>
+
+      {showTrackingInfo && (
+        <OrderTrackingInfo />
+      )}
 
       <div className="grid gap-4">
         {webOrders.length === 0 ? (
@@ -246,6 +265,27 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
                       <X className="h-4 w-4 mr-2" />
                       Rejeitar
                     </Button>
+                  </div>
+                )}
+                
+                {order.status === 'aceito' && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <Check className="h-4 w-4" />
+                      <span>Pedido aceito e enviado para o painel de Pedidos</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Acompanhe o status no módulo "Pedidos" do sistema
+                    </p>
+                  </div>
+                )}
+                
+                {order.status === 'rejeitado' && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <X className="h-4 w-4" />
+                      <span>Pedido rejeitado</span>
+                    </div>
                   </div>
                 )}
               </CardContent>
