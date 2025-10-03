@@ -9,6 +9,7 @@ import { Plus, Minus, ShoppingCart, MapPin, Phone, User, CheckCircle, Clock, Tru
 import { useProducts } from '@/hooks/useDatabase';
 import { useAutoSave } from '@/lib/persistence';
 import { useRealtime, useRealtimeNotifications } from '@/lib/realtime';
+import { useCrossDeviceSync } from '@/lib/sync';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -32,6 +33,7 @@ export const WebOrderPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerOrders, setCustomerOrders] = useRealtime<any[]>('customer-orders-history', []);
   const { requestNotificationPermission } = useRealtimeNotifications();
+  const { saveWebOrder } = useCrossDeviceSync();
   const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
@@ -159,24 +161,12 @@ export const WebOrderPage: React.FC = () => {
         source: 'web'
       };
 
-      const existingWebOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-      existingWebOrders.push(webOrder);
-      localStorage.setItem('ccpservices-web-orders', JSON.stringify(existingWebOrders));
-
-      // Forçar atualização imediata
-      localStorage.setItem('ccpservices-web-orders-timestamp', Date.now().toString());
+      // Usar sistema de sincronização entre dispositivos
+      await saveWebOrder(webOrder);
       
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
         detail: { orderId: webOrder.id, status: 'web-pendente' } 
-      }));
-      
-      // Trigger para outros dispositivos via timestamp
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'ccpservices-web-orders',
-        newValue: JSON.stringify(existingWebOrders),
-        oldValue: null,
-        storageArea: localStorage
       }));
 
       toast.success(`Pedido enviado! Código: ${webOrder.id}`);

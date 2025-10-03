@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Check, X, Clock, ExternalLink, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCrossDeviceSync } from '@/lib/sync';
 
 import { OrderTrackingInfo } from './OrderTrackingInfo';
 
@@ -35,6 +36,7 @@ interface WebOrdersPanelProps {
 export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   const [webOrders, setWebOrders] = useState<WebOrder[]>([]);
   const [showTrackingInfo, setShowTrackingInfo] = useState(false);
+  useCrossDeviceSync(); // Ativar sincronização
 
   useEffect(() => {
     loadWebOrders();
