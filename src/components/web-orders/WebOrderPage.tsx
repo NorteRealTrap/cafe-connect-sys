@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, ShoppingCart, MapPin, Phone, User } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, MapPin, Phone, User, CheckCircle, Clock, Truck, ChefHat } from 'lucide-react';
 import { useProducts } from '@/hooks/useDatabase';
 import { toast } from 'sonner';
 
@@ -28,8 +28,47 @@ export const WebOrderPage: React.FC = () => {
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
+
+  useEffect(() => {
+    loadCustomerOrders();
+    const interval = setInterval(loadCustomerOrders, 10000);
+    return () => clearInterval(interval);
+  }, [customerData.phone]);
+
+  const loadCustomerOrders = () => {
+    if (!customerData.phone) return;
+    
+    const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+    const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+    
+    const allOrders = [...webOrders, ...mainOrders.filter((o: any) => o.source === 'web')];
+    const phoneOrders = allOrders.filter((order: any) => 
+      order.customerPhone === customerData.phone
+    ).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    setCustomerOrders(phoneOrders);
+    if (phoneOrders.length > 0) setShowOrderHistory(true);
+  };
+
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'web-pendente':
+        return { label: 'Aguardando', color: 'bg-yellow-500', icon: Clock };
+      case 'aceito':
+      case 'preparando':
+        return { label: 'Preparando', color: 'bg-blue-500', icon: ChefHat };
+      case 'pronto':
+        return { label: 'Saiu para Entrega', color: 'bg-orange-500', icon: Truck };
+      case 'entregue':
+        return { label: 'Entregue', color: 'bg-green-500', icon: CheckCircle };
+      default:
+        return { label: status, color: 'bg-gray-500', icon: Clock };
+    }
+  };
   
   const getFilteredProducts = () => {
     if (selectedCategory === 'todos') {
@@ -124,18 +163,11 @@ export const WebOrderPage: React.FC = () => {
 
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
 
-      toast.success(`Pedido enviado com sucesso! Código: ${webOrder.id}`);
-      
-      // Mostrar link de acompanhamento
-      setTimeout(() => {
-        toast.success(
-          `Acompanhe seu pedido em: ${window.location.origin}/order-tracking`,
-          { duration: 10000 }
-        );
-      }, 2000);
+      toast.success(`Pedido enviado! Código: ${webOrder.id}`);
       
       setSelectedItems([]);
-      setCustomerData({ name: '', phone: '', address: '', notes: '' });
+      setCustomerOrders(prev => [webOrder, ...prev]);
+      setShowOrderHistory(true);
       
     } catch (error) {
       toast.error('Erro ao enviar pedido. Tente novamente.');
@@ -157,6 +189,39 @@ export const WebOrderPage: React.FC = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {showOrderHistory && customerOrders.length > 0 && (
+            <div className="lg:col-span-2 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seus Pedidos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {customerOrders.slice(0, 3).map((order) => {
+                      const statusInfo = getStatusInfo(order.status);
+                      const StatusIcon = statusInfo.icon;
+                      return (
+                        <div key={order.id} className="flex items-center justify-between p-3 border rounded">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-sm">{order.id}</p>
+                              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs text-white ${statusInfo.color}`}>
+                                <StatusIcon className="h-3 w-3" />
+                                {statusInfo.label}
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-600">
+                              {order.items?.length || 0} itens • R$ {order.total.toFixed(2)} • {order.orderTime}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -281,7 +346,13 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="phone"
                       value={customerData.phone}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, phone: e.target.value }))}
+                      onChange={(e) => {
+                        const phone = e.target.value;
+                        setCustomerData(prev => ({ ...prev, phone }));
+                        if (phone.length >= 10) {
+                          setTimeout(loadCustomerOrders, 500);
+                        }
+                      }}
                       placeholder="(11) 99999-9999"
                       className="pl-10"
                     />
