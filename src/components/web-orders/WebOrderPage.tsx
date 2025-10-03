@@ -161,8 +161,21 @@ export const WebOrderPage: React.FC = () => {
         source: 'web'
       };
 
-      // Usar sistema de sincronização entre dispositivos
-      await saveWebOrder(webOrder);
+          // Salvar localmente
+      const existingWebOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+      existingWebOrders.push(webOrder);
+      localStorage.setItem('ccpservices-web-orders', JSON.stringify(existingWebOrders));
+      
+      // Tentar sincronizar com Vercel API
+      try {
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webOrder)
+        });
+      } catch (error) {
+        console.log('Pedido salvo localmente');
+      }
       
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 

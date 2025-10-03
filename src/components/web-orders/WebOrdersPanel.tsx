@@ -41,31 +41,31 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   useEffect(() => {
     loadWebOrders();
     
-    // Polling a cada 3 segundos para verificar novos pedidos
-    const interval = setInterval(() => {
-      const currentOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-      const currentCount = webOrders.length;
-      const newCount = currentOrders.length;
-      
-      if (newCount > currentCount) {
-        toast.success('Novo pedido web recebido!');
+    // Verificar API a cada 3 segundos
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/orders');
+        const apiOrders = await response.json();
+        
+        const localOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+        const newOrders = apiOrders.filter((apiOrder: any) => 
+          !localOrders.find((localOrder: any) => localOrder.id === apiOrder.id)
+        );
+        
+        if (newOrders.length > 0) {
+          const updatedOrders = [...localOrders, ...newOrders];
+          localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
+          toast.success(`${newOrders.length} novo(s) pedido(s) recebido(s)!`);
+          loadWebOrders();
+        }
+      } catch (error) {
+        // Fallback para localStorage
+        loadWebOrders();
       }
-      
-      loadWebOrders();
     }, 3000);
     
-    const handleNewWebOrder = (event: CustomEvent) => {
-      loadWebOrders();
-      toast.success('Novo pedido web recebido!');
-    };
-
-    window.addEventListener('newWebOrder', handleNewWebOrder as EventListener);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('newWebOrder', handleNewWebOrder as EventListener);
-    };
-  }, [webOrders.length]);
+    return () => clearInterval(interval);
+  }, []);
 
   const loadWebOrders = () => {
     const orders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
