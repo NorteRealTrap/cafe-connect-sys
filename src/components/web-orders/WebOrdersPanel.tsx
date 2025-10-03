@@ -67,17 +67,27 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
     setWebOrders(updatedOrders);
   };
 
-  const acceptWebOrder = (webOrder: WebOrder) => {
+  const acceptWebOrder = async (webOrder: WebOrder) => {
     try {
-      // Importar ordersDatabase diretamente
-      const { ordersDatabase } = require('@/lib/orders-database');
+      // Criar pedido diretamente no localStorage do orders-database
+      const storageKey = 'cafe-connect-orders';
+      const counterKey = 'cafe-connect-order-counter';
       
-      // Converter pedido web para pedido do sistema
-      const systemOrderData = {
+      // Obter próximo número do pedido
+      const currentCounter = localStorage.getItem(counterKey);
+      const nextNumber = currentCounter ? parseInt(currentCounter) + 1 : 1;
+      localStorage.setItem(counterKey, nextNumber.toString());
+      
+      // Criar novo pedido
+      const now = new Date();
+      const newOrder = {
+        id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        numero: nextNumber,
         cliente: webOrder.customerName,
         telefone: webOrder.customerPhone,
         endereco: webOrder.customerAddress,
-        tipo: 'delivery' as const,
+        tipo: 'delivery',
+        status: 'aceito',
         itens: webOrder.items.map(item => ({
           id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           nome: item.productName,
@@ -86,24 +96,29 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           observacoes: ''
         })),
         total: webOrder.total,
-        observacoes: `Pedido Web #${webOrder.id} - Aceito em ${new Date().toLocaleString('pt-BR')}`
+        observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString()
       };
-
-      // Criar pedido diretamente no orders-database
-      const newOrder = ordersDatabase.createOrder(systemOrderData);
+      
+      // Salvar no localStorage
+      const existingOrders = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      existingOrders.unshift(newOrder);
+      localStorage.setItem(storageKey, JSON.stringify(existingOrders));
       
       updateWebOrderStatus(webOrder.id, 'aceito');
       
       // Adicionar referência cruzada
-      const orders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-      const updatedOrders = orders.map((order: WebOrder) => 
+      const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+      const updatedWebOrders = webOrders.map((order: WebOrder) => 
         order.id === webOrder.id 
-          ? { ...order, systemOrderId: newOrder.numero.toString(), acceptedAt: new Date().toISOString() }
+          ? { ...order, systemOrderId: nextNumber.toString(), acceptedAt: now.toISOString() }
           : order
       );
-      localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
+      localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
       
-      toast.success(`Pedido aceito! Criado como Pedido #${newOrder.numero} no módulo Pedidos`);
+      toast.success(`Pedido aceito! Criado como Pedido #${nextNumber} no módulo Pedidos`);
+      loadWebOrders(); // Recarregar para mostrar a referência
     } catch (error) {
       console.error('Erro ao aceitar pedido:', error);
       toast.error('Erro ao aceitar pedido');
@@ -281,7 +296,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
                       <span>Pedido aceito e enviado para o painel de Pedidos</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Pedido #{(order as any).systemOrderId || 'Processando...'} criado no módulo "Pedidos"
+                      {(order as any).systemOrderId ? 
+                        `Pedido #${(order as any).systemOrderId} criado no módulo "Pedidos"` :
+                        'Processando integração...'
+                      }
                     </p>
                   </div>
                 )}
