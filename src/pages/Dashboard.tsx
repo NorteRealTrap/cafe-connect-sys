@@ -12,6 +12,7 @@ import { ReportsPanel } from "@/components/reports/ReportsPanel";
 import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
 import { InventoryPanel } from "@/components/inventory/InventoryPanel";
 import { StatusPanel } from "@/components/status/StatusPanel";
+import { WebOrdersPanel } from "@/components/web-orders/WebOrdersPanel";
 
 import { UserRole } from "@/components/auth/LoginForm";
 
@@ -55,7 +56,7 @@ export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardPro
       case "estoque":
         return <InventoryPanel onBack={handleBackToDashboard} />;
       case "status":
-        return <StatusPanel onBack={handleBackToDashboard} />;
+        return <WebOrdersPanel onBack={handleBackToDashboard} />;
       case "debug":
         return (
           <div className="p-6">

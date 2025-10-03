@@ -63,8 +63,8 @@ const modules: DashboardModule[] = [
   },
   {
     id: "status",
-    title: "Status dos Pedidos",
-    description: "Acompanhamento em tempo real",
+    title: "Pedidos Web",
+    description: "Pedidos recebidos via link web",
     icon: <Clock className="h-6 w-6" />,
     roles: ["admin", "caixa", "atendente"],
     color: "bg-warning"
