@@ -28,6 +28,33 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
 
   useEffect(() => {
     loadOrders();
+    
+    // Atualizar status em tempo real a cada 2 segundos
+    const statusInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/status');
+        const apiStatuses = await response.json();
+        
+        let updated = false;
+        const currentOrders = ordersDatabase.getAllOrders();
+        
+        currentOrders.forEach((order: any) => {
+          const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+          if (statusUpdate && statusUpdate.status !== order.status) {
+            ordersDatabase.updateOrderStatus(order.id, statusUpdate.status);
+            updated = true;
+          }
+        });
+        
+        if (updated) {
+          loadOrders();
+        }
+      } catch (error) {
+        console.log('Erro ao verificar status');
+      }
+    }, 2000);
+    
+    return () => clearInterval(statusInterval);
   }, []);
 
   const loadOrders = () => {

@@ -78,6 +78,22 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedOrders));
         }
         
+        // Verificar pedidos do sistema principal também
+        const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+        let mainUpdated = false;
+        const updatedMainOrders = mainOrders.map((order: any) => {
+          const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
+          if (statusUpdate && statusUpdate.status !== order.status) {
+            mainUpdated = true;
+            return { ...order, status: statusUpdate.status };
+          }
+          return order;
+        });
+        
+        if (mainUpdated) {
+          localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedMainOrders));
+        }
+        
         loadWebOrders();
       } catch (error) {
         loadWebOrders();

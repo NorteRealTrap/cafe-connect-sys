@@ -91,6 +91,39 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     if (storedDrivers.length === 0) {
       setDrivers(mockDrivers);
     }
+    
+    // Atualizar status em tempo real
+    const statusInterval = setInterval(async () => {
+      try {
+        const response = await fetch('/api/status');
+        const apiStatuses = await response.json();
+        
+        const currentDeliveries = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
+        let updated = false;
+        
+        const updatedDeliveries = currentDeliveries.map((delivery: any) => {
+          const statusUpdate = apiStatuses.find((s: any) => s.orderId === delivery.orderId);
+          if (statusUpdate) {
+            const newStatus = statusUpdate.status === 'saiu-entrega' ? 'saiu_entrega' : 
+                             statusUpdate.status === 'entregue' ? 'entregue' : delivery.status;
+            if (newStatus !== delivery.status) {
+              updated = true;
+              return { ...delivery, status: newStatus };
+            }
+          }
+          return delivery;
+        });
+        
+        if (updated) {
+          localStorage.setItem('ccpservices-deliveries', JSON.stringify(updatedDeliveries));
+          setDeliveries(updatedDeliveries);
+        }
+      } catch (error) {
+        console.log('Erro ao verificar status de delivery');
+      }
+    }, 2000);
+    
+    return () => clearInterval(statusInterval);
   }, []);
 
   const getStatusBadge = (status: DeliveryOrder["status"]) => {

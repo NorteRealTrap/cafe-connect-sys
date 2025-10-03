@@ -41,35 +41,45 @@ export const WebOrderPage: React.FC = () => {
   useEffect(() => {
     loadCustomerOrders();
     requestNotificationPermission();
-    
-    // Verificar status dos pedidos a cada 5 segundos
+  }, [customerData.phone, requestNotificationPermission]);
+  
+  // Verificar status em tempo real
+  useEffect(() => {
     const statusInterval = setInterval(async () => {
-      if (customerOrders.length > 0) {
+      if (customerData.phone) {
         try {
+          // Verificar status via API
           const response = await fetch('/api/status');
           const apiStatuses = await response.json();
           
-          let updated = false;
-          const updatedOrders = customerOrders.map((order: any) => {
+          // Recarregar pedidos do localStorage
+          const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+          const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+          
+          const allOrders = [...webOrders, ...mainOrders.filter((o: any) => o.source === 'web')];
+          const phoneOrders = allOrders.filter((order: any) => 
+            order.customerPhone === customerData.phone
+          );
+          
+          // Atualizar status com dados da API
+          const updatedOrders = phoneOrders.map((order: any) => {
             const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
             if (statusUpdate && statusUpdate.status !== order.status) {
-              updated = true;
               return { ...order, status: statusUpdate.status };
             }
             return order;
-          });
+          }).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           
-          if (updated) {
-            setCustomerOrders(updatedOrders);
-          }
+          setCustomerOrders(updatedOrders);
         } catch (error) {
-          console.log('Erro ao verificar status');
+          // Fallback para localStorage
+          loadCustomerOrders();
         }
       }
-    }, 5000);
+    }, 3000);
     
     return () => clearInterval(statusInterval);
-  }, [customerData.phone, requestNotificationPermission, customerOrders.length]);
+  }, [customerData.phone]);
 
   const loadCustomerOrders = () => {
     if (!customerData.phone) return;
