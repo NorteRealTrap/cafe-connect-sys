@@ -48,53 +48,24 @@ export const WebOrderPage: React.FC = () => {
     const statusInterval = setInterval(async () => {
       if (customerData.phone) {
         try {
-          // Verificar status via API
-          const response = await fetch('/api/status');
-          const apiStatuses = await response.json();
+          // Usar sistema universal para buscar pedidos
+          const { orderSync } = await import('@/lib/order-sync');
+          const updatedOrders = orderSync.getCustomerOrders(customerData.phone);
           
-          // Recarregar pedidos do localStorage
-          const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-          const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+          console.log(`🔍 Buscando pedidos para: ${customerData.phone}`);
+          console.log(`📊 Encontrados: ${updatedOrders.length} pedidos`);
           
-          // Incluir todos os pedidos do cliente (web e principais)
-          const allOrders = [
-            ...webOrders.filter((o: any) => o.customerPhone === customerData.phone),
-            ...mainOrders.filter((o: any) => o.telefone === customerData.phone)
-          ];
-          
-          // Atualizar status com dados da API
-          console.log(`🔍 Verificando status para cliente: ${customerData.phone}`);
-          console.log('API Status disponíveis:', apiStatuses.length);
-          
-          let hasUpdates = false;
-          const updatedOrders = allOrders.map((order: any) => {
-            // Buscar por chave do cliente ou critérios tradicionais
-            const customerKey = `customer_${customerData.phone}_${order.numero || order.id.split('-')[1]}`;
-            
-            const statusUpdate = apiStatuses.find((s: any) => {
-              return s.customerKey === customerKey || 
-                     s.customerPhone === customerData.phone ||
-                     s.orderNumber === order.numero ||
-                     s.orderId === order.id;
-            });
-            
-            if (statusUpdate && statusUpdate.status !== order.status) {
-              hasUpdates = true;
-              console.log(`🔄 ATUALIZANDO: Pedido #${order.numero || order.id} de '${order.status}' → '${statusUpdate.status}'`);
-              return { ...order, status: statusUpdate.status };
-            }
-            return order;
-          }).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          
-          if (hasUpdates || updatedOrders.length !== customerOrders.length) {
+          if (updatedOrders.length !== customerOrders.length || 
+              JSON.stringify(updatedOrders) !== JSON.stringify(customerOrders)) {
             setCustomerOrders(updatedOrders);
+            console.log(`🔄 Pedidos atualizados para cliente`);
           }
         } catch (error) {
           // Fallback para localStorage
           loadCustomerOrders();
         }
       }
-    }, 2000); // Reduzir para 2 segundos para melhor responsividade
+    }, 1000); // 1 segundo para máxima responsividade
     
     return () => clearInterval(statusInterval);
   }, [customerData.phone]);

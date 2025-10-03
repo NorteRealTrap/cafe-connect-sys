@@ -204,48 +204,16 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       loadOrders();
       toast.success(`Pedido #${updatedOrder.numero} ${newStatus}!`);
       
-      // Sincronizar status via API para todos os dispositivos
-      try {
-        // Criar chave única baseada no telefone do cliente
-        const customerKey = `customer_${updatedOrder.telefone}_${updatedOrder.numero}`;
-        
-        const statusData = {
-          orderId: updatedOrder.id,
-          customerKey: customerKey,
-          status: newStatus,
-          timestamp: new Date().toISOString(),
-          orderNumber: updatedOrder.numero,
-          customerPhone: updatedOrder.telefone,
-          customerName: updatedOrder.cliente
-        };
-        
-        console.log(`📤 Enviando status '${newStatus}' para pedido #${updatedOrder.numero} (${updatedOrder.cliente})`);
-        
-        const response = await fetch('/api/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(statusData)
-        });
-        
-        if (response.ok) {
-          console.log(`✅ Status sincronizado com sucesso para #${updatedOrder.numero}`);
-        } else {
-          console.error(`❌ Erro ao sincronizar status para #${updatedOrder.numero}`);
-        }
-        
-        // Atualizar pedidos web se for de origem web
-        if (updatedOrder.source === 'web') {
-          const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-          const updatedWebOrders = webOrders.map((order: any) => 
-            order.customerPhone === updatedOrder.telefone
-              ? { ...order, status: newStatus }
-              : order
-          );
-          localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
-        }
-      } catch (error) {
-        console.error('Erro ao sincronizar status:', error);
-      }
+      // Usar sistema universal de sincronização
+      const { orderSync } = await import('@/lib/order-sync');
+      
+      await orderSync.syncOrderStatus({
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.numero,
+        customerPhone: updatedOrder.telefone,
+        customerName: updatedOrder.cliente,
+        status: newStatus
+      });
       
       // Se o pedido foi finalizado, processar pagamento
       if (newStatus === 'entregue' || newStatus === 'retirado') {
