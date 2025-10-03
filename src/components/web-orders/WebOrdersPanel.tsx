@@ -39,6 +39,19 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   useEffect(() => {
     loadWebOrders();
     
+    // Polling a cada 3 segundos para verificar novos pedidos
+    const interval = setInterval(() => {
+      const currentOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+      const currentCount = webOrders.length;
+      const newCount = currentOrders.length;
+      
+      if (newCount > currentCount) {
+        toast.success('Novo pedido web recebido!');
+      }
+      
+      loadWebOrders();
+    }, 3000);
+    
     const handleNewWebOrder = (event: CustomEvent) => {
       loadWebOrders();
       toast.success('Novo pedido web recebido!');
@@ -47,9 +60,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
     window.addEventListener('newWebOrder', handleNewWebOrder as EventListener);
     
     return () => {
+      clearInterval(interval);
       window.removeEventListener('newWebOrder', handleNewWebOrder as EventListener);
     };
-  }, []);
+  }, [webOrders.length]);
 
   const loadWebOrders = () => {
     const orders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');

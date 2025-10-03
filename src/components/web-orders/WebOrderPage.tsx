@@ -163,9 +163,20 @@ export const WebOrderPage: React.FC = () => {
       existingWebOrders.push(webOrder);
       localStorage.setItem('ccpservices-web-orders', JSON.stringify(existingWebOrders));
 
+      // Forçar atualização imediata
+      localStorage.setItem('ccpservices-web-orders-timestamp', Date.now().toString());
+      
       window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
         detail: { orderId: webOrder.id, status: 'web-pendente' } 
+      }));
+      
+      // Trigger para outros dispositivos via timestamp
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'ccpservices-web-orders',
+        newValue: JSON.stringify(existingWebOrders),
+        oldValue: null,
+        storageArea: localStorage
       }));
 
       toast.success(`Pedido enviado! Código: ${webOrder.id}`);

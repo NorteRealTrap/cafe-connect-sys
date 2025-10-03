@@ -57,18 +57,27 @@ export class RealtimeManager {
       'ccpservices-inventory'
     ];
 
+    const lastChecked = new Map<string, string>();
+
     criticalKeys.forEach(key => {
       const interval = setInterval(() => {
         try {
-          const data = localStorage.getItem(key);
-          if (data) {
-            const parsed = JSON.parse(data);
-            this.broadcast(key, parsed);
+          const timestampKey = `${key}-timestamp`;
+          const currentTimestamp = localStorage.getItem(timestampKey);
+          const lastTimestamp = lastChecked.get(key);
+          
+          if (currentTimestamp && currentTimestamp !== lastTimestamp) {
+            const data = localStorage.getItem(key);
+            if (data) {
+              const parsed = JSON.parse(data);
+              this.broadcast(key, parsed);
+              lastChecked.set(key, currentTimestamp);
+            }
           }
         } catch (error) {
           console.error(`Erro no polling de ${key}:`, error);
         }
-      }, 2000); // A cada 2 segundos
+      }, 1000); // A cada 1 segundo para melhor responsividade
 
       this.pollingIntervals.set(key, interval);
     });
