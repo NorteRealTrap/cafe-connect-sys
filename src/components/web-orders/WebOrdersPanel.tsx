@@ -243,6 +243,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
     const statusMap = {
       'web-pendente': { label: 'Aguardando', variant: 'secondary' as const },
       'aceito': { label: 'Aceito → Pedidos', variant: 'success' as const },
+      'preparando': { label: 'Preparando', variant: 'default' as const },
+      'pronto': { label: 'Pronto', variant: 'default' as const },
+      'saiu-entrega': { label: 'Saiu para Entrega', variant: 'default' as const },
+      'entregue': { label: 'Entregue', variant: 'success' as const },
       'rejeitado': { label: 'Rejeitado', variant: 'destructive' as const }
     };
     

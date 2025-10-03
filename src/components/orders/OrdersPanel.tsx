@@ -165,7 +165,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     toast.success(`Pagamento processado via ${paymentData.method}!`);
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     try {
       const updatedOrder = ordersDatabase.updateOrderStatus(orderId, newStatus);
       
@@ -176,6 +176,21 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
 
       loadOrders();
       toast.success(`Pedido #${updatedOrder.numero} ${newStatus}!`);
+      
+      // Sincronizar status via API
+      try {
+        await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: updatedOrder.id,
+            status: newStatus,
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (error) {
+        console.log('Erro ao sincronizar status');
+      }
       
       // Se o pedido foi finalizado, processar pagamento
       if (newStatus === 'entregue' || newStatus === 'retirado') {
@@ -321,7 +336,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                           Marcar Pronto
                         </Button>
                       )}
-                      {order.status === "pronto" && (
+                      {order.status === "pronto" && order.tipo !== "delivery" && (
                         <Button 
                           size="sm" 
                           variant="pdv"
@@ -330,6 +345,24 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                         >
                           <CreditCard className="h-3 w-3" />
                           Checkout
+                        </Button>
+                      )}
+                      {order.status === "pronto" && order.tipo === "delivery" && (
+                        <Button 
+                          size="sm" 
+                          variant="warning"
+                          onClick={() => updateOrderStatus(order.id, "saiu-entrega")}
+                        >
+                          Saiu para Entrega
+                        </Button>
+                      )}
+                      {order.status === "saiu-entrega" && (
+                        <Button 
+                          size="sm" 
+                          variant="success"
+                          onClick={() => updateOrderStatus(order.id, "entregue")}
+                        >
+                          Confirmar Entrega
                         </Button>
                       )}
                     </div>

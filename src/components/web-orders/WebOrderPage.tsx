@@ -94,6 +94,8 @@ export const WebOrderPage: React.FC = () => {
       case 'preparando':
         return { label: 'Preparando', color: 'bg-blue-500', icon: ChefHat };
       case 'pronto':
+        return { label: 'Pronto', color: 'bg-purple-500', icon: CheckCircle };
+      case 'saiu-entrega':
         return { label: 'Saiu para Entrega', color: 'bg-orange-500', icon: Truck };
       case 'entregue':
         return { label: 'Entregue', color: 'bg-green-500', icon: CheckCircle };

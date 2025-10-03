@@ -127,7 +127,7 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
 
-  const assignDriver = (orderId: string, driverName: string) => {
+  const assignDriver = async (orderId: string, driverName: string) => {
     const updatedDeliveries = deliveries.map(order => 
       order.id === orderId 
         ? { ...order, driver: driverName, status: "saiu_entrega" as const }
@@ -148,18 +148,33 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
       const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
       const updatedOrders = orders.map((order: any) => 
         order.id === (delivery as any).orderId
-          ? { ...order, status: 'pronto', delivery: { ...order.delivery, status: 'saiu_entrega', driver: driverName } }
+          ? { ...order, status: 'saiu-entrega', delivery: { ...order.delivery, status: 'saiu_entrega', driver: driverName } }
           : order
       );
       localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
       
+      // Sincronizar status via API
+      try {
+        await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: (delivery as any).orderId,
+            status: 'saiu-entrega',
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (error) {
+        console.log('Erro ao sincronizar status');
+      }
+      
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
-        detail: { orderId: (delivery as any).orderId, status: 'pronto' } 
+        detail: { orderId: (delivery as any).orderId, status: 'saiu-entrega' } 
       }));
     }
   };
 
-  const completeDelivery = (orderId: string) => {
+  const completeDelivery = async (orderId: string) => {
     const order = deliveries.find(o => o.id === orderId);
     if (!order?.driver) return;
 
@@ -188,6 +203,21 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
           : mainOrder
       );
       localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
+      
+      // Sincronizar status via API
+      try {
+        await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: (order as any).orderId,
+            status: 'entregue',
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (error) {
+        console.log('Erro ao sincronizar status');
+      }
       
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
         detail: { orderId: (order as any).orderId, status: 'entregue' } 
