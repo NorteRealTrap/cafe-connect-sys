@@ -73,8 +73,8 @@ export const QuickActions = ({ onModuleClick }: QuickActionsProps) => {
         </CardHeader>
         <CardContent className="space-y-3">
           <Button 
-            variant="pdv" 
-            className="w-full justify-start"
+            variant="default" 
+            className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setShowNewOrderForm(true)}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -83,7 +83,7 @@ export const QuickActions = ({ onModuleClick }: QuickActionsProps) => {
           
           <Button 
             variant="outline" 
-            className="w-full justify-start"
+            className="w-full justify-start border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={() => setShowNewItemModal(true)}
           >
             <Utensils className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const QuickActions = ({ onModuleClick }: QuickActionsProps) => {
           
           <Button 
             variant="outline" 
-            className="w-full justify-start"
+            className="w-full justify-start border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={() => onModuleClick('pedidos')}
           >
             <Users className="h-4 w-4" />
