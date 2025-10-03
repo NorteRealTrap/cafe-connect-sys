@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, ShoppingCart, MapPin, Phone, User, CheckCircle, Clock, Truck, ChefHat } from 'lucide-react';
 import { useProducts } from '@/hooks/useDatabase';
+import { useAutoSave, usePersistentState } from '@/lib/persistence';
 import { toast } from 'sonner';
 
 interface OrderItem {
@@ -21,14 +22,14 @@ export const WebOrderPage: React.FC = () => {
   const { products } = useProducts();
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
-  const [customerData, setCustomerData] = useState({
+  const { data: customerData, updateField, resetForm } = useAutoSave('web-order-form', {
     name: '',
     phone: '',
     address: '',
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+  const [customerOrders, setCustomerOrders] = usePersistentState<any[]>('customer-orders-history', []);
   const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
@@ -168,6 +169,7 @@ export const WebOrderPage: React.FC = () => {
       setSelectedItems([]);
       setCustomerOrders(prev => [webOrder, ...prev]);
       setShowOrderHistory(true);
+      resetForm();
       
     } catch (error) {
       toast.error('Erro ao enviar pedido. Tente novamente.');
@@ -332,7 +334,7 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="name"
                       value={customerData.name}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => updateField('name', e.target.value)}
                       placeholder="Seu nome completo"
                       className="pl-10"
                     />
@@ -348,7 +350,7 @@ export const WebOrderPage: React.FC = () => {
                       value={customerData.phone}
                       onChange={(e) => {
                         const phone = e.target.value;
-                        setCustomerData(prev => ({ ...prev, phone }));
+                        updateField('phone', phone);
                         if (phone.length >= 10) {
                           setTimeout(loadCustomerOrders, 500);
                         }
@@ -366,7 +368,7 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="address"
                       value={customerData.address}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))}
+                      onChange={(e) => updateField('address', e.target.value)}
                       placeholder="Rua, número, bairro, cidade"
                       className="pl-10"
                     />
@@ -378,7 +380,7 @@ export const WebOrderPage: React.FC = () => {
                   <Input
                     id="notes"
                     value={customerData.notes}
-                    onChange={(e) => setCustomerData(prev => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e) => updateField('notes', e.target.value)}
                     placeholder="Observações sobre o pedido (opcional)"
                   />
                 </div>

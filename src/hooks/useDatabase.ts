@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { db, User, Product, Category, Order, InventoryItem, Table, Payment } from '@/lib/database';
+import { usePersistentState } from '@/lib/persistence';
 
 // Hook para Users
 export const useUsers = () => {
-  const [users, setUsers] = useState<User[]>(() => db.getUsers());
+  const [users, setUsers] = usePersistentState<User[]>('ccpservices-users', []);
 
   useEffect(() => {
     const loadedUsers = db.getUsers();
-    setUsers(loadedUsers);
+    if (loadedUsers.length > 0 && users.length === 0) {
+      setUsers(loadedUsers);
+    }
   }, []);
 
   const addUser = (user: Omit<User, 'id' | 'createdAt'>) => {
@@ -40,11 +43,13 @@ export const useUsers = () => {
 
 // Hook para Products
 export const useProducts = () => {
-  const [products, setProducts] = useState<Product[]>(() => db.getProducts());
+  const [products, setProducts] = usePersistentState<Product[]>('ccpservices-products', []);
 
   useEffect(() => {
     const loadedProducts = db.getProducts();
-    setProducts(loadedProducts);
+    if (loadedProducts.length > 0 && products.length === 0) {
+      setProducts(loadedProducts);
+    }
   }, []);
 
   const addProduct = (product: Omit<Product, 'id' | 'createdAt'>) => {
@@ -119,25 +124,13 @@ export const useCategories = () => {
 
 // Hook para Orders
 export const useOrders = () => {
-  const [orders, setOrders] = useState<Order[]>(() => db.getOrders());
+  const [orders, setOrders] = usePersistentState<Order[]>('cafe-connect-orders', []);
 
   useEffect(() => {
-    // Reload orders from database on mount
     const loadedOrders = db.getOrders();
-    setOrders(loadedOrders);
-  }, []);
-
-  // Listen for storage changes from other tabs/windows
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'ccpservices-orders') {
-        const updatedOrders = db.getOrders();
-        setOrders(updatedOrders);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    if (loadedOrders.length > 0 && orders.length === 0) {
+      setOrders(loadedOrders);
+    }
   }, []);
 
   const addOrder = (order: Omit<Order, 'id' | 'createdAt'>) => {
@@ -176,11 +169,13 @@ export const useOrders = () => {
 
 // Hook para Inventory
 export const useInventory = () => {
-  const [inventory, setInventory] = useState<InventoryItem[]>(() => db.getInventory());
+  const [inventory, setInventory] = usePersistentState<InventoryItem[]>('ccpservices-inventory', []);
 
   useEffect(() => {
     const loadedInventory = db.getInventory();
-    setInventory(loadedInventory);
+    if (loadedInventory.length > 0 && inventory.length === 0) {
+      setInventory(loadedInventory);
+    }
   }, []);
 
   const addInventoryItem = (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
