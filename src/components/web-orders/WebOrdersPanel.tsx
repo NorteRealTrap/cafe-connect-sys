@@ -87,7 +87,7 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         telefone: webOrder.customerPhone,
         endereco: webOrder.customerAddress,
         tipo: 'delivery',
-        status: 'aceito',
+        status: 'preparando',
         itens: webOrder.items.map(item => ({
           id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           nome: item.productName,
@@ -99,7 +99,14 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`,
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
-        source: 'web'
+        source: 'web',
+        delivery: {
+          address: webOrder.customerAddress,
+          phone: webOrder.customerPhone,
+          estimatedTime: webOrder.estimatedTime || 45,
+          status: 'preparando',
+          distance: '0 km'
+        }
       };
       
       // Salvar no localStorage
@@ -118,9 +125,31 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
       );
       localStorage.setItem('ccpservices-web-orders', JSON.stringify(updatedWebOrders));
       
+      // Criar entrada no sistema de delivery
+      const deliveryOrder = {
+        id: `DEL-${nextNumber}`,
+        customer: webOrder.customerName,
+        phone: webOrder.customerPhone,
+        address: webOrder.customerAddress,
+        items: webOrder.items.map(item => `${item.quantity}x ${item.productName}`),
+        total: webOrder.total,
+        status: 'preparando',
+        estimatedTime: `${webOrder.estimatedTime || 45} min`,
+        distance: '0 km',
+        orderId: newOrder.id,
+        createdAt: now.toISOString()
+      };
+      
+      const existingDeliveries = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
+      existingDeliveries.unshift(deliveryOrder);
+      localStorage.setItem('ccpservices-deliveries', JSON.stringify(existingDeliveries));
+      
       // Emitir eventos de tempo real
       window.dispatchEvent(new CustomEvent('dataChanged', { 
         detail: { key: 'cafe-connect-orders', data: existingOrders } 
+      }));
+      window.dispatchEvent(new CustomEvent('dataChanged', { 
+        detail: { key: 'ccpservices-deliveries', data: existingDeliveries } 
       }));
       window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
         detail: { orderId: webOrder.id, status: 'aceito', systemOrderId: nextNumber } 

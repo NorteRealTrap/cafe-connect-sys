@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Truck, MapPin, Clock, Phone, User } from "lucide-react";
+import { useRealtime } from "@/lib/realtime";
 
 interface DeliveryPanelProps {
   onBack: () => void;
@@ -76,8 +77,21 @@ const mockDrivers: Driver[] = [
 ];
 
 export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
-  const [deliveries, setDeliveries] = useState<DeliveryOrder[]>(mockDeliveries);
-  const [drivers, setDrivers] = useState<Driver[]>(mockDrivers);
+  const [deliveries, setDeliveries] = useRealtime<DeliveryOrder[]>('ccpservices-deliveries', mockDeliveries);
+  const [drivers, setDrivers] = useRealtime<Driver[]>('ccpservices-drivers', mockDrivers);
+
+  useEffect(() => {
+    // Carregar deliveries do localStorage se existirem
+    const storedDeliveries = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
+    if (storedDeliveries.length === 0) {
+      setDeliveries(mockDeliveries);
+    }
+    
+    const storedDrivers = JSON.parse(localStorage.getItem('ccpservices-drivers') || '[]');
+    if (storedDrivers.length === 0) {
+      setDrivers(mockDrivers);
+    }
+  }, []);
 
   const getStatusBadge = (status: DeliveryOrder["status"]) => {
     const variants = {
@@ -114,36 +128,71 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
   };
 
   const assignDriver = (orderId: string, driverName: string) => {
-    setDeliveries(deliveries.map(order => 
+    const updatedDeliveries = deliveries.map(order => 
       order.id === orderId 
-        ? { ...order, driver: driverName, status: "saiu_entrega" }
+        ? { ...order, driver: driverName, status: "saiu_entrega" as const }
         : order
-    ));
+    );
+    setDeliveries(updatedDeliveries);
     
-    setDrivers(drivers.map(driver =>
+    const updatedDrivers = drivers.map(driver =>
       driver.name === driverName
-        ? { ...driver, status: "ocupado", currentOrders: driver.currentOrders + 1 }
+        ? { ...driver, status: "ocupado" as const, currentOrders: driver.currentOrders + 1 }
         : driver
-    ));
+    );
+    setDrivers(updatedDrivers);
+    
+    // Atualizar pedido principal se existir
+    const delivery = deliveries.find(d => d.id === orderId);
+    if (delivery && (delivery as any).orderId) {
+      const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+      const updatedOrders = orders.map((order: any) => 
+        order.id === (delivery as any).orderId
+          ? { ...order, status: 'pronto', delivery: { ...order.delivery, status: 'saiu_entrega', driver: driverName } }
+          : order
+      );
+      localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
+      
+      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
+        detail: { orderId: (delivery as any).orderId, status: 'pronto' } 
+      }));
+    }
   };
 
   const completeDelivery = (orderId: string) => {
     const order = deliveries.find(o => o.id === orderId);
     if (!order?.driver) return;
 
-    setDeliveries(deliveries.map(order => 
-      order.id === orderId ? { ...order, status: "entregue" } : order
-    ));
+    const updatedDeliveries = deliveries.map(delivery => 
+      delivery.id === orderId ? { ...delivery, status: "entregue" as const } : delivery
+    );
+    setDeliveries(updatedDeliveries);
 
-    setDrivers(drivers.map(driver =>
+    const updatedDrivers = drivers.map(driver =>
       driver.name === order.driver
         ? { 
             ...driver, 
-            status: "disponivel", 
+            status: "disponivel" as const, 
             currentOrders: Math.max(0, driver.currentOrders - 1) 
           }
         : driver
-    ));
+    );
+    setDrivers(updatedDrivers);
+    
+    // Atualizar pedido principal se existir
+    if ((order as any).orderId) {
+      const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+      const updatedOrders = orders.map((mainOrder: any) => 
+        mainOrder.id === (order as any).orderId
+          ? { ...mainOrder, status: 'entregue', delivery: { ...mainOrder.delivery, status: 'entregue' } }
+          : mainOrder
+      );
+      localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
+      
+      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
+        detail: { orderId: (order as any).orderId, status: 'entregue' } 
+      }));
+    }
   };
 
   const availableDrivers = drivers.filter(d => d.status === "disponivel");
