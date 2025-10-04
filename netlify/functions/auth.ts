@@ -11,7 +11,7 @@ const verifyPassword = (password: string, hash: string): boolean => {
   return hashPassword(password) === hash;
 };
 
-export const handler: Handler = async (event, context) => {
+export const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',

@@ -1,94 +1,151 @@
-# Project Structure & Architecture
+# Project Structure
 
 ## Directory Organization
 
-### Root Level Configuration
-- **package.json**: Main project dependencies and scripts
-- **vite.config.ts**: Vite build configuration
-- **tailwind.config.ts**: Tailwind CSS styling configuration
-- **tsconfig.json**: TypeScript compiler settings
-- **Dockerfile & docker-compose.yml**: Container deployment setup
+### Root Configuration
+- `package.json` - Project dependencies and scripts
+- `vite.config.ts` - Vite build configuration
+- `tsconfig.json` - TypeScript compiler settings
+- `tailwind.config.ts` - Tailwind CSS configuration
+- `netlify.toml` - Netlify deployment configuration
+- `vercel.json` - Vercel deployment configuration
+- `docker-compose.yml` / `Dockerfile` - Container configuration
 
-### Source Code Structure (`/src`)
+### Source Code (`/src`)
 
-#### Core Application
-- **main.tsx**: Application entry point
-- **App.tsx**: Main application component
-- **SimpleApp.tsx**: Simplified application variant
-- **index.css**: Global styles and Tailwind imports
+#### Components (`/src/components`)
+Modular UI components organized by feature domain:
+- `analytics/` - Analytics and reporting components
+- `auth/` - Authentication and login components
+- `business/` - Business management components
+- `categories/` - Product category management
+- `checkout/` - Checkout and payment flow
+- `communication/` - Messaging and notifications
+- `config/` - Configuration management
+- `dashboard/` - Main dashboard views
+- `debug/` - Development and debugging tools
+- `delivery/` - Delivery management
+- `inventory/` - Stock and inventory tracking
+- `menu/` - Menu item management
+- `notifications/` - Notification system
+- `operations/` - Operational tools
+- `orders/` - Order processing and management
+- `payments/` - Payment processing
+- `reports/` - Report generation
+- `settings/` - Application settings
+- `status/` - Status monitoring
+- `tables/` - Table management for dine-in
+- `ui/` - Reusable UI primitives (shadcn-ui)
+- `users/` - User management
+- `web-orders/` - Web order interface
+- `PDVLayout.tsx` - Main POS layout component
 
-#### Components Architecture (`/src/components`)
-Modular component organization by feature domain:
+#### Hooks (`/src/hooks`)
+Custom React hooks for shared logic:
+- `useDatabase.ts` - Database operations hook
+- `use-toast.ts` - Toast notification hook
+- `use-mobile.tsx` - Mobile device detection
 
-**Business Logic Components**
-- `analytics/`: Business metrics and reporting components
-- `business/`: Core business logic and operations
-- `orders/`: Order management and processing
-- `payments/`: Payment processing and transactions
-- `inventory/`: Stock management and tracking
-- `reports/`: Financial and operational reporting
+#### Library (`/src/lib`)
+Core business logic and utilities:
+- `database.ts` - Main database interface
+- `orders-database.ts` - Order-specific database operations
+- `database-reports.ts` - Reporting database queries
+- `auth.ts` - Authentication logic
+- `sync.ts` - Data synchronization
+- `order-sync.ts` - Order synchronization
+- `realtime.ts` - Real-time updates
+- `persistence.ts` - Local data persistence
+- `storage-manager.ts` - Storage management
+- `analytics.ts` - Analytics tracking
+- `financial.ts` - Financial calculations
+- `utils.ts` - General utilities
 
-**User Interface Components**
-- `ui/`: Reusable UI components (buttons, modals, forms)
-- `dashboard/`: Main dashboard and navigation
-- `menu/`: Menu display and management
-- `tables/`: Table management interface
-- `settings/`: Configuration and preferences
+#### Pages (`/src/pages`)
+Top-level page components:
+- `Dashboard.tsx` - Main dashboard page
+- `Index.tsx` - Landing/home page
+- `WebOrder.tsx` - Customer order page
+- `OrderTracking.tsx` - Order tracking page
+- `NotFound.tsx` - 404 error page
 
-**Operational Components**
-- `auth/`: Authentication and authorization
-- `delivery/`: Delivery tracking and management
-- `notifications/`: Alert and messaging system
-- `communication/`: Internal communication tools
+#### Entry Points
+- `main.tsx` - Application entry point
+- `App.tsx` - Main application component
+- `SimpleApp.tsx` - Simplified application variant
+- `index.css` - Global styles
 
-#### Utilities & Services (`/src/lib`)
-- **database.ts**: Core database operations
-- **orders-database.ts**: Order-specific database functions
-- **database-reports.ts**: Reporting database queries
-- **auth.ts**: Authentication services
-- **analytics.ts**: Analytics and tracking
-- **utils.ts**: Common utility functions
+### API (`/api` and `/netlify/functions`)
+Serverless functions for backend operations:
+- `orders.js` - Order API endpoints
+- `status.js` - Status check endpoints
+- `auth.ts` - Authentication endpoints
 
-#### Custom Hooks (`/src/hooks`)
-- **useDatabase.ts**: Database interaction hook
-- **use-toast.ts**: Toast notification management
-- **use-mobile.tsx**: Mobile device detection
+### Public Assets (`/public`)
+Static files served directly:
+- `favicon.ico` - Site icon
+- `placeholder.svg` - Placeholder images
+- `robots.txt` - Search engine directives
 
-#### Pages & Routing (`/src/pages`)
-- **Index.tsx**: Landing/home page
-- **Dashboard.tsx**: Main dashboard interface
-- **NotFound.tsx**: 404 error page
-
-### Deployment & Infrastructure
-
-#### Multi-Platform Deployment
-- **Netlify**: `/netlify` functions and configuration
-- **Vercel**: `.vercel/` deployment settings
-- **Docker**: Container-based deployment option
-
-#### CI/CD Pipeline
-- **GitHub Actions**: `.github/workflows/` for automated builds
-- **Build Scripts**: Automated testing and deployment
+### MCP Server (`/MCPServer`)
+Model Context Protocol server configuration for AI integration
 
 ## Architectural Patterns
 
 ### Component Architecture
 - **Feature-based organization**: Components grouped by business domain
-- **Atomic design principles**: Reusable UI components in `/ui`
+- **Atomic design**: UI components built from primitives (shadcn-ui)
 - **Container/Presenter pattern**: Separation of logic and presentation
 
-### Data Management
-- **Custom hooks**: Centralized data fetching and state management
-- **Local storage**: Offline capability and data persistence
-- **Real-time updates**: Live synchronization across components
+### Data Flow
+- **React Query**: Server state management with caching
+- **Custom hooks**: Encapsulated data access logic
+- **Local-first**: Offline capability with sync
 
-### Routing & Navigation
-- **React Router**: Client-side routing with protected routes
-- **Nested layouts**: Consistent UI structure across pages
-- **Mobile-first navigation**: Responsive design patterns
+### State Management
+- **React hooks**: Local component state
+- **Context API**: Shared application state
+- **Persistence layer**: IndexedDB/LocalStorage for offline data
 
-## Core Relationships
-- **Database Layer** → **Custom Hooks** → **Components** → **Pages**
-- **Authentication** → **Protected Routes** → **Feature Components**
-- **Utilities** → **All Components** (shared functionality)
-- **UI Components** → **Feature Components** (reusable interface elements)
+### Routing
+- **React Router**: Client-side routing
+- **Page-based structure**: Clear page hierarchy
+
+### Styling
+- **Tailwind CSS**: Utility-first styling
+- **CSS Modules**: Component-scoped styles
+- **Theme system**: Dark/light mode support
+
+## Core Component Relationships
+
+```
+App.tsx
+├── PDVLayout.tsx (Main POS Interface)
+│   ├── Dashboard (Analytics & Overview)
+│   ├── OrdersPanel (Order Management)
+│   ├── MenuPanel (Menu Management)
+│   ├── InventoryPanel (Stock Management)
+│   └── SettingsPanel (Configuration)
+├── WebOrder.tsx (Customer Interface)
+└── OrderTracking.tsx (Status Tracking)
+
+Data Layer
+├── useDatabase (Database Hook)
+├── lib/database.ts (Core DB)
+├── lib/orders-database.ts (Orders)
+├── lib/sync.ts (Synchronization)
+└── lib/persistence.ts (Local Storage)
+```
+
+## Build and Deployment
+
+### Development
+- Vite dev server with HMR
+- TypeScript compilation
+- ESLint for code quality
+
+### Production
+- Vite production build
+- Netlify/Vercel deployment
+- Docker containerization support
+- Serverless functions deployment

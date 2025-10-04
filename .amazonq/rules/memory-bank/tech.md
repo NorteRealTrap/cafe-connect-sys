@@ -1,118 +1,122 @@
-# Technology Stack & Development Setup
+# Technology Stack
 
-## Core Technologies
+## Programming Languages
+- **TypeScript 5.2.2** - Primary language for type-safe development
+- **JavaScript (ES Module)** - For serverless functions and configuration
 
-### Frontend Framework
-- **React 18.2.0**: Modern React with hooks and concurrent features
-- **TypeScript 5.2.2**: Type-safe JavaScript development
-- **Vite 5.0.0**: Fast build tool and development server
+## Core Framework
+- **React 18.2.0** - UI library for component-based architecture
+- **React DOM 18.2.0** - React rendering for web
 
-### UI & Styling
-- **Tailwind CSS 3.3.5**: Utility-first CSS framework
-- **shadcn/ui**: High-quality React component library
-- **Radix UI**: Accessible, unstyled UI primitives
-- **Lucide React**: Modern icon library
-- **Tailwind Animate**: CSS animations
+## Build System
+- **Vite 5.0.0** - Fast build tool and dev server
+- **@vitejs/plugin-react 4.1.1** - React integration for Vite
+- **TypeScript Compiler** - Type checking and compilation
 
-### State Management & Data
-- **React Hook Form 7.48.2**: Form handling and validation
-- **Zod 3.22.4**: Schema validation
-- **TanStack Query 5.8.4**: Server state management
-- **Date-fns 2.30.0**: Date manipulation utilities
+## UI Framework and Components
+- **shadcn-ui** - Reusable component library built on Radix UI
+- **Radix UI** - Unstyled, accessible component primitives:
+  - Dialog, Dropdown, Select, Tabs, Toast, Tooltip
+  - Accordion, Alert Dialog, Checkbox, Radio Group
+  - Navigation Menu, Popover, Scroll Area, Slider
+  - And 15+ other primitive components
+- **Lucide React 0.294.0** - Icon library
+- **Vaul 0.7.9** - Drawer component
 
-### Routing & Navigation
-- **React Router DOM 6.20.1**: Client-side routing
-- **React Resizable Panels**: Flexible layout components
+## Styling
+- **Tailwind CSS 3.3.5** - Utility-first CSS framework
+- **tailwindcss-animate 1.0.7** - Animation utilities
+- **tailwind-merge 2.0.0** - Merge Tailwind classes
+- **class-variance-authority 0.7.0** - Component variants
+- **PostCSS 8.4.31** - CSS processing
+- **Autoprefixer 10.4.16** - CSS vendor prefixes
 
-### Development Tools
-- **ESLint 8.53.0**: Code linting and quality
-- **TypeScript ESLint**: TypeScript-specific linting rules
-- **Autoprefixer**: CSS vendor prefixing
-- **PostCSS**: CSS processing
+## State Management and Data Fetching
+- **@tanstack/react-query 5.8.4** - Server state management, caching, and synchronization
+- **React Hook Form 7.48.2** - Form state management
+- **@hookform/resolvers 3.3.2** - Form validation resolvers
+- **Zod 3.22.4** - Schema validation
 
-## Build System & Configuration
+## Routing
+- **React Router DOM 6.20.1** - Client-side routing
 
-### Development Commands
-```bash
-npm run dev      # Start development server
-npm run build    # Production build
-npm run lint     # Code linting
-npm run preview  # Preview production build
-```
+## UI Utilities
+- **cmdk 0.2.0** - Command menu component
+- **date-fns 2.30.0** - Date manipulation
+- **react-day-picker 8.9.1** - Date picker component
+- **embla-carousel-react 8.0.0-rc22** - Carousel component
+- **input-otp 1.2.4** - OTP input component
+- **react-resizable-panels 0.0.55** - Resizable panel layouts
+- **recharts 2.8.0** - Charting library
+- **sonner 1.2.4** - Toast notifications
+- **next-themes 0.2.1** - Theme management (dark/light mode)
+- **clsx 2.0.0** - Conditional class names
 
-### Build Configuration
-- **Vite Config**: Modern build tooling with HMR
-- **TypeScript Config**: Strict type checking enabled
-- **ESLint Config**: React and TypeScript rules
-- **Tailwind Config**: Custom design system configuration
+## Development Tools
+- **ESLint 8.53.0** - Code linting
+- **@typescript-eslint/eslint-plugin 8.38.0** - TypeScript ESLint rules
+- **@typescript-eslint/parser 8.38.0** - TypeScript parser for ESLint
+- **eslint-plugin-react-hooks 4.6.0** - React Hooks linting
+- **eslint-plugin-react-refresh 0.4.4** - React Refresh linting
 
-### Environment Setup
-- **Node.js**: Required runtime (version specified in .nvmrc)
-- **npm**: Package management
-- **Bun**: Alternative package manager (lockfile present)
+## Type Definitions
+- **@types/node 20.9.0** - Node.js type definitions
+- **@types/react 18.2.37** - React type definitions
+- **@types/react-dom 18.2.15** - React DOM type definitions
+- **@types/prop-types 15.7.15** - PropTypes type definitions
 
 ## Deployment Platforms
+- **Netlify** - Primary deployment platform with serverless functions
+- **Vercel** - Alternative deployment platform
+- **Docker** - Containerization support
 
-### Multi-Platform Support
-- **Netlify**: Serverless functions and edge deployment
-- **Vercel**: Edge functions and global CDN
-- **Docker**: Containerized deployment option
+## Database
+- **Neon Database** - PostgreSQL database (via Netlify integration)
+- **IndexedDB/LocalStorage** - Client-side persistence
 
-### Deployment Configuration
-- **netlify.toml**: Netlify-specific build settings
-- **vercel.json**: Vercel deployment configuration
-- **Dockerfile**: Container image definition
-- **docker-compose.yml**: Multi-container orchestration
+## Development Commands
 
-### CI/CD Pipeline
-- **GitHub Actions**: Automated build and deployment workflows
-- **Build Workflows**: `.github/workflows/build.yml`
-- **Deploy Workflows**: `.github/workflows/deploy.yml`
+### Install Dependencies
+```bash
+npm install
+```
 
-## Database & Backend
+### Development Server
+```bash
+npm run dev
+```
+Starts Vite dev server with hot module replacement
 
-### Data Storage
-- **Local Storage**: Client-side data persistence
-- **Netlify Database**: Cloud database integration
-- **Custom Database Layer**: Abstracted data operations
+### Production Build
+```bash
+npm run build
+```
+Creates optimized production build
 
-### Authentication
-- **Custom Auth System**: User authentication and authorization
-- **Netlify Functions**: Serverless authentication endpoints
+### Linting
+```bash
+npm run lint
+```
+Runs ESLint on the codebase
 
-## Development Dependencies
+### Preview Production Build
+```bash
+npm run preview
+```
+Preview production build locally
 
-### Type Definitions
-- **@types/react**: React type definitions
-- **@types/react-dom**: React DOM type definitions
-- **@types/node**: Node.js type definitions
+## Node Version
+- **Node.js** - Specified in `.nvmrc` file
+- **Package Manager** - npm (package-lock.json present)
 
-### Build Tools
-- **@vitejs/plugin-react**: Vite React plugin
-- **autoprefixer**: CSS vendor prefixing
-- **postcss**: CSS processing pipeline
-
-### Code Quality
-- **eslint-plugin-react-hooks**: React hooks linting
-- **eslint-plugin-react-refresh**: React refresh linting
-- **@typescript-eslint/parser**: TypeScript ESLint parser
-
-## Component Libraries
-
-### UI Components
-- **@radix-ui/react-***: Complete set of accessible UI primitives
-- **cmdk**: Command palette component
-- **sonner**: Toast notifications
-- **vaul**: Drawer/modal components
-- **embla-carousel-react**: Carousel components
-
-### Form & Input
-- **react-hook-form**: Form state management
-- **@hookform/resolvers**: Form validation resolvers
-- **input-otp**: OTP input component
-- **react-day-picker**: Date picker component
-
-### Data Visualization
-- **recharts**: Chart and graph components
-- **class-variance-authority**: Component variant management
-- **clsx**: Conditional className utility
+## Configuration Files
+- `vite.config.ts` - Vite configuration
+- `tsconfig.json` - TypeScript base configuration
+- `tsconfig.app.json` - App-specific TypeScript config
+- `tsconfig.node.json` - Node-specific TypeScript config
+- `tailwind.config.ts` - Tailwind CSS configuration
+- `postcss.config.js` - PostCSS configuration
+- `components.json` - shadcn-ui component configuration
+- `.eslintrc.cjs` - ESLint configuration
+- `netlify.toml` - Netlify deployment configuration
+- `vercel.json` - Vercel deployment configuration

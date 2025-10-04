@@ -1,48 +1,61 @@
-# Cafe Connect System - Product Overview
+# Product Overview
 
 ## Project Purpose
-Cafe Connect System (CCP Services PDV) is a comprehensive Point of Sale (POS) and restaurant management system designed for cafes and food service establishments. It provides a complete digital solution for order management, inventory tracking, payment processing, and business analytics.
+Cafe Connect System (CCP Services PDV) is a comprehensive Point of Sale (POS) and restaurant management system designed for cafes and food service businesses. It provides a complete solution for order management, inventory tracking, payment processing, and business analytics.
 
-## Key Features & Capabilities
+## Key Features and Capabilities
 
-### Core POS Functionality
-- **Order Management**: Complete order lifecycle from creation to fulfillment
-- **Menu Management**: Dynamic menu configuration with categories and items
-- **Payment Processing**: Multiple payment methods and transaction handling
-- **Table Management**: Table assignment and status tracking
-- **Inventory Control**: Real-time stock tracking and management
+### Order Management
+- Real-time order processing and tracking
+- Web-based order placement for customers
+- Order status monitoring and updates
+- Multi-channel order synchronization
+- Table management for dine-in service
 
 ### Business Operations
-- **Dashboard Analytics**: Comprehensive business metrics and KPIs
-- **Financial Reports**: Revenue tracking, profit analysis, and financial insights
-- **User Management**: Role-based access control for staff and administrators
-- **Delivery Integration**: Order delivery tracking and management
-- **Communication Tools**: Internal messaging and notification systems
+- Inventory management and tracking
+- Menu and category management
+- User and staff management
+- Delivery coordination
+- Payment processing integration
+
+### Analytics and Reporting
+- Financial reporting and analytics
+- Sales performance tracking
+- Business intelligence dashboard
+- Real-time operational metrics
+
+### Communication
+- Customer notifications
+- Order status updates
+- Internal communication tools
 
 ### Technical Features
-- **Real-time Updates**: Live synchronization across all system components
-- **Mobile Responsive**: Optimized for tablets and mobile devices
-- **Offline Capability**: Local storage for continued operation during connectivity issues
-- **Multi-deployment**: Support for Netlify, Vercel, and Docker deployments
+- Offline-first architecture with local persistence
+- Real-time data synchronization
+- Database integration (Neon/Netlify)
+- Authentication and authorization
+- Responsive design for multiple devices
 
 ## Target Users
 
 ### Primary Users
-- **Cafe Owners**: Complete business management and oversight
-- **Restaurant Managers**: Daily operations and staff coordination
-- **Cashiers/Staff**: Order processing and customer service
-- **Kitchen Staff**: Order fulfillment and inventory management
+- Cafe and restaurant owners
+- Restaurant managers
+- POS operators and cashiers
+- Kitchen staff
+- Delivery personnel
 
-### Use Cases
-- Small to medium-sized cafes and restaurants
-- Food trucks and mobile food services
-- Quick-service restaurants
-- Coffee shops and bakeries
-- Multi-location restaurant chains
+### Secondary Users
+- Customers placing web orders
+- Business analysts reviewing reports
+- System administrators
 
-## Value Proposition
-- Streamlined operations with integrated POS and management tools
-- Real-time business insights for data-driven decisions
-- Reduced operational costs through automation
-- Enhanced customer experience with faster service
-- Scalable solution that grows with the business
+## Use Cases
+
+1. **In-Store Operations**: Process orders, manage tables, handle payments at physical location
+2. **Online Ordering**: Accept and manage web-based customer orders
+3. **Inventory Control**: Track stock levels, manage suppliers, prevent shortages
+4. **Financial Management**: Monitor sales, generate reports, analyze business performance
+5. **Multi-Location Management**: Coordinate operations across multiple business locations
+6. **Customer Service**: Track order status, manage delivery, handle customer communications
