@@ -13,6 +13,8 @@ import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
 import { InventoryPanel } from "@/components/inventory/InventoryPanel";
 import { StatusPanel } from "@/components/status/StatusPanel";
 import { WebOrdersPanel } from "@/components/web-orders/WebOrdersPanel";
+import { DeliveryPanel } from "@/components/delivery/DeliveryPanel";
+import { CommunicationPanel } from "@/components/communication/CommunicationPanel";
 
 import { UserRole } from "@/components/auth/LoginForm";
 
@@ -57,6 +59,10 @@ export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardPro
         return <InventoryPanel onBack={handleBackToDashboard} />;
       case "status":
         return <WebOrdersPanel onBack={handleBackToDashboard} />;
+      case "delivery":
+        return <DeliveryPanel onBack={handleBackToDashboard} />;
+      case "comunicacao":
+        return <CommunicationPanel onBack={handleBackToDashboard} />;
       case "debug":
         return (
           <div className="p-6">

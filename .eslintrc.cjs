@@ -4,7 +4,7 @@ module.exports = {
   extends: [
     'eslint:recommended',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'netlify', 'api'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'api'],
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module'

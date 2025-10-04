@@ -72,21 +72,27 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 
-## Deploy Status Badge
+## Deployment
 
-This badge is automatically updated to reflect the current state of your latest production deployment. To create a status badge for a deployed branch, add the `?branch=` query parameter to the badge URL. You can use the markup snippet below to add it to your project README.
+This project is deployed on **Vercel**.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/1c11048c-32c2-4d0b-af13-a7e5cfee318a/deploy-status)](https://app.netlify.com/projects/helpful-stroopwafel-3176a2/deploys)
+### Environment Variables
 
-## Using Neon Database with Netlify
+Configure these variables in your Vercel project settings:
 
-To fetch data from your Neon database directly using the `@netlify/neon` package, you can use the following query:
-
-```javascript
-import { neon } from '@netlify/neon';
-
-const sql = neon(); // automatically uses env NETLIFY_DATABASE_URL
-const [post] = await sql`SELECT * FROM posts WHERE id = ${postId}`;
+```env
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_ACCESS_TOKEN=
+WEBHOOK_VERIFY_TOKEN=
+INSTAGRAM_PAGE_ID=
+INSTAGRAM_ACCESS_TOKEN=
+DATABASE_URL=
 ```
 
-Ensure that the `NETLIFY_DATABASE_URL` environment variable is properly configured in your Netlify project settings.
+### API Routes
+
+Serverless functions are located in `/api` directory:
+- `/api/orders` - Order management
+- `/api/status` - Order status sync
+- `/api/auth` - Authentication
+- `/api/webhook` - WhatsApp/Instagram webhooks
