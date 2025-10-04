@@ -15,6 +15,7 @@ import { StatusPanel } from "@/components/status/StatusPanel";
 import { WebOrdersPanel } from "@/components/web-orders/WebOrdersPanel";
 import { DeliveryPanel } from "@/components/delivery/DeliveryPanel";
 import { CommunicationPanel } from "@/components/communication/CommunicationPanel";
+import { DatabaseStatusPanel } from "@/components/debug/DatabaseStatus";
 
 import { UserRole } from "@/components/auth/LoginForm";
 
@@ -22,6 +23,10 @@ interface DashboardProps {
   userRole: UserRole;
   businessCategory?: any;
   onLogout: () => void;
+}
+
+interface DatabaseStatusPanelProps {
+  onBack: () => void;
 }
 
 type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios" | "debug";
@@ -64,19 +69,7 @@ export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardPro
       case "comunicacao":
         return <CommunicationPanel onBack={handleBackToDashboard} />;
       case "debug":
-        return (
-          <div className="p-6">
-            <DatabaseStatus />
-            <div className="mt-6">
-              <button 
-                onClick={handleBackToDashboard}
-                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Voltar ao Dashboard
-              </button>
-            </div>
-          </div>
-        );
+        return <DatabaseStatusPanel onBack={handleBackToDashboard} />;
       case "dashboard":
       default:
         return <DashboardGrid userRole={userRole} onModuleClick={handleModuleClick} />;
