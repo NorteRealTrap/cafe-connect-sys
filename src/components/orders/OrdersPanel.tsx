@@ -7,7 +7,7 @@ import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
 import { Clock, MapPin, Home, Package, Plus, AlertTriangle, CreditCard } from "lucide-react";
 import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
-import { CheckoutModal } from "@/components/checkout/CheckoutModal";
+import { AdvancedCheckout } from "@/components/checkout/AdvancedCheckout";
 import { ordersDatabase, Order } from "@/lib/orders-database";
 import { toast } from "sonner";
 
@@ -179,17 +179,36 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     setShowCheckout(true);
   };
 
-  const handlePaymentComplete = (orderId: string, paymentData: any) => {
+  const handlePaymentComplete = async (orderId: string, paymentData: any) => {
     // Atualizar status do pedido para entregue/retirado
     const order = orders.find(o => o.numero.toString() === orderId);
     if (order) {
       const finalStatus = order.tipo === 'delivery' ? 'entregue' : order.tipo === 'retirada' ? 'retirado' : 'entregue';
       updateOrderStatus(order.id, finalStatus as OrderStatus);
+      
+      // Registrar pagamento
+      const { paymentProcessor } = await import('@/lib/payment-processor');
+      paymentProcessor.processPayment({
+        orderId: order.id,
+        orderNumber: order.numero.toString(),
+        customerName: order.cliente,
+        subtotal: paymentData.subtotal || order.total,
+        discount: paymentData.discount || 0,
+        discountType: paymentData.discountType || 'value',
+        finalTotal: paymentData.finalTotal || order.total,
+        payments: paymentData.payments || [{ method: paymentData.method, amount: order.total }],
+        change: paymentData.change,
+        receivedAmount: paymentData.receivedAmount
+      });
     }
     
     setShowCheckout(false);
     setCheckoutOrder(null);
-    toast.success(`Pagamento processado via ${paymentData.method}!`);
+    
+    const methods = paymentData.payments 
+      ? paymentData.payments.map((p: any) => p.method).join(', ')
+      : paymentData.method;
+    toast.success(`Pagamento processado: ${methods}`);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
@@ -424,7 +443,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         </div>
       )}
       
-      <CheckoutModal
+      <AdvancedCheckout
         open={showCheckout}
         onClose={() => {
           setShowCheckout(false);
