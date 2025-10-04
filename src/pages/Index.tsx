@@ -49,6 +49,12 @@ const Index = () => {
   }, []);
 
   const handleLogin = (credentials: { email: string; password: string; role: string }) => {
+    const session = {
+      role: credentials.role,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('ccpservices-session', JSON.stringify(session));
+    localStorage.setItem('current-user-id', credentials.email);
     setUser({ role: credentials.role as UserRole });
   };
 
@@ -69,7 +75,9 @@ const Index = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('ccpservices-session');
+    localStorage.removeItem('current-user-id');
     setUser(null);
+    setBusinessCategory(null);
   };
 
   if (loading) {
