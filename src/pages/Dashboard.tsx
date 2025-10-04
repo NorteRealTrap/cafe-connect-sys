@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PDVLayout } from "@/components/PDVLayout";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
@@ -32,7 +32,14 @@ interface DatabaseStatusPanelProps {
 type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios" | "debug";
 
 export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardProps) => {
-  const [activeModule, setActiveModule] = useState<ActiveModule>("dashboard");
+  const [activeModule, setActiveModule] = useState<ActiveModule>(() => {
+    const saved = localStorage.getItem('ccpservices-active-module');
+    return (saved as ActiveModule) || "dashboard";
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ccpservices-active-module', activeModule);
+  }, [activeModule]);
 
   const handleModuleClick = (moduleId: string) => {
     setActiveModule(moduleId as ActiveModule);
