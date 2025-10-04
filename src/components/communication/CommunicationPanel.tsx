@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, MessageSquare, Instagram, Phone, Mail, Send } from "lucide-react";
+import { ArrowLeft, MessageSquare, Instagram, Phone, Mail, Send, Settings } from "lucide-react";
+import { MessagingSetup } from "./MessagingSetup";
+import { credentialsManager } from "@/lib/multi-tenant-messaging";
 
 interface CommunicationPanelProps {
   onBack: () => void;
@@ -49,6 +51,13 @@ export const CommunicationPanel = ({ onBack }: CommunicationPanelProps) => {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newMessage, setNewMessage] = useState("");
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+  const userId = localStorage.getItem('current-user-id') || 'default-user';
+  const hasCredentials = credentialsManager.hasCredentials(userId);
+
+  if (showSetup) {
+    return <MessagingSetup userId={userId} onBack={() => setShowSetup(false)} />;
+  }
 
   const getPlatformIcon = (platform: Message["platform"]) => {
     const icons = {
@@ -109,13 +118,38 @@ export const CommunicationPanel = ({ onBack }: CommunicationPanelProps) => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold">Central de Comunicação</h1>
+        </div>
+        <Button variant="outline" onClick={() => setShowSetup(true)}>
+          <Settings className="h-4 w-4 mr-2" />
+          Configurar Canais
         </Button>
-        <h1 className="text-2xl font-bold">Central de Comunicação</h1>
       </div>
+
+      {!hasCredentials && (
+        <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Settings className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-yellow-900 dark:text-yellow-100">Configure seus canais de comunicação</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  Para enviar e receber mensagens, você precisa configurar suas credenciais do WhatsApp e Instagram.
+                </p>
+                <Button size="sm" className="mt-3" onClick={() => setShowSetup(true)}>
+                  Configurar Agora
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>

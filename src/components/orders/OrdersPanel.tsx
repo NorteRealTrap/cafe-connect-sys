@@ -215,6 +215,20 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         status: newStatus
       });
       
+      // Enviar notificação WhatsApp se configurado
+      try {
+        const { multiTenantNotifications } = await import('@/lib/multi-tenant-messaging');
+        const userId = localStorage.getItem('current-user-id') || 'default-user';
+        await multiTenantNotifications.notifyOrderStatus(
+          userId,
+          updatedOrder.telefone,
+          updatedOrder.numero.toString(),
+          newStatus
+        );
+      } catch (error) {
+        console.log('Notificação WhatsApp não enviada:', error);
+      }
+      
       // Se o pedido foi finalizado, processar pagamento
       if (newStatus === 'entregue' || newStatus === 'retirado') {
         (async () => {
