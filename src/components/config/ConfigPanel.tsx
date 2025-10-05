@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Settings, Store, Bell, Shield, Palette, Database, Globe } from "lucide-react";
 import { UserRole } from "@/components/auth/LoginForm";
 import { DomainSettings } from "@/components/settings/DomainSettings";
+import { CacheDiagnostics } from "@/components/debug/CacheDiagnostics";
 
 interface ConfigPanelProps {
   onBack: () => void;
@@ -89,16 +90,21 @@ export const ConfigPanel = ({ onBack }: ConfigPanelProps) => {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="dominios">Domínios</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
+          <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           <TabsTrigger value="aparencia">Aparência</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dominios" className="space-y-4">
           <DomainSettings />
+        </TabsContent>
+
+        <TabsContent value="diagnostico" className="space-y-4">
+          <CacheDiagnostics />
         </TabsContent>
 
         <TabsContent value="geral" className="space-y-4">

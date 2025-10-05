@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OrderStatusBadge, OrderStatus } from "./OrderStatus";
-import { Clock, MapPin, Home, Package, Plus, AlertTriangle, CreditCard } from "lucide-react";
+import { Clock, MapPin, Home, Package, Plus, AlertTriangle, CreditCard, RefreshCw } from "lucide-react";
 import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
 import { AdvancedCheckout } from "@/components/checkout/AdvancedCheckout";
 import { ordersDatabase, Order } from "@/lib/orders-database";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
+import { cacheCleaner } from "@/lib/cache-cleaner";
 
 
 
@@ -26,6 +27,8 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutOrder, setCheckoutOrder] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Atalhos de teclado
   useKeyboardShortcuts([
@@ -59,23 +62,51 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   ]);
 
   useEffect(() => {
-    try {
-      loadOrders();
-    } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
-    }
+    initializeOrders();
   }, []);
 
-  const loadOrders = () => {
+  const initializeOrders = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Validar localStorage antes de carregar
+      cacheCleaner.validateAndFixLocalStorage();
+      
+      // Carregar pedidos
+      await loadOrders();
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Erro ao inicializar pedidos:', error);
+      setError('Erro ao carregar pedidos. Clique em "Limpar Cache" para tentar novamente.');
+      setIsLoading(false);
+      setOrders([]);
+      setStats({ total: 0, today: 0, active: 0, completed: 0 });
+    }
+  };
+
+  const loadOrders = async () => {
     try {
       const allOrders = ordersDatabase.getAllOrders();
       const orderStats = ordersDatabase.getOrdersStats();
       setOrders(allOrders);
       setStats(orderStats);
+      setError(null);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
-      setOrders([]);
-      setStats({ total: 0, today: 0, active: 0, completed: 0 });
+      throw error;
+    }
+  };
+
+  const handleClearCache = async () => {
+    try {
+      await cacheCleaner.fullCleanup();
+      toast.success('Cache limpo com sucesso!');
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao limpar cache:', error);
+      toast.error('Erro ao limpar cache');
     }
   };
 
@@ -215,6 +246,52 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     }
   };
 
+  // Mostrar erro se houver
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <Card className="p-12 text-center border-destructive">
+          <div className="flex flex-col items-center gap-4">
+            <AlertTriangle className="h-16 w-16 text-destructive" />
+            <div>
+              <h3 className="text-lg font-semibold">Erro ao Carregar Pedidos</h3>
+              <p className="text-sm text-muted-foreground mt-2">{error}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="destructive" onClick={handleClearCache}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Limpar Cache
+              </Button>
+              <Button variant="outline" onClick={initializeOrders}>
+                Tentar Novamente
+              </Button>
+              <Button variant="outline" onClick={onBack}>
+                Voltar
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Mostrar loading
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <Card className="p-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <RefreshCw className="h-16 w-16 text-muted-foreground animate-spin" />
+            <div>
+              <h3 className="text-lg font-semibold">Carregando Pedidos...</h3>
+              <p className="text-sm text-muted-foreground mt-1">Aguarde um momento</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -231,6 +308,9 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           )}
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={loadOrders} title="Atualizar">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
           <Button variant="outline" onClick={() => setShowHistoryPanel(true)}>
             Histórico
           </Button>
