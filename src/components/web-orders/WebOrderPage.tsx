@@ -76,10 +76,25 @@ export const WebOrderPage: React.FC = () => {
     const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
     const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
     
-    const allOrders = [...webOrders, ...mainOrders.filter((o: any) => o.source === 'web')];
-    const phoneOrders = allOrders.filter((order: any) => 
-      order.customerPhone === customerData.phone
-    ).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Criar mapa de pedidos únicos por ID
+    const ordersMap = new Map();
+    
+    // Adicionar pedidos web
+    webOrders.forEach((order: any) => {
+      if (order.customerPhone === customerData.phone || order.telefone === customerData.phone) {
+        ordersMap.set(order.id, order);
+      }
+    });
+    
+    // Adicionar pedidos principais (sobrescreve se já existir)
+    mainOrders.forEach((order: any) => {
+      if ((order.customerPhone === customerData.phone || order.telefone === customerData.phone) && order.source === 'web') {
+        ordersMap.set(order.id, order);
+      }
+    });
+    
+    const phoneOrders = Array.from(ordersMap.values())
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     
     setCustomerOrders(phoneOrders);
     if (phoneOrders.length > 0) setShowOrderHistory(true);
@@ -249,6 +264,8 @@ export const WebOrderPage: React.FC = () => {
                     {customerOrders.slice(0, 3).map((order) => {
                       const statusInfo = getStatusInfo(order.status);
                       const StatusIcon = statusInfo.icon;
+                      const itemCount = order.items?.length || order.itens?.length || 0;
+                      const orderTime = order.orderTime || new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                       return (
                         <div key={order.id} className="flex items-center justify-between p-3 border rounded">
                           <div className="flex-1">
@@ -260,12 +277,12 @@ export const WebOrderPage: React.FC = () => {
                               </div>
                             </div>
                             <p className="text-xs text-gray-600">
-                              {order.items?.length || 0} itens • R$ {order.total.toFixed(2)} • {order.orderTime}
+                              {itemCount} {itemCount === 1 ? 'item' : 'itens'} • R$ {order.total.toFixed(2)} • {orderTime}
                             </p>
                           </div>
                         </div>
                       );
-                    })}
+                    })
                   </div>
                 </CardContent>
               </Card>
