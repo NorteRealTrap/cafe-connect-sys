@@ -2,18 +2,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/components/auth/LoginForm";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Bell, Settings } from "lucide-react";
+import { LogOut, Bell, Settings, UserCog } from "lucide-react";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardHeaderProps {
   userRole: UserRole;
   onLogout: () => void;
+  onRoleChange?: (role: UserRole) => void;
   onNotifications?: () => void;
   onSettings?: () => void;
 }
 
-export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ userRole, onLogout, onRoleChange }: DashboardHeaderProps) => {
+  const currentUser = localStorage.getItem('current-user-id') || '';
+  const isSuperAdmin = currentUser === 'admin@cafeconnect.com';
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const getRoleBadgeVariant = (role: UserRole) => {
@@ -37,9 +41,25 @@ export const DashboardHeader = ({ userRole, onLogout }: DashboardHeaderProps) =>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-foreground">CCPServices</h1>
-          <Badge variant={getRoleBadgeVariant(userRole)}>
-            {getRoleLabel(userRole)}
-          </Badge>
+          {isSuperAdmin ? (
+            <div className="flex items-center gap-2">
+              <UserCog className="h-4 w-4 text-muted-foreground" />
+              <Select value={userRole} onValueChange={(value: UserRole) => onRoleChange?.(value)}>
+                <SelectTrigger className="w-[180px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="caixa">Operador de Caixa</SelectItem>
+                  <SelectItem value="atendente">Atendente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <Badge variant={getRoleBadgeVariant(userRole)}>
+              {getRoleLabel(userRole)}
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

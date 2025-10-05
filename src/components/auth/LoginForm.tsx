@@ -39,10 +39,13 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
       }
       
       // Validar credenciais
+      // Super admin pode acessar com qualquer role
+      const isSuperAdmin = email.toLowerCase().trim() === 'admin@cafeconnect.com';
+      
       const user = users.find(u => 
         u.email.toLowerCase() === email.toLowerCase().trim() && 
         u.password === password &&
-        u.role === role &&
+        (isSuperAdmin || u.role === role) &&
         u.status === 'ativo'
       );
       

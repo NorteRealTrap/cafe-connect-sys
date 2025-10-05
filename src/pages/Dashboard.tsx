@@ -31,7 +31,8 @@ interface DatabaseStatusPanelProps {
 
 type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos" | "status" | "estoque" | "relatorios" | "comunicacao" | "categorias" | "delivery" | "operacoes" | "configuracoes" | "usuarios" | "debug";
 
-export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardProps) => {
+export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }: DashboardProps) => {
+  const [userRole, setUserRole] = useState<UserRole>(initialRole);
   const [activeModule, setActiveModule] = useState<ActiveModule>(() => {
     const saved = localStorage.getItem('ccpservices-active-module');
     return (saved as ActiveModule) || "dashboard";
@@ -46,6 +47,14 @@ export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardPro
   };
 
   const handleBackToDashboard = () => {
+    setActiveModule("dashboard");
+  };
+
+  const handleRoleChange = (newRole: UserRole) => {
+    setUserRole(newRole);
+    const session = JSON.parse(localStorage.getItem('ccpservices-session') || '{}');
+    session.role = newRole;
+    localStorage.setItem('ccpservices-session', JSON.stringify(session));
     setActiveModule("dashboard");
   };
 
@@ -85,7 +94,7 @@ export const Dashboard = ({ userRole, businessCategory, onLogout }: DashboardPro
 
   return (
     <PDVLayout>
-      <DashboardHeader userRole={userRole} onLogout={onLogout} />
+      <DashboardHeader userRole={userRole} onLogout={onLogout} onRoleChange={handleRoleChange} />
       {renderContent()}
     </PDVLayout>
   );
