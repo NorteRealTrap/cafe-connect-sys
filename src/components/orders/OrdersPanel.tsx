@@ -59,10 +59,16 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   }, []);
 
   const loadOrders = () => {
-    const allOrders = ordersDatabase.getAllOrders();
-    const orderStats = ordersDatabase.getOrdersStats();
-    setOrders(allOrders);
-    setStats(orderStats);
+    try {
+      const allOrders = ordersDatabase.getAllOrders();
+      const orderStats = ordersDatabase.getOrdersStats();
+      setOrders(allOrders);
+      setStats(orderStats);
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+      setOrders([]);
+      setStats({ total: 0, today: 0, active: 0, completed: 0 });
+    }
   };
 
   const getTimeElapsed = (createdAt: Date): string => {
@@ -88,7 +94,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     }
 
     try {
-      const orderData = {
+      const newOrderData = {
         tipo: orderData.tipo,
         mesa: orderData.mesa,
         endereco: orderData.endereco,
@@ -105,7 +111,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         observacoes: orderData.observacoes
       };
       
-      const newOrder = ordersDatabase.createOrder(orderData);
+      const newOrder = ordersDatabase.createOrder(newOrderData);
       integrationHub.syncOrder(newOrder);
 
       loadOrders();
@@ -337,6 +343,23 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         </TabsList>
 
         <TabsContent value={selectedTab} className="space-y-4">
+          {getFilteredOrders().length === 0 ? (
+            <Card className="p-12 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <Package className="h-16 w-16 text-muted-foreground" />
+                <div>
+                  <h3 className="text-lg font-semibold">Nenhum pedido encontrado</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Clique em "Novo Pedido" para criar o primeiro pedido
+                  </p>
+                </div>
+                <Button variant="pdv" onClick={() => setShowNewOrderForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeiro Pedido
+                </Button>
+              </div>
+            </Card>
+          ) : (
           <div className="grid gap-4">
             {getFilteredOrders().map((order) => (
               <Card key={order.id} className="hover:shadow-md transition-shadow">
@@ -431,6 +454,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
               </Card>
             ))}
           </div>
+          )}
         </TabsContent>
       </Tabs>
       
