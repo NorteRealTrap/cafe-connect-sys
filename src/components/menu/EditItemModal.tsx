@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ImageUpload } from "./ImageUpload";
 import type { Product } from "@/lib/database";
 
 interface EditItemModalProps {
@@ -21,6 +22,7 @@ export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProp
     description: "",
     price: 0,
     category: "Bebidas",
+    image: undefined as string | undefined,
     available: true,
     featured: false
   });
@@ -32,6 +34,7 @@ export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProp
         description: item.description,
         price: item.price,
         category: item.category,
+        image: item.image,
         available: item.available,
         featured: item.featured
       });
@@ -52,6 +55,7 @@ export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProp
       description: "",
       price: 0,
       category: "Bebidas",
+      image: undefined,
       available: true,
       featured: false
     });
@@ -86,6 +90,11 @@ export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProp
               rows={3}
             />
           </div>
+
+          <ImageUpload
+            value={formData.image}
+            onChange={(image) => setFormData(prev => ({ ...prev, image }))}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

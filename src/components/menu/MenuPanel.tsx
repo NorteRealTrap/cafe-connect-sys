@@ -119,7 +119,16 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
         <TabsContent value={selectedCategory} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {getFilteredItems().map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow">
+              <Card key={item.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                {item.image && (
+                  <div className="w-full h-48 overflow-hidden">
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">

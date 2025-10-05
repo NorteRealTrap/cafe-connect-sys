@@ -308,7 +308,14 @@ export const WebOrderPage: React.FC = () => {
                 <TabsContent value={selectedCategory}>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
                     {getFilteredProducts().map((product) => (
-                      <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <div key={product.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                        {product.image && (
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-20 h-20 object-cover rounded-lg"
+                          />
+                        )}
                         <div className="flex-1">
                           <h3 className="font-medium">{product.name}</h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400">{product.description}</p>

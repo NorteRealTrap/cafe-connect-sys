@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { ImageUpload } from "./ImageUpload";
 
 interface NewItemModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface NewItemModalProps {
     description: string;
     price: number;
     category: string;
+    image?: string;
     available: boolean;
     featured: boolean;
   }) => void;
@@ -26,6 +28,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
     description: "",
     price: 0,
     category: "Bebidas",
+    image: undefined as string | undefined,
     available: true,
     featured: false
   });
@@ -40,6 +43,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
       description: "",
       price: 0,
       category: "Bebidas",
+      image: undefined,
       available: true,
       featured: false
     });
@@ -52,6 +56,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
       description: "",
       price: 0,
       category: "Bebidas",
+      image: undefined,
       available: true,
       featured: false
     });
@@ -86,6 +91,11 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
               rows={3}
             />
           </div>
+
+          <ImageUpload
+            value={formData.image}
+            onChange={(image) => setFormData(prev => ({ ...prev, image }))}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
