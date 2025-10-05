@@ -64,8 +64,10 @@ export const useProducts = () => {
       setProducts(updatedProducts);
       db.saveProducts(updatedProducts);
       console.log('Produto adicionado:', newProduct.name);
+      return newProduct;
     } catch (error) {
       console.error('Erro ao adicionar produto:', error);
+      throw error;
     }
   };
 
@@ -75,6 +77,7 @@ export const useProducts = () => {
     );
     setProducts(updatedProducts);
     db.saveProducts(updatedProducts);
+    return updatedProducts.find(p => p.id === id);
   };
 
   const deleteProduct = (id: string) => {

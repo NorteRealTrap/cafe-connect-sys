@@ -9,6 +9,7 @@ import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
 import { AdvancedCheckout } from "@/components/checkout/AdvancedCheckout";
 import { ordersDatabase, Order } from "@/lib/orders-database";
+import { integrationHub } from "@/lib/integration-hub";
 import { toast } from "sonner";
 
 
@@ -87,7 +88,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     }
 
     try {
-      const newOrder = ordersDatabase.createOrder({
+      const orderData = {
         tipo: orderData.tipo,
         mesa: orderData.mesa,
         endereco: orderData.endereco,
@@ -102,7 +103,10 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         })),
         total: orderData.total,
         observacoes: orderData.observacoes
-      });
+      };
+      
+      const newOrder = ordersDatabase.createOrder(orderData);
+      integrationHub.syncOrder(newOrder);
 
       loadOrders();
       toast.success(`Pedido #${newOrder.numero} criado com sucesso!`);
