@@ -9,6 +9,7 @@ import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
 import { AdvancedCheckout } from "@/components/checkout/AdvancedCheckout";
 import { ordersDatabase, Order } from "@/lib/orders-database";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { toast } from "sonner";
 
 
@@ -25,6 +26,37 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [checkoutOrder, setCheckoutOrder] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+
+  // Atalhos de teclado
+  useKeyboardShortcuts([
+    {
+      key: 'n',
+      ctrl: true,
+      action: () => setShowNewOrderForm(true),
+      description: 'Novo Pedido'
+    },
+    {
+      key: 'h',
+      ctrl: true,
+      action: () => setShowHistoryPanel(true),
+      description: 'Histórico'
+    },
+    {
+      key: 'Escape',
+      action: () => {
+        if (showNewOrderForm) setShowNewOrderForm(false);
+        else if (showHistoryPanel) setShowHistoryPanel(false);
+        else if (showCheckout) setShowCheckout(false);
+        else onBack();
+      },
+      description: 'Fechar/Voltar'
+    },
+    {
+      key: 'F5',
+      action: () => loadOrders(),
+      description: 'Atualizar'
+    }
+  ]);
 
   useEffect(() => {
     try {

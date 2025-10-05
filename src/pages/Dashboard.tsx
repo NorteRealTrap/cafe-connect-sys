@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { PDVLayout } from "@/components/PDVLayout";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
 import { OrdersPanel } from "@/components/orders/OrdersPanel";
@@ -38,6 +39,38 @@ export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }:
     const saved = localStorage.getItem('ccpservices-active-module');
     return (saved as ActiveModule) || "dashboard";
   });
+
+  // Atalhos de teclado globais
+  useKeyboardShortcuts([
+    {
+      key: 'h',
+      ctrl: true,
+      action: () => setActiveModule('dashboard'),
+      description: 'Voltar ao Dashboard'
+    },
+    {
+      key: 'p',
+      ctrl: true,
+      action: () => setActiveModule('pedidos'),
+      description: 'Abrir Pedidos'
+    },
+    {
+      key: 'm',
+      ctrl: true,
+      action: () => setActiveModule('cardapio'),
+      description: 'Abrir Cardápio'
+    },
+    {
+      key: 'Escape',
+      action: () => setActiveModule('dashboard'),
+      description: 'Voltar'
+    },
+    {
+      key: 'F1',
+      action: () => {},
+      description: 'Ajuda'
+    }
+  ]);
 
   useEffect(() => {
     localStorage.setItem('ccpservices-active-module', activeModule);

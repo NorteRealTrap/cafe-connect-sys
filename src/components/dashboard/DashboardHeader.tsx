@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserRole } from "@/components/auth/LoginForm";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Bell, Settings, UserCog } from "lucide-react";
+import { LogOut, Bell, Settings, UserCog, Keyboard } from "lucide-react";
 import { NotificationsPanel } from "@/components/notifications/NotificationsPanel";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { KeyboardShortcutsHelp } from "@/components/ui/keyboard-shortcuts-help";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DashboardHeaderProps {
@@ -20,6 +21,7 @@ export const DashboardHeader = ({ userRole, onLogout, onRoleChange }: DashboardH
   const isSuperAdmin = currentUser === 'admin@cafeconnect.com';
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case "admin": return "default";
@@ -63,6 +65,9 @@ export const DashboardHeader = ({ userRole, onLogout, onRoleChange }: DashboardH
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => setShowKeyboardHelp(true)} title="Atalhos (F1)">
+            <Keyboard className="h-4 w-4" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setShowNotifications(true)}>
             <Bell className="h-4 w-4" />
           </Button>
@@ -82,6 +87,11 @@ export const DashboardHeader = ({ userRole, onLogout, onRoleChange }: DashboardH
       {showSettings && (
         <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
+      
+      <KeyboardShortcutsHelp 
+        open={showKeyboardHelp} 
+        onClose={() => setShowKeyboardHelp(false)} 
+      />
     </header>
   );
 };
