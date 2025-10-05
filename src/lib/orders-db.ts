@@ -27,8 +27,8 @@ export interface Order {
   observacoes?: string;
 }
 
-const STORAGE_KEY = 'cafe-orders';
-const COUNTER_KEY = 'cafe-orders-counter';
+const STORAGE_KEY = 'cafe-connect-orders';
+const COUNTER_KEY = 'cafe-connect-order-counter';
 
 class OrdersDB {
   private getCounter(): number {
@@ -70,13 +70,13 @@ class OrdersDB {
     return this.loadOrders().find(o => o.id === id) || null;
   }
 
-  create(data: Omit<Order, 'id' | 'numero' | 'createdAt' | 'updatedAt' | 'status'>): Order {
+  create(data: Omit<Order, 'id' | 'numero' | 'createdAt' | 'updatedAt' | 'status'> & { id?: string }): Order {
     const orders = this.loadOrders();
     const counter = this.getCounter() + 1;
     
     const order: Order = {
       ...data,
-      id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: data.id || `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       numero: counter,
       status: 'pendente',
       createdAt: new Date().toISOString(),
