@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, RefreshCw, Package, Clock, MapPin, Home } from "lucide-react";
 import { ordersDB, Order, OrderStatus, OrderType } from "@/lib/orders-db";
+import { webOrdersSync } from "@/lib/web-orders-sync";
 import { NewOrderForm } from "./NewOrderForm";
 import { toast } from "sonner";
 
@@ -31,10 +32,16 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   useEffect(() => {
     loadData();
     
+    // Iniciar sincronização automática de pedidos web
+    const stopSync = webOrdersSync.startAutoSync();
+    
     const handleChange = () => loadData();
     window.addEventListener('orders-changed', handleChange);
     
-    return () => window.removeEventListener('orders-changed', handleChange);
+    return () => {
+      window.removeEventListener('orders-changed', handleChange);
+      stopSync();
+    };
   }, []);
 
   const handleNewOrder = (data: any) => {
@@ -61,6 +68,10 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const updateStatus = (id: string, status: OrderStatus) => {
     try {
       ordersDB.updateStatus(id, status);
+      
+      // Sincronizar status de volta para pedidos web
+      webOrdersSync.syncStatusToWeb(id, status);
+      
       toast.success('Status atualizado!');
       loadData();
     } catch (error) {
@@ -153,6 +164,11 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                             {getTypeIcon(order.tipo)}
                             {order.tipo}
                           </Badge>
+                          {order.observacoes?.includes('Pedido Web') && (
+                            <Badge variant="secondary" className="text-xs">
+                              WEB
+                            </Badge>
+                          )}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground mt-1">
                           {order.cliente}
