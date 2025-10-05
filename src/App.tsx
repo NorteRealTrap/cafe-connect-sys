@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 import { initializePersistence } from "@/lib/persistence";
 import { initializeRealtime } from "@/lib/realtime";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
 import OrderTracking from "./pages/OrderTracking";
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          <Analytics />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
