@@ -15,6 +15,7 @@ import { StatusPanel } from "@/components/status/StatusPanel";
 import { WebOrdersPanel } from "@/components/web-orders/WebOrdersPanel";
 import { DeliveryPanel } from "@/components/delivery/DeliveryPanel";
 import { CommunicationPanel } from "@/components/communication/CommunicationPanel";
+import { OperationsPanel } from "@/components/operations/OperationsPanel";
 import { DatabaseStatusPanel } from "@/components/debug/DatabaseStatus";
 
 import { UserRole } from "@/components/auth/LoginForm";
@@ -84,6 +85,8 @@ export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }:
         return <DeliveryPanel onBack={handleBackToDashboard} />;
       case "comunicacao":
         return <CommunicationPanel onBack={handleBackToDashboard} />;
+      case "operacoes":
+        return <OperationsPanel onBack={handleBackToDashboard} />;
       case "debug":
         return <DatabaseStatusPanel onBack={handleBackToDashboard} />;
       case "dashboard":
