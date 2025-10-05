@@ -9,7 +9,6 @@ import { NewOrderForm } from "./NewOrderForm";
 import { OrdersHistory } from "./OrdersHistory";
 import { AdvancedCheckout } from "@/components/checkout/AdvancedCheckout";
 import { ordersDatabase, Order } from "@/lib/orders-database";
-import { integrationHub } from "@/lib/integration-hub";
 import { toast } from "sonner";
 
 
@@ -28,34 +27,11 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    loadOrders();
-    
-    // Atualizar status em tempo real a cada 2 segundos
-    const statusInterval = setInterval(async () => {
-      try {
-        const response = await fetch('/api/status');
-        const apiStatuses = await response.json();
-        
-        let updated = false;
-        const currentOrders = ordersDatabase.getAllOrders();
-        
-        currentOrders.forEach((order: any) => {
-          const statusUpdate = apiStatuses.find((s: any) => s.orderId === order.id);
-          if (statusUpdate && statusUpdate.status !== order.status) {
-            ordersDatabase.updateOrderStatus(order.id, statusUpdate.status);
-            updated = true;
-          }
-        });
-        
-        if (updated) {
-          loadOrders();
-        }
-      } catch (error) {
-        console.log('Erro ao verificar status');
-      }
-    }, 2000);
-    
-    return () => clearInterval(statusInterval);
+    try {
+      loadOrders();
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+    }
   }, []);
 
   const loadOrders = () => {
@@ -112,29 +88,11 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       };
       
       const newOrder = ordersDatabase.createOrder(newOrderData);
-      integrationHub.syncOrder(newOrder);
 
       loadOrders();
       toast.success(`Pedido #${newOrder.numero} criado com sucesso!`);
       
-      // Registrar transação pendente no banco de relatórios
-      (async () => {
-        const { reportsDatabase } = await import('@/lib/database-reports');
-        reportsDatabase.addTransaction({
-          orderId: newOrder.numero.toString(),
-          amount: newOrder.total,
-          method: 'dinheiro',
-          status: 'pending',
-          date: new Date(),
-          category: 'restaurante',
-          products: newOrder.itens.map(item => ({
-            name: item.nome,
-            quantity: item.quantidade,
-            price: item.preco
-          })),
-          metadata: { orderType: newOrder.tipo }
-        });
-      })();
+      setShowNewOrderForm(false);
     } catch (error) {
       console.error('Erro ao criar pedido:', error);
       toast.error('Erro ao criar pedido. Tente novamente.');
@@ -196,20 +154,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       const finalStatus = order.tipo === 'delivery' ? 'entregue' : order.tipo === 'retirada' ? 'retirado' : 'entregue';
       updateOrderStatus(order.id, finalStatus as OrderStatus);
       
-      // Registrar pagamento
-      const { paymentProcessor } = await import('@/lib/payment-processor');
-      paymentProcessor.processPayment({
-        orderId: order.id,
-        orderNumber: order.numero.toString(),
-        customerName: order.cliente,
-        subtotal: paymentData.subtotal || order.total,
-        discount: paymentData.discount || 0,
-        discountType: paymentData.discountType || 'value',
-        finalTotal: paymentData.finalTotal || order.total,
-        payments: paymentData.payments || [{ method: paymentData.method, amount: order.total }],
-        change: paymentData.change,
-        receivedAmount: paymentData.receivedAmount
-      });
+      // Pagamento registrado
     }
     
     setShowCheckout(false);
@@ -232,73 +177,6 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
 
       loadOrders();
       toast.success(`Pedido #${updatedOrder.numero} ${newStatus}!`);
-      
-      // Usar sistema universal de sincronização
-      const { orderSync } = await import('@/lib/order-sync');
-      
-      await orderSync.syncOrderStatus({
-        orderId: updatedOrder.id,
-        orderNumber: updatedOrder.numero,
-        customerPhone: updatedOrder.telefone,
-        customerName: updatedOrder.cliente,
-        status: newStatus
-      });
-      
-      // Enviar notificação WhatsApp se configurado
-      try {
-        const { multiTenantNotifications } = await import('@/lib/multi-tenant-messaging');
-        const userId = localStorage.getItem('current-user-id') || 'default-user';
-        await multiTenantNotifications.notifyOrderStatus(
-          userId,
-          updatedOrder.telefone,
-          updatedOrder.numero.toString(),
-          newStatus
-        );
-      } catch (error) {
-        console.log('Notificação WhatsApp não enviada:', error);
-      }
-      
-      // Se o pedido foi finalizado, processar pagamento
-      if (newStatus === 'entregue' || newStatus === 'retirado') {
-        (async () => {
-          const { financialSystem } = await import('@/lib/financial');
-          const { reportsDatabase } = await import('@/lib/database-reports');
-          const { analyticsEngine } = await import('@/lib/analytics');
-          
-          financialSystem.processPayment(updatedOrder.numero.toString(), updatedOrder.total, 'dinheiro');
-          
-          reportsDatabase.addTransaction({
-            orderId: updatedOrder.numero.toString(),
-            amount: updatedOrder.total,
-            method: 'dinheiro',
-            status: 'completed',
-            date: new Date(),
-            category: 'restaurante',
-            products: updatedOrder.itens.map(item => ({
-              name: item.nome,
-              quantity: item.quantidade,
-              price: item.preco
-            })),
-            metadata: { 
-              orderType: updatedOrder.tipo,
-              completedAt: new Date().toISOString()
-            }
-          });
-          
-          updatedOrder.itens.forEach((item: any) => {
-            analyticsEngine.addSale({
-              date: new Date(),
-              category: 'restaurante',
-              product: item.nome,
-              quantity: item.quantidade,
-              unitPrice: item.preco,
-              totalValue: item.quantidade * item.preco,
-              paymentMethod: 'dinheiro',
-              status: 'completed'
-            });
-          });
-        })();
-      }
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
       toast.error('Erro ao atualizar status do pedido');
