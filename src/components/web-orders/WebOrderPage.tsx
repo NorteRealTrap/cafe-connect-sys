@@ -282,7 +282,7 @@ export const WebOrderPage: React.FC = () => {
                           </div>
                         </div>
                       );
-                    })
+                    })})
                   </div>
                 </CardContent>
               </Card>
