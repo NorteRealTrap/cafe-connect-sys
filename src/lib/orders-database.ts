@@ -33,26 +33,51 @@ class OrdersDatabase {
   private getOrders(): Order[] {
     try {
       const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const orders = JSON.parse(stored);
-        return orders.map((order: any) => ({
-          ...order,
-          createdAt: new Date(order.createdAt),
-          updatedAt: new Date(order.updatedAt),
-          completedAt: order.completedAt ? new Date(order.completedAt) : undefined
-        }));
+      if (!stored) return [];
+      
+      const orders = JSON.parse(stored);
+      if (!Array.isArray(orders)) {
+        console.error('Dados de pedidos corrompidos, resetando...');
+        localStorage.removeItem(this.storageKey);
+        return [];
       }
+      
+      return orders.map((order: any) => {
+        try {
+          return {
+            ...order,
+            createdAt: new Date(order.createdAt),
+            updatedAt: new Date(order.updatedAt),
+            completedAt: order.completedAt ? new Date(order.completedAt) : undefined
+          };
+        } catch (err) {
+          console.error('Erro ao processar pedido:', err);
+          return null;
+        }
+      }).filter(Boolean) as Order[];
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
+      localStorage.removeItem(this.storageKey);
+      return [];
     }
-    return [];
   }
 
   private saveOrders(orders: Order[]): void {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(orders));
+      if (!Array.isArray(orders)) {
+        console.error('Tentativa de salvar dados inválidos');
+        return;
+      }
+      const data = JSON.stringify(orders);
+      localStorage.setItem(this.storageKey, data);
+      
+      // Disparar evento para atualizar outras abas
+      window.dispatchEvent(new CustomEvent('ordersUpdated', { detail: { orders } }));
     } catch (error) {
       console.error('Erro ao salvar pedidos:', error);
+      if (error instanceof Error && error.message.includes('quota')) {
+        alert('Armazenamento cheio. Limpe dados antigos.');
+      }
     }
   }
 

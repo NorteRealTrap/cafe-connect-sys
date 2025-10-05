@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,31 +62,55 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   ]);
 
   useEffect(() => {
-    initializeOrders();
-  }, []);
+    let mounted = true;
+    
+    const init = async () => {
+      if (!mounted) return;
+      
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        cacheCleaner.validateAndFixLocalStorage();
+        
+        const allOrders = ordersDatabase.getAllOrders();
+        const orderStats = ordersDatabase.getOrdersStats();
+        
+        if (mounted) {
+          setOrders(allOrders);
+          setStats(orderStats);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar pedidos:', error);
+        if (mounted) {
+          setError('Erro ao carregar pedidos. Clique em "Limpar Cache" para tentar novamente.');
+          setIsLoading(false);
+          setOrders([]);
+          setStats({ total: 0, today: 0, active: 0, completed: 0 });
+        }
+      }
+    };
+    
+    init();
+    
+    const handleOrdersUpdate = () => {
+      if (mounted && !isLoading) {
+        loadOrders();
+      }
+    };
+    
+    window.addEventListener('ordersUpdated', handleOrdersUpdate);
+    window.addEventListener('storage', handleOrdersUpdate);
+    
+    return () => {
+      mounted = false;
+      window.removeEventListener('ordersUpdated', handleOrdersUpdate);
+      window.removeEventListener('storage', handleOrdersUpdate);
+    };
+  }, [isLoading, loadOrders]);
 
-  const initializeOrders = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Validar localStorage antes de carregar
-      cacheCleaner.validateAndFixLocalStorage();
-      
-      // Carregar pedidos
-      await loadOrders();
-      
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Erro ao inicializar pedidos:', error);
-      setError('Erro ao carregar pedidos. Clique em "Limpar Cache" para tentar novamente.');
-      setIsLoading(false);
-      setOrders([]);
-      setStats({ total: 0, today: 0, active: 0, completed: 0 });
-    }
-  };
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const allOrders = ordersDatabase.getAllOrders();
       const orderStats = ordersDatabase.getOrdersStats();
@@ -95,9 +119,25 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       setError(null);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error);
-      throw error;
+      setError('Erro ao carregar pedidos');
     }
-  };
+  }, []);
+
+  const initializeOrders = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      cacheCleaner.validateAndFixLocalStorage();
+      await loadOrders();
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Erro ao inicializar pedidos:', error);
+      setError('Erro ao carregar pedidos. Clique em "Limpar Cache" para tentar novamente.');
+      setIsLoading(false);
+      setOrders([]);
+      setStats({ total: 0, today: 0, active: 0, completed: 0 });
+    }
+  }, [loadOrders]);
 
   const handleClearCache = async () => {
     try {
@@ -119,7 +159,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     return `${hours}h ${diff % 60}min`;
   };
   
-  const handleNewOrder = (orderData: any) => {
+  const handleNewOrder = useCallback((orderData: any) => {
     // Verificar duplicação
     const duplicate = ordersDatabase.checkDuplicateOrder(
       orderData.cliente,
@@ -160,12 +200,12 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       console.error('Erro ao criar pedido:', error);
       toast.error('Erro ao criar pedido. Tente novamente.');
     }
-  };
+  }, [loadOrders]);
 
-  const getFilteredOrders = () => {
+  const filteredOrders = useMemo(() => {
     if (selectedTab === "todos") return orders;
     return orders.filter(order => order.tipo === selectedTab);
-  };
+  }, [orders, selectedTab]);
 
   const getTypeIcon = (type: "local" | "delivery" | "retirada") => {
     switch (type) {
@@ -229,7 +269,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     toast.success(`Pagamento processado: ${methods}`);
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+  const updateOrderStatus = useCallback(async (orderId: string, newStatus: OrderStatus) => {
     try {
       const updatedOrder = ordersDatabase.updateOrderStatus(orderId, newStatus);
       
@@ -244,7 +284,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       console.error('Erro ao atualizar status:', error);
       toast.error('Erro ao atualizar status do pedido');
     }
-  };
+  }, [loadOrders]);
 
   // Mostrar erro se houver
   if (error) {
@@ -333,7 +373,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         </TabsList>
 
         <TabsContent value={selectedTab} className="space-y-4">
-          {getFilteredOrders().length === 0 ? (
+          {filteredOrders.length === 0 ? (
             <Card className="p-12 text-center">
               <div className="flex flex-col items-center gap-4">
                 <Package className="h-16 w-16 text-muted-foreground" />
@@ -351,7 +391,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
             </Card>
           ) : (
           <div className="grid gap-4">
-            {getFilteredOrders().map((order) => (
+            {filteredOrders.map((order) => (
               <Card key={order.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
