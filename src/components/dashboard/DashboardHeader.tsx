@@ -37,7 +37,7 @@ export const DashboardHeader = ({ userRole, onLogout, onRoleChange }: DashboardH
   };
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4">
+    <header className="bg-card/80 backdrop-blur-md border-b border-border/50 px-6 py-4 sticky top-0 z-50">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-semibold text-foreground">CCPServices</h1>

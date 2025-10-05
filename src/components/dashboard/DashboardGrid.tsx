@@ -189,7 +189,7 @@ export const DashboardGrid = ({ userRole, onModuleClick }: DashboardGridProps) =
           {availableModules.map((module) => (
             <Card 
               key={module.id} 
-              className="group hover:shadow-pdv transition-all duration-200 cursor-pointer border-border/50"
+              className="group hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 cursor-pointer border-border/50 bg-card/80 backdrop-blur-sm hover:scale-105"
               onClick={() => onModuleClick(module.id)}
             >
               <CardHeader className="pb-3">
