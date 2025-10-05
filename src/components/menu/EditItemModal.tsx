@@ -64,7 +64,7 @@ export const EditItemModal = ({ open, onClose, onSave, item }: EditItemModalProp
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Item do Cardápio</DialogTitle>
         </DialogHeader>

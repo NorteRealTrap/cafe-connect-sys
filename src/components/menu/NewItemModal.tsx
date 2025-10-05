@@ -65,7 +65,7 @@ export const NewItemModal = ({ open, onClose, onSave }: NewItemModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novo Item do Cardápio</DialogTitle>
         </DialogHeader>

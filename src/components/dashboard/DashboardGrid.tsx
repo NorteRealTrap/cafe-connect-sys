@@ -137,7 +137,7 @@ const modules: DashboardModule[] = [
     id: "debug",
     title: "Debug",
     description: "Status dos bancos de dados",
-    icon: <Settings className="h-6 w-6" />,
+    icon: <BarChart3 className="h-6 w-6" />,
     roles: ["admin"],
     color: "bg-red-500"
   }
