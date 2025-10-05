@@ -102,13 +102,13 @@
 
 .input-icon {
   position: absolute;
-  left: 15px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   color: #00ffff;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
   filter: drop-shadow(0 0 5px #00ffff);
 }
@@ -119,14 +119,14 @@
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #333;
   border-radius: 10px;
-  padding-left: 45px;
+  padding-left: 42px;
   padding-right: 15px;
   color: #fff;
   font-family: 'Orbitron', monospace;
   font-size: 14px;
   transition: all 0.3s ease;
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 .futuristic-input:focus {
@@ -138,23 +138,24 @@
 
 .futuristic-input:focus + .floating-label,
 .futuristic-input:not(:placeholder-shown) + .floating-label {
-  transform: translateY(-35px) scale(0.8);
+  transform: translateY(-35px) scale(0.85);
   color: #00ffff;
+  background: rgba(0, 0, 0, 0.9);
 }
 
 .floating-label {
   position: absolute;
-  left: 45px;
+  left: 42px;
   top: 50%;
   transform: translateY(-50%);
   color: #888;
-  font-size: 14px;
+  font-size: 13px;
   pointer-events: none;
   transition: all 0.3s ease;
-  background: rgba(0, 0, 0, 0.8);
+  background: transparent;
   padding: 0 5px;
   font-family: 'Orbitron', monospace;
-  z-index: 2;
+  z-index: 5;
 }
 
 .futuristic-select {
