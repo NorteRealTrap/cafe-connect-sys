@@ -93,6 +93,10 @@ class StorageMigration {
           order.updatedAt = new Date(order.updatedAt).toISOString();
         }
 
+        // Remover campos extras que não fazem parte do tipo Order
+        delete order.source;
+        delete order.delivery;
+
         return true;
       });
 

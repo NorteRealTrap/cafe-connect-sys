@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, Check, X, Clock, ExternalLink, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCrossDeviceSync } from '@/lib/sync';
+import { ordersDB } from '@/lib/orders-db';
 
 import { OrderTrackingInfo } from './OrderTrackingInfo';
 
@@ -124,25 +125,14 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
 
   const acceptWebOrder = async (webOrder: WebOrder) => {
     try {
-      // Criar pedido diretamente no localStorage do orders-database
-      const storageKey = 'cafe-connect-orders';
-      const counterKey = 'cafe-connect-order-counter';
-      
-      // Obter próximo número do pedido
-      const currentCounter = localStorage.getItem(counterKey);
-      const nextNumber = currentCounter ? parseInt(currentCounter) + 1 : 1;
-      localStorage.setItem(counterKey, nextNumber.toString());
-      
-      // Criar novo pedido
       const now = new Date();
-      const newOrder = {
-        id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        numero: nextNumber,
+      
+      // Criar novo pedido usando ordersDB para garantir formato correto
+      const newOrder = ordersDB.create({
+        tipo: 'delivery',
         cliente: webOrder.customerName,
         telefone: webOrder.customerPhone,
         endereco: webOrder.customerAddress,
-        tipo: 'delivery',
-        status: 'preparando',
         itens: webOrder.items.map(item => ({
           id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           nome: item.productName,
@@ -151,23 +141,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           observacoes: ''
         })),
         total: webOrder.total,
-        observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        source: 'web',
-        delivery: {
-          address: webOrder.customerAddress,
-          phone: webOrder.customerPhone,
-          estimatedTime: webOrder.estimatedTime || 45,
-          status: 'preparando',
-          distance: '0 km'
-        }
-      };
+        observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`
+      });
       
-      // Salvar no localStorage
-      const existingOrders = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      existingOrders.unshift(newOrder);
-      localStorage.setItem(storageKey, JSON.stringify(existingOrders));
+      const nextNumber = newOrder.numero;
       
       updateWebOrderStatus(webOrder.id, 'aceito');
       
@@ -215,9 +192,7 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
       localStorage.setItem('ccpservices-deliveries', JSON.stringify(existingDeliveries));
       
       // Emitir eventos de tempo real
-      window.dispatchEvent(new CustomEvent('dataChanged', { 
-        detail: { key: 'cafe-connect-orders', data: existingOrders } 
-      }));
+      window.dispatchEvent(new Event('orders-changed'));
       window.dispatchEvent(new CustomEvent('dataChanged', { 
         detail: { key: 'ccpservices-deliveries', data: existingDeliveries } 
       }));
