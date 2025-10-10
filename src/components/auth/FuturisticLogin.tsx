@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Lock, Coffee } from 'lucide-react';
 import { AuthService } from '@/lib/auth';
+import { db } from '@/lib/database';
 import { toast } from 'sonner';
 import './FuturisticLogin.css';
 
@@ -19,6 +20,9 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Garantir que o banco de dados está inicializado
+    db.initializeDatabase();
+    
     // Criar partículas de fundo
     createParticles();
   }, []);
@@ -115,6 +119,18 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
     }
   };
 
+  const handleResetDatabase = () => {
+    if (confirm('⚠️ Isso irá reinicializar o banco de dados com os usuários padrão. Continuar?')) {
+      // Limpar usuários e reinicializar
+      localStorage.removeItem('ccpservices-users');
+      db.initializeDatabase();
+      toast.success('Banco de dados reinicializado! Use as credenciais padrão.');
+      setEmail('admin@cafeconnect.com');
+      setPassword('admin123');
+      setRole('admin');
+    }
+  };
+
   return (
     <div className="futuristic-login">
       <canvas id="particles-canvas" className="particles-bg"></canvas>
@@ -179,6 +195,21 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
               </div>
             )}
 
+            <div className="credentials-hint" style={{ 
+              fontSize: '0.75rem', 
+              color: 'rgba(0, 255, 255, 0.6)', 
+              marginBottom: '1rem',
+              padding: '0.5rem',
+              border: '1px solid rgba(0, 255, 255, 0.2)',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(0, 255, 255, 0.05)'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Credenciais Padrão:</div>
+              <div>Email: admin@cafeconnect.com</div>
+              <div>Senha: admin123</div>
+              <div>Tipo: Administrador</div>
+            </div>
+
             <Button 
               type="submit" 
               className="futuristic-button"
@@ -194,6 +225,29 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
 
           <div className="footer-text">
             Tecnologia Avançada • Segurança Máxima
+            <button 
+              type="button"
+              onClick={handleResetDatabase}
+              style={{
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                fontSize: '0.75rem',
+                background: 'rgba(255, 0, 0, 0.2)',
+                border: '1px solid rgba(255, 0, 0, 0.5)',
+                borderRadius: '4px',
+                color: 'rgba(255, 100, 100, 0.9)',
+                cursor: 'pointer',
+                transition: 'all 0.3s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.3)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
+              }}
+            >
+              🔄 Reinicializar Banco de Dados
+            </button>
           </div>
         </div>
       </div>
