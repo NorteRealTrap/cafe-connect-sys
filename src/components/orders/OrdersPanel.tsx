@@ -3,11 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, RefreshCw, Package, Clock, MapPin, Home } from "lucide-react";
+import { Plus, RefreshCw, Package, Clock, MapPin, Home, AlertTriangle } from "lucide-react";
 import { ordersDB, Order, OrderStatus, OrderType } from "@/lib/orders-db";
 import { webOrdersSync } from "@/lib/web-orders-sync";
 import { NewOrderForm } from "./NewOrderForm";
 import { toast } from "sonner";
+import { storageMigration } from "@/lib/storage-migration";
 
 interface OrdersPanelProps {
   onBack: () => void;
@@ -25,22 +26,51 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       setStats(ordersDB.getStats());
     } catch (error) {
       console.error('Erro ao carregar:', error);
-      toast.error('Erro ao carregar pedidos');
+      toast.error('Erro ao carregar pedidos. Tente limpar os dados.');
+    }
+  };
+
+  const handleClearData = () => {
+    if (confirm('⚠️ Isso irá limpar TODOS os dados de pedidos. Deseja continuar?')) {
+      try {
+        storageMigration.forceCleanup();
+        toast.success('Dados limpos com sucesso! Recarregando...');
+      } catch (error) {
+        toast.error('Erro ao limpar dados');
+      }
     }
   };
 
   useEffect(() => {
-    loadData();
+    // Tentar carregar dados com tratamento de erro
+    try {
+      loadData();
+    } catch (error) {
+      console.error('Erro crítico ao carregar pedidos:', error);
+      toast.error('Erro ao carregar pedidos. Clique no botão ⚠️ para limpar dados corrompidos.');
+    }
     
     // Iniciar sincronização automática de pedidos web
-    const stopSync = webOrdersSync.startAutoSync();
+    let stopSync: (() => void) | undefined;
+    try {
+      stopSync = webOrdersSync.startAutoSync();
+    } catch (error) {
+      console.error('Erro ao iniciar sincronização:', error);
+    }
     
-    const handleChange = () => loadData();
+    const handleChange = () => {
+      try {
+        loadData();
+      } catch (error) {
+        console.error('Erro ao recarregar pedidos:', error);
+      }
+    };
+    
     window.addEventListener('orders-changed', handleChange);
     
     return () => {
       window.removeEventListener('orders-changed', handleChange);
-      stopSync();
+      if (stopSync) stopSync();
     };
   }, []);
 
@@ -121,8 +151,11 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={loadData}>
+          <Button variant="ghost" size="sm" onClick={loadData} title="Recarregar">
             <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button variant="destructive" size="sm" onClick={handleClearData} title="Limpar dados corrompidos">
+            <AlertTriangle className="h-4 w-4" />
           </Button>
           <Button variant="pdv" onClick={() => setShowNewOrder(true)}>
             <Plus className="h-4 w-4 mr-2" />

@@ -4,6 +4,7 @@ import { BusinessSelector } from "@/components/business/BusinessSelector";
 import { Dashboard } from "./Dashboard";
 import { storageManager } from "@/lib/storage-manager";
 import { ordersDB } from "@/lib/orders-db";
+import { storageMigration } from "@/lib/storage-migration";
 
 type UserRole = 'admin' | 'caixa' | 'atendente';
 
@@ -13,6 +14,16 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Executar migração e validação de dados primeiro
+    try {
+      storageMigration.checkAndMigrate();
+    } catch (error) {
+      console.error('Erro na migração:', error);
+      // Em caso de erro crítico, limpar tudo
+      storageMigration.forceCleanup();
+      return;
+    }
+    
     // Inicializar storage manager
     storageManager.init();
     
