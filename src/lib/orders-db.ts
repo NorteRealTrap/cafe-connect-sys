@@ -1,4 +1,6 @@
 // Sistema de banco de dados de pedidos simplificado e robusto
+import { auditLogger } from './audit-logger';
+import { notificationManager } from './notification-manager';
 
 export type OrderStatus = 'pendente' | 'preparando' | 'pronto' | 'entregue' | 'cancelado';
 export type OrderType = 'local' | 'delivery' | 'retirada';
@@ -87,6 +89,14 @@ class OrdersDB {
     this.saveOrders(orders);
     this.setCounter(counter);
     
+    // Log e notificação
+    try {
+      auditLogger.logOrderCreated(order.id, order.numero, order.total);
+      notificationManager.notifyNewOrder(order.numero);
+    } catch (e) {
+      // Ignorar erros de log/notificação
+    }
+    
     return order;
   }
 
@@ -96,6 +106,7 @@ class OrdersDB {
     
     if (index === -1) return null;
 
+    const oldStatus = orders[index].status;
     orders[index] = {
       ...orders[index],
       status,
@@ -103,6 +114,17 @@ class OrdersDB {
     };
 
     this.saveOrders(orders);
+    
+    // Log e notificação
+    try {
+      auditLogger.logOrderStatusChanged(id, oldStatus, status);
+      if (status === 'pronto') {
+        notificationManager.notifyOrderReady(orders[index].numero);
+      }
+    } catch (e) {
+      // Ignorar erros de log/notificação
+    }
+    
     return orders[index];
   }
 
