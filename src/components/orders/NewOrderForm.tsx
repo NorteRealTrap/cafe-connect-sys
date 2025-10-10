@@ -102,8 +102,7 @@ export const NewOrderForm = ({ onClose, onSubmit }: NewOrderFormProps) => {
       mesa: orderData.tipo === "local" ? orderData.mesa : undefined,
       endereco: orderData.tipo === "delivery" ? orderData.endereco : undefined,
       itens: selectedItems,
-      total: getTotal(),
-      status: "aceito"
+      total: getTotal()
     };
 
     onSubmit(newOrder);

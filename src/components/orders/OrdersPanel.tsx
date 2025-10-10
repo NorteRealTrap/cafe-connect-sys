@@ -90,7 +90,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     return <Package className="h-4 w-4" />;
   };
 
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusColor = (status: OrderStatus): "default" | "secondary" | "destructive" | "outline" | "success" | "warning" => {
     if (status === "pendente") return "secondary";
     if (status === "preparando") return "warning";
     if (status === "pronto") return "success";

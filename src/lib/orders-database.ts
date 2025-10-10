@@ -122,7 +122,7 @@ class OrdersDatabase {
     return orders.find(order => order.numero === numero) || null;
   }
 
-  createOrder(orderData: Omit<Order, 'id' | 'numero' | 'createdAt' | 'updatedAt'>): Order {
+  createOrder(orderData: Omit<Order, 'id' | 'numero' | 'status' | 'createdAt' | 'updatedAt'>): Order {
     const orders = this.getOrders();
     const now = new Date();
     

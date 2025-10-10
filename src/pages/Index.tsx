@@ -3,7 +3,7 @@ import { FuturisticLogin } from "@/components/auth/FuturisticLogin";
 import { BusinessSelector } from "@/components/business/BusinessSelector";
 import { Dashboard } from "./Dashboard";
 import { storageManager } from "@/lib/storage-manager";
-import { ordersDatabase } from "@/lib/orders-database";
+import { ordersDB } from "@/lib/orders-db";
 
 type UserRole = 'admin' | 'caixa' | 'atendente';
 
