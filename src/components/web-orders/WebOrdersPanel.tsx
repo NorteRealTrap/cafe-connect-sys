@@ -136,11 +136,11 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         itens: webOrder.items.map(item => ({
           id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           nome: item.productName,
-          quantidade: item.quantity,
-          preco: item.price,
+          quantidade: Number(item.quantity),
+          preco: Number(item.price),
           observacoes: ''
         })),
-        total: webOrder.total,
+        total: Number(webOrder.total),
         observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`
       });
       

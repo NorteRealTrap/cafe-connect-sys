@@ -55,11 +55,11 @@ export const webOrdersSync = {
           itens: webOrder.items.map((item: any) => ({
             id: item.productId,
             nome: item.productName,
-            quantidade: item.quantity,
-            preco: item.price,
+            quantidade: Number(item.quantity),
+            preco: Number(item.price),
             observacoes: ''
           })),
-          total: webOrder.total,
+          total: Number(webOrder.total),
           observacoes: `Pedido Web - ${webOrder.id}`
         });
         

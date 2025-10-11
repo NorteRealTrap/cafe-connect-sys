@@ -225,13 +225,13 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                       {order.itens.map((item, idx) => (
                         <div key={idx} className="flex justify-between text-sm">
                           <span>{item.quantidade}x {item.nome}</span>
-                          <span>R$ {(item.quantidade * item.preco).toFixed(2)}</span>
+                          <span>R$ {(Number(item.quantidade) * Number(item.preco)).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
                     
                     <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="font-semibold">Total: R$ {order.total.toFixed(2)}</span>
+                      <span className="font-semibold">Total: R$ {Number(order.total).toFixed(2)}</span>
                       <div className="flex gap-2">
                         {order.status === "pendente" && (
                           <Button size="sm" onClick={() => updateStatus(order.id, "preparando")}>
