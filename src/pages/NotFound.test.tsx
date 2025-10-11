@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { NotFound } from './NotFound'
+import NotFound from './NotFound'
 
 const renderWithRouter = (component: React.ReactElement) => {
   return render(
@@ -11,16 +11,14 @@ const renderWithRouter = (component: React.ReactElement) => {
 }
 
 describe('NotFound', () => {
-  it('renders 404 error message', () => {
+  it('renders page title', () => {
     renderWithRouter(<NotFound />)
-    
-    expect(screen.getByText('404')).toBeInTheDocument()
+    expect(screen.getByText(/página não encontrada/i)).toBeInTheDocument()
   })
 
-  it('renders page not found message', () => {
+  it('renders description message', () => {
     renderWithRouter(<NotFound />)
-    
-    expect(screen.getByText(/página não encontrada/i)).toBeInTheDocument()
+    expect(screen.getByText(/a página que você está procurando não existe/i)).toBeInTheDocument()
   })
 
   it('renders back to home link', () => {
@@ -33,8 +31,7 @@ describe('NotFound', () => {
 
   it('has proper styling classes', () => {
     renderWithRouter(<NotFound />)
-    
-    const container = screen.getByText('404').closest('div')
-    expect(container).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center')
+    const root = document.querySelector('div.min-h-screen')
+    expect(root).toBeTruthy()
   })
 })

@@ -14,5 +14,6 @@
     "javascriptreact": "javascriptreact",
     "typescript": "typescript",
     "typescriptreact": "typescriptreact"
-  }
+  },
+  "codium.codeCompletion.enable": false
 }

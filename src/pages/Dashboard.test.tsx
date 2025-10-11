@@ -46,6 +46,8 @@ describe('Dashboard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Ensure tests start from dashboard (no persisted module state)
+    localStorage.removeItem('ccpservices-active-module')
   })
 
   it('renders dashboard with correct user role', () => {

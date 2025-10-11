@@ -3,12 +3,12 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from '../App'
 
-// Mock components that might not be fully implemented
-vi.mock('@/components/auth/LoginForm', () => ({
-  LoginForm: ({ onLogin }: { onLogin: (role: string) => void }) => (
+// Mock the FuturisticLogin used by Index page to avoid canvas and complex UI
+vi.mock('@/components/auth/FuturisticLogin', () => ({
+  FuturisticLogin: ({ onLogin }: { onLogin: (credentials: { email: string; password: string; role: string }) => void }) => (
     <div data-testid="login-form">
-      <button onClick={() => onLogin('admin')}>Login as Admin</button>
-      <button onClick={() => onLogin('employee')}>Login as Employee</button>
+      <button onClick={() => onLogin({ email: 'admin@x.com', password: 'x', role: 'admin' })}>Login as Admin</button>
+      <button onClick={() => onLogin({ email: 'emp@x.com', password: 'x', role: 'employee' })}>Login as Employee</button>
     </div>
   )
 }))
@@ -30,6 +30,10 @@ const renderWithProviders = (component: React.ReactElement) => {
     </QueryClientProvider>
   )
 }
+
+beforeEach(() => {
+  localStorage.clear()
+})
 
 describe('Application Integration Tests', () => {
   it('renders login form initially', () => {

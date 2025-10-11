@@ -35,6 +35,11 @@ type ActiveModule = "dashboard" | "pedidos" | "cardapio" | "mesas" | "pagamentos
 
 export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }: DashboardProps) => {
   const [userRole, setUserRole] = useState<UserRole>(initialRole);
+
+  // Sync internal role state when prop changes
+  useEffect(() => {
+    setUserRole(initialRole);
+  }, [initialRole]);
   const [activeModule, setActiveModule] = useState<ActiveModule>(() => {
     const saved = localStorage.getItem('ccpservices-active-module');
     return (saved as ActiveModule) || "dashboard";
