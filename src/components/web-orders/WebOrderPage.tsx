@@ -1,123 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, ShoppingCart, MapPin, Phone, User, CheckCircle, Clock, Truck, ChefHat } from 'lucide-react';
-import { useProducts } from '@/hooks/useDatabase';
-import { useAutoSave } from '@/lib/persistence';
-import { useRealtime, useRealtimeNotifications } from '@/lib/realtime';
-import { useCrossDeviceSync } from '@/lib/sync';
+import { Plus, Minus, ShoppingCart, MapPin, Phone, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface OrderItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-export const WebOrderPage: React.FC = () => {
-  const { products } = useProducts();
+export const WebOrderPage = () => {
+  const [products, setProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('todos');
-  const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
-  const { data: customerData, updateField, resetForm } = useAutoSave('web-order-form', {
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [customerData, setCustomerData] = useState({
     name: '',
     phone: '',
     address: '',
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerOrders, setCustomerOrders] = useRealtime<any[]>('customer-orders-history', []);
-  const { requestNotificationPermission } = useRealtimeNotifications();
-  const { saveWebOrder } = useCrossDeviceSync();
-  const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
 
   useEffect(() => {
-    loadCustomerOrders();
-    requestNotificationPermission();
-  }, [customerData.phone, requestNotificationPermission]);
-  
-  // Verificar status em tempo real
-  useEffect(() => {
-    const statusInterval = setInterval(async () => {
-      if (customerData.phone) {
-        try {
-          // Usar sistema universal para buscar pedidos
-          const { orderSync } = await import('@/lib/order-sync');
-          const updatedOrders = orderSync.getCustomerOrders(customerData.phone);
-          
-          console.log(`🔍 Buscando pedidos para: ${customerData.phone}`);
-          console.log(`📊 Encontrados: ${updatedOrders.length} pedidos`);
-          
-          if (updatedOrders.length !== customerOrders.length || 
-              JSON.stringify(updatedOrders) !== JSON.stringify(customerOrders)) {
-            setCustomerOrders(updatedOrders);
-            console.log(`🔄 Pedidos atualizados para cliente`);
-          }
-        } catch (error) {
-          // Fallback para localStorage
-          loadCustomerOrders();
-        }
-      }
-    }, 1000); // 1 segundo para máxima responsividade
-    
-    return () => clearInterval(statusInterval);
-  }, [customerData.phone]);
+    const data = localStorage.getItem('ccpservices-products');
+    setProducts(data ? JSON.parse(data) : []);
+  }, []);
 
-  const loadCustomerOrders = () => {
-    if (!customerData.phone) return;
-    
-    const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-    const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
-    
-    // Criar mapa de pedidos únicos por ID
-    const ordersMap = new Map();
-    
-    // Adicionar pedidos web
-    webOrders.forEach((order: any) => {
-      if (order.customerPhone === customerData.phone || order.telefone === customerData.phone) {
-        ordersMap.set(order.id, order);
-      }
-    });
-    
-    // Adicionar pedidos principais (sobrescreve se já existir)
-    mainOrders.forEach((order: any) => {
-      if ((order.customerPhone === customerData.phone || order.telefone === customerData.phone) && order.source === 'web') {
-        ordersMap.set(order.id, order);
-      }
-    });
-    
-    const phoneOrders = Array.from(ordersMap.values())
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    
-    setCustomerOrders(phoneOrders);
-    if (phoneOrders.length > 0) setShowOrderHistory(true);
-  };
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case 'web-pendente':
-        return { label: 'Aguardando', color: 'bg-yellow-500', icon: Clock };
-      case 'aceito':
-      case 'preparando':
-        return { label: 'Preparando', color: 'bg-blue-500', icon: ChefHat };
-      case 'pronto':
-        return { label: 'Pronto', color: 'bg-purple-500', icon: CheckCircle };
-      case 'saiu-entrega':
-        return { label: 'Saiu para Entrega', color: 'bg-orange-500', icon: Truck };
-      case 'entregue':
-        return { label: 'Entregue', color: 'bg-green-500', icon: CheckCircle };
-      default:
-        return { label: status, color: 'bg-gray-500', icon: Clock };
-    }
-  };
-  
   const getFilteredProducts = () => {
     if (selectedCategory === 'todos') {
       return products.filter(p => p.available);
@@ -126,8 +35,8 @@ export const WebOrderPage: React.FC = () => {
   };
 
   const addItem = (product: any) => {
-    const existingItem = selectedItems.find(item => item.productId === product.id);
-    if (existingItem) {
+    const existing = selectedItems.find(item => item.productId === product.id);
+    if (existing) {
       setSelectedItems(prev => prev.map(item => 
         item.productId === product.id 
           ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.price }
@@ -177,7 +86,7 @@ export const WebOrderPage: React.FC = () => {
     }
 
     if (selectedItems.length === 0) {
-      toast.error('Adicione pelo menos um item ao pedido');
+      toast.error('Adicione pelo menos um item');
       return;
     }
 
@@ -186,55 +95,43 @@ export const WebOrderPage: React.FC = () => {
     try {
       const webOrder = {
         id: `WEB-${Date.now()}`,
+        numero: Date.now() % 10000,
         customerName: customerData.name,
         customerPhone: customerData.phone,
         customerAddress: customerData.address,
-        items: selectedItems.map(item => ({
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.total
+        cliente: customerData.name,
+        telefone: customerData.phone,
+        endereco: customerData.address,
+        items: selectedItems,
+        itens: selectedItems.map(item => ({
+          id: item.productId,
+          nome: item.productName,
+          quantidade: item.quantity,
+          preco: item.price
         })),
         total: getTotal(),
-        status: 'web-pendente',
-        type: 'delivery',
-        orderTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        estimatedTime: 45,
+        status: 'pendente',
+        tipo: 'delivery',
         createdAt: new Date().toISOString(),
-        source: 'web'
+        observacoes: customerData.notes
       };
 
-          // Salvar localmente
-      const existingWebOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
-      existingWebOrders.push(webOrder);
-      localStorage.setItem('ccpservices-web-orders', JSON.stringify(existingWebOrders));
-      
-      // Tentar sincronizar com Vercel API
-      try {
-        await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webOrder)
-        });
-      } catch (error) {
-        console.log('Pedido salvo localmente');
-      }
-      
-      window.dispatchEvent(new CustomEvent('newWebOrder', { detail: webOrder }));
-      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
-        detail: { orderId: webOrder.id, status: 'web-pendente' } 
-      }));
+      // Salvar em ambos os storages
+      const webOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
+      webOrders.push(webOrder);
+      localStorage.setItem('ccpservices-web-orders', JSON.stringify(webOrders));
+
+      const mainOrders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+      mainOrders.unshift(webOrder);
+      localStorage.setItem('cafe-connect-orders', JSON.stringify(mainOrders));
 
       toast.success(`Pedido enviado! Código: ${webOrder.id}`);
       
       setSelectedItems([]);
-      setCustomerOrders(prev => [webOrder, ...prev]);
-      setShowOrderHistory(true);
-      resetForm();
+      setCustomerData({ name: '', phone: '', address: '', notes: '' });
       
     } catch (error) {
-      toast.error('Erro ao enviar pedido. Tente novamente.');
+      toast.error('Erro ao enviar pedido');
     } finally {
       setIsSubmitting(false);
     }
@@ -248,51 +145,16 @@ export const WebOrderPage: React.FC = () => {
             Café Connect
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Faça seu pedido online e receba em casa
+            Faça seu pedido online
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {showOrderHistory && customerOrders.length > 0 && (
-            <div className="lg:col-span-2 mb-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Seus Pedidos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {customerOrders.slice(0, 3).map((order) => {
-                      const statusInfo = getStatusInfo(order.status);
-                      const StatusIcon = statusInfo.icon;
-                      const itemCount = order.items?.length || order.itens?.length || 0;
-                      const orderTime = order.orderTime || new Date(order.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                      return (
-                        <div key={order.id} className="flex items-center justify-between p-3 border rounded">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-medium text-sm">{order.id}</p>
-                              <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs text-white ${statusInfo.color}`}>
-                                <StatusIcon className="h-3 w-3" />
-                                {statusInfo.label}
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-600">
-                              {itemCount} {itemCount === 1 ? 'item' : 'itens'} • R$ {order.total.toFixed(2)} • {orderTime}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })})
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
-                Nosso Cardápio
+                Cardápio
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -307,29 +169,34 @@ export const WebOrderPage: React.FC = () => {
 
                 <TabsContent value={selectedCategory}>
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {getFilteredProducts().map((product) => (
-                      <div key={product.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                        {product.image && (
-                          <img 
-                            src={product.image} 
-                            alt={product.name}
-                            className="w-20 h-20 object-cover rounded-lg"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{product.description}</p>
-                          <p className="text-lg font-bold text-green-600">R$ {product.price.toFixed(2)}</p>
+                    {getFilteredProducts().length === 0 ? (
+                      <p className="text-center py-8 text-gray-500">
+                        Nenhum produto disponível
+                      </p>
+                    ) : (
+                      getFilteredProducts().map((product) => (
+                        <div key={product.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-gray-50">
+                          {product.image && (
+                            <img 
+                              src={product.image} 
+                              alt={product.name}
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <h3 className="font-medium">{product.name}</h3>
+                            <p className="text-sm text-gray-600">{product.description}</p>
+                            <p className="text-lg font-bold text-green-600">R$ {product.price.toFixed(2)}</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            onClick={() => addItem(product)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button 
-                          size="sm" 
-                          onClick={() => addItem(product)}
-                          className="ml-4"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -405,7 +272,7 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="name"
                       value={customerData.name}
-                      onChange={(e) => updateField('name', e.target.value)}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Seu nome completo"
                       className="pl-10"
                     />
@@ -419,13 +286,7 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="phone"
                       value={customerData.phone}
-                      onChange={(e) => {
-                        const phone = e.target.value;
-                        updateField('phone', phone);
-                        if (phone.length >= 10) {
-                          setTimeout(loadCustomerOrders, 500);
-                        }
-                      }}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, phone: e.target.value }))}
                       placeholder="(11) 99999-9999"
                       className="pl-10"
                     />
@@ -439,7 +300,7 @@ export const WebOrderPage: React.FC = () => {
                     <Input
                       id="address"
                       value={customerData.address}
-                      onChange={(e) => updateField('address', e.target.value)}
+                      onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))}
                       placeholder="Rua, número, bairro, cidade"
                       className="pl-10"
                     />
@@ -451,8 +312,8 @@ export const WebOrderPage: React.FC = () => {
                   <Input
                     id="notes"
                     value={customerData.notes}
-                    onChange={(e) => updateField('notes', e.target.value)}
-                    placeholder="Observações sobre o pedido (opcional)"
+                    onChange={(e) => setCustomerData(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Observações (opcional)"
                   />
                 </div>
 
@@ -462,7 +323,7 @@ export const WebOrderPage: React.FC = () => {
                   className="w-full h-12 text-lg"
                   size="lg"
                 >
-                  {isSubmitting ? 'Enviando...' : `Finalizar Pedido - R$ ${getTotal().toFixed(2)}`}
+                  {isSubmitting ? 'Enviando...' : `Finalizar Pedido - R$ {getTotal().toFixed(2)}`}
                 </Button>
               </CardContent>
             </Card>
