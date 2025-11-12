@@ -14,61 +14,138 @@ interface OrdersPanelProps {
   onBack: () => void;
 }
 
+const isValidOrder = (order: any): boolean => {
+  try {
+    return (
+      order &&
+      typeof order.id === 'string' &&
+      typeof order.numero === 'number' &&
+      typeof order.cliente === 'string' &&
+      Array.isArray(order.itens) &&
+      order.itens.every((item: any) => 
+        item &&
+        typeof item.nome === 'string' &&
+        !isNaN(Number(item.quantidade)) &&
+        !isNaN(Number(item.preco)) &&
+        Number(item.quantidade) > 0 &&
+        Number(item.preco) >= 0
+      ) &&
+      !isNaN(Number(order.total))
+    );
+  } catch {
+    return false;
+  }
+};
+
+const sanitizeOrder = (order: any): Order | null => {
+  try {
+    if (!isValidOrder(order)) {
+      console.warn('Pedido inválido:', order);
+      return null;
+    }
+
+    return {
+      ...order,
+      total: Number(order.total) || 0,
+      itens: order.itens.map((item: any) => ({
+        ...item,
+        quantidade: Number(item.quantidade) || 0,
+        preco: Number(item.preco) || 0
+      }))
+    };
+  } catch (error) {
+    console.error('Erro ao sanitizar:', error);
+    return null;
+  }
+};
+
 export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState("todos");
   const [showNewOrder, setShowNewOrder] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = () => {
     try {
-      setOrders(ordersDB.getAll());
+      setError(null);
+      
+      const allOrders = ordersDB.getAll();
+      const validOrders = allOrders
+        .map(sanitizeOrder)
+        .filter((order): order is Order => order !== null);
+
+      if (validOrders.length < allOrders.length) {
+        const lostCount = allOrders.length - validOrders.length;
+        console.warn(`${lostCount} pedido(s) inválido(s) removidos`);
+        toast.warning(`${lostCount} pedido(s) corrompidos ignorados`);
+      }
+
+      setOrders(validOrders);
       setStats(ordersDB.getStats());
+
     } catch (error) {
       console.error('Erro ao carregar:', error);
-      toast.error('Erro ao carregar pedidos. Tente limpar os dados.');
+      setError('Erro ao carregar pedidos. Dados corrompidos.');
+      setOrders([]);
+      setStats({ total: 0, today: 0, pendente: 0, preparando: 0 });
     }
   };
 
   const handleClearData = () => {
-    if (confirm('⚠️ Isso irá limpar TODOS os dados de pedidos. Deseja continuar?')) {
+    if (confirm('⚠️ Isso irá limpar TODOS os dados. Continuar?')) {
       try {
         storageMigration.forceCleanup();
-        toast.success('Dados limpos com sucesso! Recarregando...');
+        setOrders([]);
+        setStats(null);
+        setError(null);
+        toast.success('Dados limpos!');
+        setTimeout(() => window.location.reload(), 1000);
       } catch (error) {
-        toast.error('Erro ao limpar dados');
+        toast.error('Erro ao limpar');
       }
     }
   };
 
   useEffect(() => {
-    // Tentar carregar dados com tratamento de erro
-    try {
-      loadData();
-    } catch (error) {
-      console.error('Erro crítico ao carregar pedidos:', error);
-      toast.error('Erro ao carregar pedidos. Clique no botão ⚠️ para limpar dados corrompidos.');
-    }
-    
-    // Iniciar sincronização automática de pedidos web
+    let mounted = true;
     let stopSync: (() => void) | undefined;
-    try {
-      stopSync = webOrdersSync.startAutoSync();
-    } catch (error) {
-      console.error('Erro ao iniciar sincronização:', error);
-    }
-    
-    const handleChange = () => {
+
+    const initialize = async () => {
+      if (!mounted) return;
+
       try {
         loadData();
+        
+        try {
+          stopSync = webOrdersSync.startAutoSync();
+        } catch (syncError) {
+          console.error('Erro sync:', syncError);
+        }
       } catch (error) {
-        console.error('Erro ao recarregar pedidos:', error);
+        console.error('Erro init:', error);
+        if (mounted) {
+          setError('Erro ao inicializar. Clique em "Limpar Dados".');
+        }
+      }
+    };
+
+    initialize();
+    
+    const handleChange = () => {
+      if (mounted) {
+        try {
+          loadData();
+        } catch (error) {
+          console.error('Erro reload:', error);
+        }
       }
     };
     
     window.addEventListener('orders-changed', handleChange);
     
     return () => {
+      mounted = false;
       window.removeEventListener('orders-changed', handleChange);
       if (stopSync) stopSync();
     };
@@ -76,36 +153,73 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
 
   const handleNewOrder = (data: any) => {
     try {
+      if (!data.cliente?.trim()) {
+        toast.error('Nome obrigatório');
+        return;
+      }
+
+      if (!Array.isArray(data.itens) || data.itens.length === 0) {
+        toast.error('Adicione itens');
+        return;
+      }
+
+      const invalidItems = data.itens.some((item: any) => 
+        !item.nome || 
+        isNaN(Number(item.quantidade)) || 
+        isNaN(Number(item.preco)) ||
+        Number(item.quantidade) <= 0
+      );
+
+      if (invalidItems) {
+        toast.error('Itens inválidos');
+        return;
+      }
+
       ordersDB.create({
         tipo: data.tipo,
         mesa: data.mesa,
         endereco: data.endereco,
-        cliente: data.cliente,
-        telefone: data.telefone,
-        itens: data.itens,
-        total: data.total,
+        cliente: data.cliente.trim(),
+        telefone: data.telefone?.trim() || '',
+        itens: data.itens.map((item: any) => ({
+          ...item,
+          quantidade: Number(item.quantidade),
+          preco: Number(item.preco)
+        })),
+        total: Number(data.total),
         observacoes: data.observacoes
       });
       
-      toast.success('Pedido criado com sucesso!');
+      toast.success('Pedido criado!');
       setShowNewOrder(false);
       loadData();
     } catch (error) {
+      console.error('Erro criar:', error);
       toast.error('Erro ao criar pedido');
     }
   };
 
   const updateStatus = (id: string, status: OrderStatus) => {
     try {
+      const order = orders.find(o => o.id === id);
+      if (!order) {
+        toast.error('Pedido não encontrado');
+        return;
+      }
+
       ordersDB.updateStatus(id, status);
       
-      // Sincronizar status de volta para pedidos web
-      webOrdersSync.syncStatusToWeb(id, status);
+      try {
+        webOrdersSync.syncStatusToWeb(id, status);
+      } catch (syncError) {
+        console.warn('Erro sync status:', syncError);
+      }
       
       toast.success('Status atualizado!');
       loadData();
     } catch (error) {
-      toast.error('Erro ao atualizar status');
+      console.error('Erro status:', error);
+      toast.error('Erro ao atualizar');
     }
   };
 
@@ -129,11 +243,46 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
   };
 
   const getTimeElapsed = (createdAt: string) => {
-    const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
-    if (diff < 1) return "Agora";
-    if (diff < 60) return `${diff} min`;
-    return `${Math.floor(diff / 60)}h ${diff % 60}min`;
+    try {
+      const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
+      if (diff < 1) return "Agora";
+      if (diff < 60) return `${diff} min`;
+      return `${Math.floor(diff / 60)}h ${diff % 60}min`;
+    } catch {
+      return "—";
+    }
   };
+
+  if (error) {
+    return (
+      <div className="p-6 space-y-6">
+        <Card className="p-12 text-center border-destructive">
+          <div className="flex flex-col items-center gap-4">
+            <AlertTriangle className="h-16 w-16 text-destructive" />
+            <div>
+              <h3 className="text-lg font-semibold">Erro ao Carregar Pedidos</h3>
+              <p className="text-sm text-muted-foreground mt-2">{error}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="destructive" onClick={handleClearData}>
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Limpar Dados
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setError(null);
+                loadData();
+              }}>
+                Tentar Novamente
+              </Button>
+              <Button variant="outline" onClick={onBack}>
+                Voltar
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -143,10 +292,10 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           <p className="text-muted-foreground">Acompanhe todos os pedidos</p>
           {stats && (
             <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-              <span>Total: {stats.total}</span>
-              <span>Hoje: {stats.today}</span>
-              <span>Pendentes: {stats.pendente}</span>
-              <span>Preparando: {stats.preparando}</span>
+              <span>Total: {stats.total || 0}</span>
+              <span>Hoje: {stats.today || 0}</span>
+              <span>Pendentes: {stats.pendente || 0}</span>
+              <span>Preparando: {stats.preparando || 0}</span>
             </div>
           )}
         </div>
@@ -154,7 +303,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
           <Button variant="ghost" size="sm" onClick={loadData} title="Recarregar">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleClearData} title="Limpar dados corrompidos">
+          <Button variant="destructive" size="sm" onClick={handleClearData} title="Limpar dados">
             <AlertTriangle className="h-4 w-4" />
           </Button>
           <Button variant="pdv" onClick={() => setShowNewOrder(true)}>
@@ -222,16 +371,24 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      {order.itens.map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span>{item.quantidade}x {item.nome}</span>
-                          <span>R$ {(Number(item.quantidade) * Number(item.preco)).toFixed(2)}</span>
-                        </div>
-                      ))}
+                      {order.itens.map((item, idx) => {
+                        const quantidade = Number(item.quantidade) || 0;
+                        const preco = Number(item.preco) || 0;
+                        const subtotal = quantidade * preco;
+                        
+                        return (
+                          <div key={idx} className="flex justify-between text-sm">
+                            <span>{quantidade}x {item.nome || 'Item sem nome'}</span>
+                            <span>R$ {subtotal.toFixed(2)}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                     
                     <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="font-semibold">Total: R$ {Number(order.total).toFixed(2)}</span>
+                      <span className="font-semibold">
+                        Total: R$ {(Number(order.total) || 0).toFixed(2)}
+                      </span>
                       <div className="flex gap-2">
                         {order.status === "pendente" && (
                           <Button size="sm" onClick={() => updateStatus(order.id, "preparando")}>
