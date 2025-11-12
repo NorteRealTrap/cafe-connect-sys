@@ -73,6 +73,20 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      'pendente': { label: 'Pendente', variant: 'secondary' },
+      'web-pendente': { label: 'Pendente', variant: 'secondary' },
+      'aceito': { label: 'Aceito', variant: 'outline' },
+      'preparando': { label: 'Preparando', variant: 'default' },
+      'pronto': { label: 'Pronto', variant: 'default' },
+      'saiu-entrega': { label: 'Saiu p/ Entrega', variant: 'default' },
+      'entregue': { label: 'Entregue', variant: 'default' },
+    };
+    const info = statusMap[status] || { label: status, variant: 'secondary' };
+    return <Badge variant={info.variant}>{info.label}</Badge>;
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -116,7 +130,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                       <Clock className="h-3 w-3 mr-1" />
                       {getTime(order.createdAt)}
                     </Badge>
-                    <Badge>{order.status || 'pendente'}</Badge>
+                    {getStatusBadge(order.status || 'pendente')}
                   </div>
                 </div>
               </CardHeader>
@@ -138,21 +152,44 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                   <span className="font-semibold">
                     Total: R$ {(Number(order.total) || 0).toFixed(2)}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {(order.status === 'pendente' || order.status === 'web-pendente') && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(order.id, 'aceito')}>
+                          Aceitar
+                        </Button>
+                        <Button size="sm" onClick={() => updateStatus(order.id, 'preparando')}>
+                          Preparar
+                        </Button>
+                      </>
+                    )}
+                    {order.status === 'aceito' && (
                       <Button size="sm" onClick={() => updateStatus(order.id, 'preparando')}>
-                        Iniciar
+                        Iniciar Preparo
                       </Button>
                     )}
                     {order.status === 'preparando' && (
                       <Button size="sm" onClick={() => updateStatus(order.id, 'pronto')}>
-                        Pronto
+                        Marcar Pronto
                       </Button>
                     )}
                     {order.status === 'pronto' && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(order.id, 'saiu-entrega')}>
+                          Saiu p/ Entrega
+                        </Button>
+                        <Button size="sm" onClick={() => updateStatus(order.id, 'entregue')}>
+                          Entregue
+                        </Button>
+                      </>
+                    )}
+                    {order.status === 'saiu-entrega' && (
                       <Button size="sm" onClick={() => updateStatus(order.id, 'entregue')}>
-                        Finalizar
+                        Confirmar Entrega
                       </Button>
+                    )}
+                    {order.status === 'entregue' && (
+                      <Badge variant="default" className="bg-green-600">Finalizado</Badge>
                     )}
                   </div>
                 </div>
