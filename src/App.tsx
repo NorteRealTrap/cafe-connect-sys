@@ -4,8 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { useEffect } from "react";
-import { initializePersistence } from "@/lib/persistence";
 import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
@@ -22,14 +20,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  useEffect(() => {
-    try {
-      initializePersistence();
-    } catch (error) {
-      console.error('Erro ao inicializar:', error);
-    }
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider

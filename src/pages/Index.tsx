@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import { FuturisticLogin } from "@/components/auth/FuturisticLogin";
 import { BusinessSelector } from "@/components/business/BusinessSelector";
 import { Dashboard } from "./Dashboard";
-import { storageManager } from "@/lib/storage-manager";
-import { ordersDB } from "@/lib/orders-db";
-import { storageMigration } from "@/lib/storage-migration";
 
 type UserRole = 'admin' | 'caixa' | 'atendente';
 
@@ -14,42 +11,14 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Executar migração e validação de dados primeiro
-    try {
-      storageMigration.checkAndMigrate();
-    } catch (error) {
-      console.error('Erro na migração:', error);
-      // Em caso de erro crítico, limpar tudo
-      storageMigration.forceCleanup();
-      return;
-    }
-    
-    // Inicializar storage manager
-    storageManager.init();
-    
-    // Validar integridade dos dados
-    if (!storageManager.validateStorage()) {
-      console.log('Dados reinicializados devido à corrupção');
-    }
-    
-    // Verificar se há sessão salva
     const savedSession = localStorage.getItem('ccpservices-session');
     if (savedSession) {
       try {
         const session = JSON.parse(savedSession);
-        if (session.role && session.timestamp) {
-          // Verificar se a sessão não expirou (24 horas)
-          const now = Date.now();
-          const sessionAge = now - session.timestamp;
-          const maxAge = 24 * 60 * 60 * 1000; // 24 horas
-          
-          if (sessionAge < maxAge) {
-            setUser({ role: session.role });
-            if (session.businessCategory) {
-              setBusinessCategory(session.businessCategory);
-            }
-          } else {
-            localStorage.removeItem('ccpservices-session');
+        if (session.role) {
+          setUser({ role: session.role });
+          if (session.businessCategory) {
+            setBusinessCategory(session.businessCategory);
           }
         }
       } catch (e) {
@@ -65,7 +34,6 @@ const Index = () => {
       timestamp: Date.now()
     };
     localStorage.setItem('ccpservices-session', JSON.stringify(session));
-    localStorage.setItem('current-user-id', credentials.email);
     setUser({ role: credentials.role as UserRole });
   };
 
@@ -86,7 +54,6 @@ const Index = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('ccpservices-session');
-    localStorage.removeItem('current-user-id');
     setUser(null);
     setBusinessCategory(null);
   };
