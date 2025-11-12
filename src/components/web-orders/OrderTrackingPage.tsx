@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, Truck, ChefHat, Search } from 'lucide-react';
+import { CheckCircle, Clock, Truck, ChefHat, Search, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface WebOrder {
   id: string;
@@ -25,6 +26,7 @@ export const OrderTrackingPage: React.FC = () => {
   const [order, setOrder] = useState<WebOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
 
   const searchOrder = () => {
     if (!orderId.trim()) return;
@@ -39,7 +41,7 @@ export const OrderTrackingPage: React.FC = () => {
       let foundOrder = webOrders.find((o: WebOrder) => o.id === orderId.trim());
       
       if (!foundOrder) {
-        foundOrder = mainOrders.find((o: any) => o.id === orderId.trim() && o.source === 'web');
+        foundOrder = mainOrders.find((o: any) => o.id === orderId.trim());
       }
       
       if (foundOrder) {
@@ -56,12 +58,78 @@ export const OrderTrackingPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (order) {
-        searchOrder();
+  const sendReportToWhatsApp = async () => {
+    if (!order) return;
+
+    setSendingReport(true);
+    try {
+      const config = JSON.parse(localStorage.getItem('pdv-config') || '{}');
+      const ownerPhone = config.ownerPhone || config.storePhone;
+
+      if (!ownerPhone) {
+        toast.error('Número do dono não configurado. Configure em Configurações > Geral');
+        return;
       }
-    }, 10000); // Atualiza a cada 10 segundos
+
+      const statusInfo = getStatusInfo(order.status);
+      const itemsList = order.items.map((item, i) => 
+        `${i + 1}. ${item.productName} - Qtd: ${item.quantity} - R$ ${(item.price * item.quantity).toFixed(2)}`
+      ).join('%0A');
+
+      const message = `*RELATÓRIO DE PEDIDO*%0A%0A` +
+        `*Pedido:* ${order.id}%0A` +
+        `*Cliente:* ${order.customerName}%0A` +
+        `*Telefone:* ${order.customerPhone}%0A` +
+        `*Status:* ${statusInfo.label}%0A` +
+        `*Data/Hora:* ${new Date(order.orderTime || order.createdAt).toLocaleString('pt-BR')}%0A%0A` +
+        `*ITENS DO PEDIDO:*%0A${itemsList}%0A%0A` +
+        `*TOTAL: R$ ${order.total.toFixed(2)}*%0A%0A` +
+        `*Endereço de Entrega:*%0A${order.customerAddress || 'Não informado'}`;
+
+      const whatsappUrl = `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${message}`;
+      window.open(whatsappUrl, '_blank');
+      
+      toast.success('Abrindo WhatsApp...');
+    } catch (error) {
+      toast.error('Erro ao enviar relatório');
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
+  useEffect(() => {
+    // Carregar dados do cliente e último pedido
+    const customerData = localStorage.getItem('customer-data');
+    if (customerData) {
+      const data = JSON.parse(customerData);
+      if (data.lastOrderId) {
+        setOrderId(data.lastOrderId);
+        // Auto-buscar o pedido
+        setTimeout(() => {
+          const input = document.querySelector('input[placeholder*="código"]') as HTMLInputElement;
+          if (input) {
+            input.value = data.lastOrderId;
+            setOrderId(data.lastOrderId);
+          }
+        }, 100);
+      }
+    }
+
+    // Verificar URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromUrl = urlParams.get('id');
+    if (idFromUrl) {
+      setOrderId(idFromUrl);
+      setTimeout(() => searchOrder(), 200);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!order) return;
+
+    const interval = setInterval(() => {
+      searchOrder();
+    }, 5000); // Atualiza a cada 5 segundos
 
     return () => clearInterval(interval);
   }, [order, orderId]);
@@ -246,18 +314,30 @@ export const OrderTrackingPage: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {order.status !== 'entregue' && (
-                <Card>
-                  <CardContent className="text-center py-6">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Tempo estimado de entrega: {order.estimatedTime} minutos
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Esta página atualiza automaticamente a cada 10 segundos
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardContent className="py-6 space-y-4">
+                  {order.status !== 'entregue' && (
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Tempo estimado de entrega: {order.estimatedTime || 30} minutos
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Esta página atualiza automaticamente a cada 5 segundos
+                      </p>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    onClick={sendReportToWhatsApp}
+                    disabled={sendingReport}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {sendingReport ? 'Enviando...' : 'Enviar Relatório para Dono via WhatsApp'}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>

@@ -125,10 +125,18 @@ export const WebOrderPage = () => {
       mainOrders.unshift(webOrder);
       localStorage.setItem('cafe-connect-orders', JSON.stringify(mainOrders));
 
+      // Salvar dados do cliente para persistência
+      localStorage.setItem('customer-data', JSON.stringify({
+        name: customerData.name,
+        phone: customerData.phone,
+        address: customerData.address,
+        lastOrderId: webOrder.id
+      }));
+
       toast.success(`Pedido enviado! Código: ${webOrder.id}`);
       
-      setSelectedItems([]);
-      setCustomerData({ name: '', phone: '', address: '', notes: '' });
+      // Redirecionar para página de acompanhamento
+      window.location.href = `/order-tracking?id=${webOrder.id}`;
       
     } catch (error) {
       toast.error('Erro ao enviar pedido');

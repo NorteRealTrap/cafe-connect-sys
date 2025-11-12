@@ -147,6 +147,29 @@ export const ConfigPanel = ({ onBack }: ConfigPanelProps) => {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>WhatsApp do Dono</CardTitle>
+              <CardDescription>
+                Número usado para receber relatórios de pedidos dos clientes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="ownerPhone">Número do WhatsApp (com DDD)</Label>
+                <Input
+                  id="ownerPhone"
+                  placeholder="(11) 99999-9999"
+                  value={config.ownerPhone || ''}
+                  onChange={(e) => handleConfigChange("ownerPhone", e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Exemplo: (11) 98765-4321 ou 11987654321
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="sistema" className="space-y-4">
