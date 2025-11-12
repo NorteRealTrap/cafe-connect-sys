@@ -10,6 +10,7 @@ import { Settings, Store, Bell, Shield, Palette, Database, Globe } from "lucide-
 import { UserRole } from "@/components/auth/LoginForm";
 import { DomainSettings } from "@/components/settings/DomainSettings";
 import { CacheDiagnostics } from "@/components/debug/CacheDiagnostics";
+import { SystemRepairPanel } from "@/components/debug/SystemRepairPanel";
 
 interface ConfigPanelProps {
   onBack: () => void;
@@ -90,11 +91,12 @@ export const ConfigPanel = ({ onBack }: ConfigPanelProps) => {
       </div>
 
       <Tabs defaultValue="geral" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="geral">Geral</TabsTrigger>
           <TabsTrigger value="dominios">Domínios</TabsTrigger>
           <TabsTrigger value="sistema">Sistema</TabsTrigger>
           <TabsTrigger value="diagnostico">Diagnóstico</TabsTrigger>
+          <TabsTrigger value="reparo">Reparo</TabsTrigger>
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           <TabsTrigger value="aparencia">Aparência</TabsTrigger>
         </TabsList>
@@ -105,6 +107,10 @@ export const ConfigPanel = ({ onBack }: ConfigPanelProps) => {
 
         <TabsContent value="diagnostico" className="space-y-4">
           <CacheDiagnostics />
+        </TabsContent>
+
+        <TabsContent value="reparo" className="space-y-4">
+          <SystemRepairPanel />
         </TabsContent>
 
         <TabsContent value="geral" className="space-y-4">
