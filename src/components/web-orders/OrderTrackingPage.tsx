@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, Truck, ChefHat, Search, Send } from 'lucide-react';
+import { CheckCircle, Clock, Truck, ChefHat, Search, Send, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WebOrder {
@@ -136,6 +136,7 @@ export const OrderTrackingPage: React.FC = () => {
 
   const getStatusInfo = (status: string) => {
     switch (status) {
+      case 'pendente':
       case 'web-pendente':
         return { 
           label: 'Aguardando Confirmação', 
@@ -152,6 +153,7 @@ export const OrderTrackingPage: React.FC = () => {
           description: 'Seu pedido está sendo preparado'
         };
       case 'pronto':
+      case 'saiu-entrega':
         return { 
           label: 'Saiu para Entrega', 
           color: 'bg-orange-500', 
@@ -159,6 +161,7 @@ export const OrderTrackingPage: React.FC = () => {
           description: 'Seu pedido saiu para entrega'
         };
       case 'entregue':
+      case 'finalizado':
         return { 
           label: 'Entregue', 
           color: 'bg-green-500', 
@@ -167,22 +170,25 @@ export const OrderTrackingPage: React.FC = () => {
         };
       default:
         return { 
-          label: 'Status Desconhecido', 
-          color: 'bg-gray-500', 
+          label: 'Aguardando Confirmação', 
+          color: 'bg-yellow-500', 
           icon: Clock,
-          description: 'Status não identificado'
+          description: 'Seu pedido foi recebido e está aguardando confirmação'
         };
     }
   };
 
   const getProgressPercentage = (status: string) => {
     switch (status) {
+      case 'pendente':
       case 'web-pendente': return 25;
       case 'aceito':
       case 'preparando': return 50;
-      case 'pronto': return 75;
-      case 'entregue': return 100;
-      default: return 0;
+      case 'pronto':
+      case 'saiu-entrega': return 75;
+      case 'entregue':
+      case 'finalizado': return 100;
+      default: return 25;
     }
   };
 
@@ -327,15 +333,23 @@ export const OrderTrackingPage: React.FC = () => {
                     </div>
                   )}
                   
-                  <Button 
-                    onClick={sendReportToWhatsApp}
-                    disabled={sendingReport}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {sendingReport ? 'Enviando...' : 'Enviar Relatório para Dono via WhatsApp'}
-                  </Button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={sendReportToWhatsApp}
+                      disabled={sendingReport}
+                      variant="outline"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      {sendingReport ? 'Enviando...' : 'Enviar Relatório'}
+                    </Button>
+                    <Button 
+                      onClick={() => window.location.href = '/web-order'}
+                      variant="default"
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Fazer Novo Pedido
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
