@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, Star, Coffee, Pizza, Cake, Wine, Utensils } from "lucide-react";
 import { useProducts } from "@/hooks/useDatabase";
-import { useIntegration } from "@/hooks/useIntegration";
 import { NewItemModal } from "./NewItemModal";
+import { toast } from "sonner";
 import { EditItemModal } from "./EditItemModal";
 import type { Product } from "@/lib/database";
 
@@ -25,7 +25,6 @@ interface MenuPanelProps {
 
 export const MenuPanel = ({ onBack }: MenuPanelProps) => {
   const { products: menuItems, addProduct, updateProduct } = useProducts();
-  const { syncProduct } = useIntegration();
   const [selectedCategory, setSelectedCategory] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewModal, setShowNewModal] = useState(false);
@@ -65,8 +64,8 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
     available: boolean;
     featured: boolean;
   }) => {
-    const product = addProduct(itemData);
-    syncProduct(product, 'create');
+    addProduct(itemData);
+    toast.success('Produto adicionado!');
   };
 
   const handleEditItem = (item: Product) => {
@@ -75,8 +74,8 @@ export const MenuPanel = ({ onBack }: MenuPanelProps) => {
   };
 
   const handleUpdateItem = (id: string, updates: Partial<Product>) => {
-    const product = updateProduct(id, updates);
-    syncProduct(product, 'update');
+    updateProduct(id, updates);
+    toast.success('Produto atualizado!');
     setShowEditModal(false);
     setEditingItem(null);
   };
