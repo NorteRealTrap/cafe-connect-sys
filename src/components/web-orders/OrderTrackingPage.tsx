@@ -28,10 +28,10 @@ export const OrderTrackingPage: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
   const [sendingReport, setSendingReport] = useState(false);
 
-  const searchOrder = () => {
+  const searchOrder = (silent = false) => {
     if (!orderId.trim()) return;
     
-    setLoading(true);
+    if (!silent) setLoading(true);
     setNotFound(false);
     
     try {
@@ -54,7 +54,7 @@ export const OrderTrackingPage: React.FC = () => {
     } catch (error) {
       setNotFound(true);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -125,14 +125,14 @@ export const OrderTrackingPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!order) return;
+    if (!orderId || !order) return;
 
     const interval = setInterval(() => {
-      searchOrder();
-    }, 5000); // Atualiza a cada 5 segundos
+      searchOrder(true); // Silent refresh
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [order, orderId]);
+  }, [orderId]);
 
   const getStatusInfo = (status: string) => {
     switch (status) {
