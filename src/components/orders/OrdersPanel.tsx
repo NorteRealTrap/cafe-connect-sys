@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, RefreshCw, Package, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { notifyOrderUpdate } from "@/hooks/useOrderSync";
 
 const STORAGE_KEY = 'cafe-connect-orders';
 
@@ -40,6 +41,20 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         o.id === id ? { ...o, status: newStatus } : o
       );
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      
+      // Atualizar também em ccpservices-web-orders
+      const webData = localStorage.getItem('ccpservices-web-orders');
+      if (webData) {
+        const webParsed = JSON.parse(webData);
+        const webUpdated = webParsed.map((o: any) => 
+          o.id === id ? { ...o, status: newStatus } : o
+        );
+        localStorage.setItem('ccpservices-web-orders', JSON.stringify(webUpdated));
+      }
+      
+      // Notificar outras abas/janelas
+      notifyOrderUpdate();
+      
       loadOrders();
       toast.success('Status atualizado!');
     } catch (error) {

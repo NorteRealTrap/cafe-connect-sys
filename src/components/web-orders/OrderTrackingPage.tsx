@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, Truck, ChefHat, Search, Send, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
+import { useOrderSync } from '@/hooks/useOrderSync';
 
 interface WebOrder {
   id: string;
@@ -124,12 +125,21 @@ export const OrderTrackingPage: React.FC = () => {
     }
   }, []);
 
+  // Sincronização em tempo real entre abas
+  const handleSync = useCallback(() => {
+    if (orderId) {
+      searchOrder(true);
+    }
+  }, [orderId]);
+
+  useOrderSync(handleSync);
+
   useEffect(() => {
     if (!orderId || !order) return;
 
     const interval = setInterval(() => {
-      searchOrder(true); // Silent refresh
-    }, 5000);
+      searchOrder(true);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [orderId]);
