@@ -118,7 +118,9 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       #{order.numero || order.id?.slice(-6) || '000'}
-                      <Badge variant="outline">{order.tipo || 'delivery'}</Badge>
+                      <Badge variant={order.tipo === 'retirada' ? 'default' : 'outline'}>
+                        {order.tipo === 'retirada' ? 'Retirada' : 'Delivery'}
+                      </Badge>
                       {order.id?.startsWith('WEB-') && <Badge variant="secondary">WEB</Badge>}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -175,15 +177,17 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                     )}
                     {order.status === 'pronto' && (
                       <>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(order.id, 'saiu-entrega')}>
-                          Saiu p/ Entrega
-                        </Button>
+                        {order.tipo === 'delivery' && (
+                          <Button size="sm" variant="outline" onClick={() => updateStatus(order.id, 'saiu-entrega')}>
+                            Saiu p/ Entrega
+                          </Button>
+                        )}
                         <Button size="sm" onClick={() => updateStatus(order.id, 'entregue')}>
-                          Entregue
+                          {order.tipo === 'retirada' ? 'Retirado' : 'Entregue'}
                         </Button>
                       </>
                     )}
-                    {order.status === 'saiu-entrega' && (
+                    {order.status === 'saiu-entrega' && order.tipo === 'delivery' && (
                       <Button size="sm" onClick={() => updateStatus(order.id, 'entregue')}>
                         Confirmar Entrega
                       </Button>

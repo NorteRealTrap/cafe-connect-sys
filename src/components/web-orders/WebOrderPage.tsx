@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Minus, ShoppingCart, MapPin, Phone, User } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, MapPin, Phone, User, Store, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const WebOrderPage = () => {
@@ -18,6 +18,7 @@ export const WebOrderPage = () => {
     address: '',
     notes: ''
   });
+  const [orderType, setOrderType] = useState<'delivery' | 'retirada'>('delivery');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = ['todos', 'Bebidas', 'Lanches', 'Doces', 'Bar'];
@@ -80,8 +81,8 @@ export const WebOrderPage = () => {
       return;
     }
 
-    if (!customerData.address.trim()) {
-      toast.error('Endereço é obrigatório');
+    if (orderType === 'delivery' && !customerData.address.trim()) {
+      toast.error('Endereço é obrigatório para delivery');
       return;
     }
 
@@ -111,7 +112,7 @@ export const WebOrderPage = () => {
         })),
         total: getTotal(),
         status: 'pendente',
-        tipo: 'delivery',
+        tipo: orderType,
         createdAt: new Date().toISOString(),
         observacoes: customerData.notes
       };
@@ -270,7 +271,35 @@ export const WebOrderPage = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Dados para Entrega</CardTitle>
+                <CardTitle>Tipo de Pedido</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant={orderType === 'delivery' ? 'default' : 'outline'}
+                    onClick={() => setOrderType('delivery')}
+                    className="h-20 flex flex-col gap-2"
+                  >
+                    <Truck className="h-6 w-6" />
+                    <span>Delivery</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={orderType === 'retirada' ? 'default' : 'outline'}
+                    onClick={() => setOrderType('retirada')}
+                    className="h-20 flex flex-col gap-2"
+                  >
+                    <Store className="h-6 w-6" />
+                    <span>Retirada</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{orderType === 'delivery' ? 'Dados para Entrega' : 'Dados para Contato'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -301,19 +330,21 @@ export const WebOrderPage = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Endereço Completo *</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="address"
-                      value={customerData.address}
-                      onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))}
-                      placeholder="Rua, número, bairro, cidade"
-                      className="pl-10"
-                    />
+                {orderType === 'delivery' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Endereço Completo *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="address"
+                        value={customerData.address}
+                        onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="Rua, número, bairro, cidade"
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Observações</Label>

@@ -144,7 +144,9 @@ export const OrderTrackingPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [orderId]);
 
-  const getStatusInfo = (status: string) => {
+  const getStatusInfo = (status: string, tipo?: string) => {
+    const isRetirada = tipo === 'retirada';
+    
     switch (status) {
       case 'pendente':
       case 'web-pendente':
@@ -155,6 +157,12 @@ export const OrderTrackingPage: React.FC = () => {
           description: 'Seu pedido foi recebido e está aguardando confirmação'
         };
       case 'aceito':
+        return { 
+          label: 'Pedido Aceito', 
+          color: 'bg-blue-400', 
+          icon: CheckCircle,
+          description: 'Seu pedido foi aceito e será preparado em breve'
+        };
       case 'preparando':
         return { 
           label: 'Preparando', 
@@ -163,6 +171,12 @@ export const OrderTrackingPage: React.FC = () => {
           description: 'Seu pedido está sendo preparado'
         };
       case 'pronto':
+        return { 
+          label: isRetirada ? 'Pronto para Retirada' : 'Pronto', 
+          color: 'bg-purple-500', 
+          icon: CheckCircle,
+          description: isRetirada ? 'Seu pedido está pronto! Pode vir retirar' : 'Seu pedido está pronto e será enviado em breve'
+        };
       case 'saiu-entrega':
         return { 
           label: 'Saiu para Entrega', 
@@ -173,10 +187,10 @@ export const OrderTrackingPage: React.FC = () => {
       case 'entregue':
       case 'finalizado':
         return { 
-          label: 'Entregue', 
+          label: isRetirada ? 'Retirado' : 'Entregue', 
           color: 'bg-green-500', 
           icon: CheckCircle,
-          description: 'Pedido entregue com sucesso'
+          description: isRetirada ? 'Pedido retirado com sucesso' : 'Pedido entregue com sucesso'
         };
       default:
         return { 
@@ -188,17 +202,19 @@ export const OrderTrackingPage: React.FC = () => {
     }
   };
 
-  const getProgressPercentage = (status: string) => {
+  const getProgressPercentage = (status: string, tipo?: string) => {
+    const isRetirada = tipo === 'retirada';
+    
     switch (status) {
       case 'pendente':
-      case 'web-pendente': return 25;
-      case 'aceito':
-      case 'preparando': return 50;
-      case 'pronto':
-      case 'saiu-entrega': return 75;
+      case 'web-pendente': return 20;
+      case 'aceito': return 40;
+      case 'preparando': return 60;
+      case 'pronto': return isRetirada ? 100 : 80;
+      case 'saiu-entrega': return 90;
       case 'entregue':
       case 'finalizado': return 100;
-      default: return 25;
+      default: return 20;
     }
   };
 
@@ -276,9 +292,9 @@ export const OrderTrackingPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   {(() => {
-                    const statusInfo = getStatusInfo(order.status);
+                    const statusInfo = getStatusInfo(order.status, order.tipo);
                     const StatusIcon = statusInfo.icon;
-                    const progress = getProgressPercentage(order.status);
+                    const progress = getProgressPercentage(order.status, order.tipo);
                     
                     return (
                       <div className="space-y-4">
@@ -300,10 +316,12 @@ export const OrderTrackingPage: React.FC = () => {
                         </div>
                         
                         <div className="flex justify-between text-xs text-gray-500">
-                          <span>Pedido Recebido</span>
+                          <span>Recebido</span>
+                          <span>Aceito</span>
                           <span>Preparando</span>
-                          <span>Saiu para Entrega</span>
-                          <span>Entregue</span>
+                          <span>Pronto</span>
+                          {order.tipo === 'delivery' && <span>Entrega</span>}
+                          <span>{order.tipo === 'retirada' ? 'Retirado' : 'Entregue'}</span>
                         </div>
                       </div>
                     );
