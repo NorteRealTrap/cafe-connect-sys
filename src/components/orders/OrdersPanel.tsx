@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, RefreshCw, Package, Clock } from "lucide-react";
+import { Plus, RefreshCw, Package, Clock, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { notifyOrderUpdate } from "@/hooks/useOrderSync";
 import { revenueSync } from "@/lib/revenue-sync";
+import { deliverySync } from "@/lib/delivery-sync";
 
 const STORAGE_KEY = 'cafe-connect-orders';
 
@@ -38,6 +39,16 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       const parsed = data ? JSON.parse(data) : [];
+      const order = parsed.find((o: any) => o.id === id);
+      
+      // Criar delivery automaticamente quando pedido for aceito
+      if (order?.tipo === 'delivery' && newStatus === 'aceito' && !order.deliveryId) {
+        const deliveryId = deliverySync.createDeliveryFromOrder(id);
+        if (deliveryId) {
+          toast.success('Pedido registrado no sistema de delivery!');
+        }
+      }
+      
       const updated = parsed.map((o: any) => 
         o.id === id ? { ...o, status: newStatus } : o
       );
@@ -52,6 +63,9 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
         );
         localStorage.setItem('ccpservices-web-orders', JSON.stringify(webUpdated));
       }
+      
+      // Sincronizar status com delivery
+      deliverySync.updateOrderStatus(id, newStatus);
       
       // Notificar outras abas/janelas
       notifyOrderUpdate();
@@ -157,9 +171,17 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
                 </div>
                 
                 <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="font-semibold">
-                    Total: R$ {(Number(order.total) || 0).toFixed(2)}
-                  </span>
+                  <div>
+                    <span className="font-semibold">
+                      Total: R$ {(Number(order.total) || 0).toFixed(2)}
+                    </span>
+                    {order.deliveryId && (
+                      <Badge variant="outline" className="ml-2">
+                        <Truck className="h-3 w-3 mr-1" />
+                        {order.deliveryId}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {(order.status === 'pendente' || order.status === 'web-pendente') && (
                       <>

@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Truck, MapPin, Clock, Phone, User } from "lucide-react";
+import { ArrowLeft, Truck, MapPin, Clock, Phone, User, Plus, Trash2 } from "lucide-react";
 import { useRealtime } from "@/lib/realtime";
+import { deliverySync } from "@/lib/delivery-sync";
+import { toast } from "sonner";
 
 interface DeliveryPanelProps {
   onBack: () => void;
@@ -79,6 +81,8 @@ const mockDrivers: Driver[] = [
 export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
   const [deliveries, setDeliveries] = useRealtime<DeliveryOrder[]>('ccpservices-deliveries', mockDeliveries);
   const [drivers, setDrivers] = useRealtime<Driver[]>('ccpservices-drivers', mockDrivers);
+  const [showAddDriver, setShowAddDriver] = useState(false);
+  const [newDriver, setNewDriver] = useState({ name: '', phone: '', vehicle: '' });
 
   useEffect(() => {
     // Carregar deliveries do localStorage se existirem
@@ -91,6 +95,15 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     if (storedDrivers.length === 0) {
       setDrivers(mockDrivers);
     }
+    
+    // Escutar eventos de criação de delivery
+    const handleDeliveryCreated = () => {
+      const updated = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
+      setDeliveries(updated);
+    };
+    
+    window.addEventListener('deliveryCreated', handleDeliveryCreated);
+    window.addEventListener('orderStatusChanged', handleDeliveryCreated);
     
     // Atualizar status em tempo real
     const statusInterval = setInterval(async () => {
@@ -123,7 +136,11 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
       }
     }, 2000);
     
-    return () => clearInterval(statusInterval);
+    return () => {
+      clearInterval(statusInterval);
+      window.removeEventListener('deliveryCreated', handleDeliveryCreated);
+      window.removeEventListener('orderStatusChanged', handleDeliveryCreated);
+    };
   }, []);
 
   const getStatusBadge = (status: DeliveryOrder["status"]) => {
@@ -160,33 +177,28 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
 
-  const assignDriver = async (orderId: string, driverName: string) => {
+  const assignDriver = async (orderId: string, driverId: number) => {
+    const driver = drivers.find(d => d.id === driverId);
+    if (!driver) return;
+
     const updatedDeliveries = deliveries.map(order => 
       order.id === orderId 
-        ? { ...order, driver: driverName, status: "saiu_entrega" as const }
+        ? { ...order, driver: driver.name, status: "saiu_entrega" as const }
         : order
     );
     setDeliveries(updatedDeliveries);
     
-    const updatedDrivers = drivers.map(driver =>
-      driver.name === driverName
-        ? { ...driver, status: "ocupado" as const, currentOrders: driver.currentOrders + 1 }
-        : driver
+    const updatedDrivers = drivers.map(d =>
+      d.id === driverId
+        ? { ...d, status: "ocupado" as const, currentOrders: d.currentOrders + 1 }
+        : d
     );
     setDrivers(updatedDrivers);
     
-    // Atualizar pedido principal se existir
+    deliverySync.updateDeliveryStatus(orderId, 'saiu_entrega', driver.name);
+    
     const delivery = deliveries.find(d => d.id === orderId);
     if (delivery && (delivery as any).orderId) {
-      const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
-      const updatedOrders = orders.map((order: any) => 
-        order.id === (delivery as any).orderId
-          ? { ...order, status: 'saiu-entrega', delivery: { ...order.delivery, status: 'saiu_entrega', driver: driverName } }
-          : order
-      );
-      localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
-      
-      // Sincronizar status via API
       try {
         await fetch('/api/status', {
           method: 'POST',
@@ -200,11 +212,9 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
       } catch (error) {
         console.log('Erro ao sincronizar status');
       }
-      
-      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
-        detail: { orderId: (delivery as any).orderId, status: 'saiu-entrega' } 
-      }));
     }
+    
+    toast.success(`Entregador ${driver.name} designado!`);
   };
 
   const completeDelivery = async (orderId: string) => {
@@ -227,17 +237,11 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     );
     setDrivers(updatedDrivers);
     
-    // Atualizar pedido principal se existir
+    // Sincronizar com sistema de delivery
+    deliverySync.updateDeliveryStatus(orderId, 'entregue');
+    
+    // Sincronizar status via API
     if ((order as any).orderId) {
-      const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
-      const updatedOrders = orders.map((mainOrder: any) => 
-        mainOrder.id === (order as any).orderId
-          ? { ...mainOrder, status: 'entregue', delivery: { ...mainOrder.delivery, status: 'entregue' } }
-          : mainOrder
-      );
-      localStorage.setItem('cafe-connect-orders', JSON.stringify(updatedOrders));
-      
-      // Sincronizar status via API
       try {
         await fetch('/api/status', {
           method: 'POST',
@@ -251,14 +255,68 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
       } catch (error) {
         console.log('Erro ao sincronizar status');
       }
-      
-      window.dispatchEvent(new CustomEvent('orderStatusChanged', { 
-        detail: { orderId: (order as any).orderId, status: 'entregue' } 
-      }));
     }
+    
+    toast.success('Entrega confirmada!');
+  };
+
+  const addDriver = () => {
+    if (!newDriver.name || !newDriver.phone || !newDriver.vehicle) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+
+    const driver: Driver = {
+      id: Date.now(),
+      name: newDriver.name,
+      phone: newDriver.phone,
+      vehicle: newDriver.vehicle,
+      status: 'disponivel',
+      currentOrders: 0
+    };
+
+    const updatedDrivers = [...drivers, driver];
+    setDrivers(updatedDrivers);
+    setNewDriver({ name: '', phone: '', vehicle: '' });
+    setShowAddDriver(false);
+    toast.success('Entregador adicionado!');
+  };
+
+  const deleteDriver = (id: number) => {
+    const driver = drivers.find(d => d.id === id);
+    if (driver?.currentOrders > 0) {
+      toast.error('Não é possível remover entregador com pedidos ativos');
+      return;
+    }
+
+    const updatedDrivers = drivers.filter(d => d.id !== id);
+    setDrivers(updatedDrivers);
+    toast.success('Entregador removido!');
   };
 
   const availableDrivers = drivers.filter(d => d.status === "disponivel");
+
+  const cancelDelivery = (orderId: string) => {
+    const order = deliveries.find(o => o.id === orderId);
+    if (!order) return;
+
+    const updatedDeliveries = deliveries.map(delivery => 
+      delivery.id === orderId ? { ...delivery, status: "cancelado" as const } : delivery
+    );
+    setDeliveries(updatedDeliveries);
+
+    if (order.driver) {
+      const updatedDrivers = drivers.map(driver =>
+        driver.name === order.driver
+          ? { ...driver, status: "disponivel" as const, currentOrders: Math.max(0, driver.currentOrders - 1) }
+          : driver
+      );
+      setDrivers(updatedDrivers);
+    }
+
+    deliverySync.updateDeliveryStatus(orderId, 'cancelado');
+    toast.success('Entrega cancelada!');
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -362,23 +420,49 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
                   <span className="font-medium">Items:</span> {order.items.join(", ")}
                 </div>
                 
-                <div className="flex gap-2 pt-2">
-                  {order.status === "preparando" && availableDrivers.length > 0 && (
-                    <Button 
-                      size="sm"
-                      onClick={() => assignDriver(order.id, availableDrivers[0].name)}
-                    >
-                      Designar Entregador
-                    </Button>
+                <div className="flex gap-2 pt-2 flex-wrap">
+                  {order.status === "preparando" && (
+                    <>
+                      {availableDrivers.length > 0 ? (
+                        <select
+                          className="px-3 py-1 border rounded text-sm"
+                          onChange={(e) => assignDriver(order.id, Number(e.target.value))}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Selecionar Entregador</option>
+                          {availableDrivers.map(driver => (
+                            <option key={driver.id} value={driver.id}>
+                              {driver.name} - {driver.vehicle}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Badge variant="secondary">Sem entregadores disponíveis</Badge>
+                      )}
+                      <Button size="sm" variant="destructive" onClick={() => cancelDelivery(order.id)}>
+                        Cancelar
+                      </Button>
+                    </>
                   )}
                   {order.status === "saiu_entrega" && (
-                    <Button 
-                      size="sm" 
-                      variant="success"
-                      onClick={() => completeDelivery(order.id)}
-                    >
-                      Confirmar Entrega
-                    </Button>
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        onClick={() => completeDelivery(order.id)}
+                      >
+                        Confirmar Entrega
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => cancelDelivery(order.id)}>
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                  {order.status === "entregue" && (
+                    <Badge variant="default" className="bg-green-600">Finalizado</Badge>
+                  )}
+                  {order.status === "cancelado" && (
+                    <Badge variant="destructive">Cancelado</Badge>
                   )}
                 </div>
               </CardContent>
@@ -387,13 +471,66 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Entregadores</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Entregadores</h2>
+            <Button size="sm" onClick={() => setShowAddDriver(!showAddDriver)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar
+            </Button>
+          </div>
+
+          {showAddDriver && (
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <input
+                  type="text"
+                  placeholder="Nome"
+                  value={newDriver.name}
+                  onChange={(e) => setNewDriver({ ...newDriver, name: e.target.value })}
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Telefone"
+                  value={newDriver.phone}
+                  onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <input
+                  type="text"
+                  placeholder="Veículo"
+                  value={newDriver.vehicle}
+                  onChange={(e) => setNewDriver({ ...newDriver, vehicle: e.target.value })}
+                  className="w-full px-3 py-2 border rounded"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={addDriver} className="flex-1">
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowAddDriver(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {drivers.map((driver) => (
             <Card key={driver.id}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{driver.name}</span>
-                  {getDriverStatusBadge(driver.status)}
+                  <div className="flex items-center gap-2">
+                    {getDriverStatusBadge(driver.status)}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteDriver(driver.id)}
+                      disabled={driver.currentOrders > 0}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <div>{driver.vehicle}</div>
