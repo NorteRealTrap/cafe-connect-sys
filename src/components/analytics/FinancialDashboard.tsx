@@ -1,20 +1,36 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { financialSystem } from "@/lib/financial";
 import { analyticsEngine } from "@/lib/analytics";
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, Smartphone, Receipt } from "lucide-react";
+import { revenueSync } from "@/lib/revenue-sync";
+import { TrendingUp, TrendingDown, DollarSign, CreditCard, Smartphone, Receipt, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const FinancialDashboard = () => {
   const [summary, setSummary] = useState<any>({});
   const [metrics, setMetrics] = useState<any>({});
 
-  useEffect(() => {
+  const loadData = () => {
+    // Sincronizar pedidos completados primeiro
+    revenueSync.syncAllCompletedOrders();
+    
     const financialSummary = financialSystem.getFinancialSummary();
     const analyticsMetrics = analyticsEngine.getRevenueMetrics();
     setSummary(financialSummary);
     setMetrics(analyticsMetrics);
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleSync = () => {
+    toast.info('Sincronizando dados...');
+    loadData();
+    toast.success('Dados sincronizados!');
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -49,6 +65,16 @@ export const FinancialDashboard = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Dashboard Financeiro</h2>
+          <p className="text-muted-foreground">Visão completa de receitas e despesas</p>
+        </div>
+        <Button onClick={handleSync} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Sincronizar
+        </Button>
+      </div>
       {/* Resumo Financeiro */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>

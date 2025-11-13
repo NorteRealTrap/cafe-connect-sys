@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, RefreshCw, Package, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { notifyOrderUpdate } from "@/hooks/useOrderSync";
+import { revenueSync } from "@/lib/revenue-sync";
 
 const STORAGE_KEY = 'cafe-connect-orders';
 
@@ -54,6 +55,11 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       
       // Notificar outras abas/janelas
       notifyOrderUpdate();
+      
+      // Sincronizar com sistema financeiro se entregue
+      if (newStatus === 'entregue') {
+        setTimeout(() => revenueSync.syncOrderToFinancial(id), 500);
+      }
       
       loadOrders();
       toast.success('Status atualizado!');

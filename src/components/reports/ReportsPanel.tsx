@@ -1,409 +1,235 @@
-import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, DollarSign, ShoppingCart, Download, FileText, Calendar } from "lucide-react";
-import { MetricsCards } from "@/components/analytics/MetricsCards";
-import { RevenueChart } from "@/components/analytics/RevenueChart";
-import { FinancialDashboard } from "@/components/analytics/FinancialDashboard";
-import { PaymentReports } from "@/components/analytics/PaymentReports";
-import { analyticsEngine } from "@/lib/analytics";
-import { financialSystem } from "@/lib/financial";
-import { reportsDatabase, ReportData } from "@/lib/database-reports";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { revenueSync } from '@/lib/revenue-sync';
+import { analyticsEngine } from '@/lib/analytics';
+import { financialSystem } from '@/lib/financial';
+import { BarChart3, TrendingUp, DollarSign, Package, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ReportsPanelProps {
   onBack: () => void;
 }
 
 export const ReportsPanel = ({ onBack }: ReportsPanelProps) => {
-  const [period, setPeriod] = useState("hoje");
-  const [reports, setReports] = useState<ReportData[]>([]);
-  const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  
+  const [report, setReport] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    loadReports();
-    // Forçar sincronização de dados
-    syncAllData();
+    loadReport();
   }, []);
 
-  const syncAllData = () => {
-    // Sincronizar dados entre sistemas
-    const payments = financialSystem.getAllPayments();
-    const transactions = reportsDatabase.getAllTransactions();
-    
-    // Se não há transações mas há pagamentos, sincronizar
-    if (payments.length > 0 && transactions.length === 0) {
-      payments.forEach(payment => {
-        if (payment.status === 'completed') {
-          reportsDatabase.addTransaction({
-            orderId: payment.orderId,
-            amount: payment.amount,
-            method: payment.method,
-            status: 'completed',
-            date: payment.date,
-            category: 'vendas',
-            products: [{ name: `Pedido #${payment.orderId}`, quantity: 1, price: payment.amount }],
-            metadata: { gateway: 'sync' }
-          });
-        }
-      });
+  const loadReport = () => {
+    setLoading(true);
+    try {
+      revenueSync.syncAllCompletedOrders();
+      const data = revenueSync.getRevenueReport();
+      setReport(data);
+    } catch (error) {
+      toast.error('Erro ao carregar relatório');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadReports = () => {
-    const allReports = reportsDatabase.getAllReports();
-    setReports(allReports);
-  };
-  
-  const metrics = analyticsEngine.getRevenueMetrics();
-  const topProducts = metrics.topProducts;
-  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value);
+    }).format(value || 0);
   };
 
-  const currentData = useMemo(() => {
-    const summary = financialSystem.getFinancialSummary();
-    const today = new Date();
-    const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    const payments = financialSystem.getAllPayments().filter(p => p.status === 'completed');
-    
-    switch (period) {
-      case "hoje": {
-        const todayPayments = payments.filter(p => p.date.toDateString() === today.toDateString());
-        const total = todayPayments.reduce((sum, p) => sum + p.netAmount, 0);
-        const orders = todayPayments.length;
-        const avgTicket = orders > 0 ? total / orders : 0;
-        return { total, orders, avgTicket };
-      }
-      case "semana": {
-        const weekPayments = payments.filter(p => p.date >= thisWeek);
-        const total = weekPayments.reduce((sum, p) => sum + p.netAmount, 0);
-        const orders = weekPayments.length;
-        const avgTicket = orders > 0 ? total / orders : 0;
-        return { total, orders, avgTicket };
-      }
-      case "mes": {
-        const monthPayments = payments.filter(p => p.date >= thisMonth);
-        const total = monthPayments.reduce((sum, p) => sum + p.netAmount, 0);
-        const orders = monthPayments.length;
-        const avgTicket = orders > 0 ? total / orders : 0;
-        return { total, orders, avgTicket };
-      }
-      default: {
-        const todayPayments = payments.filter(p => p.date.toDateString() === today.toDateString());
-        const total = todayPayments.reduce((sum, p) => sum + p.netAmount, 0);
-        const orders = todayPayments.length;
-        const avgTicket = orders > 0 ? total / orders : 0;
-        return { total, orders, avgTicket };
-      }
-    }
-  }, [period]);
+  const exportReport = () => {
+    const data = JSON.stringify(report, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    toast.success('Relatório exportado!');
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <p>Carregando relatórios...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Relatórios e Analytics</h2>
-          <p className="text-muted-foreground">Acompanhe o desempenho do seu negócio</p>
+          <h2 className="text-2xl font-bold">Relatórios</h2>
+          <p className="text-muted-foreground">Análise completa de vendas e faturamento</p>
         </div>
         <div className="flex gap-2">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="hoje">Hoje</SelectItem>
-              <SelectItem value="semana">Semana</SelectItem>
-              <SelectItem value="mes">Mês</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={onBack}>
+          <Button onClick={exportReport} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+          <Button onClick={loadReport} variant="outline" size="sm">
+            Atualizar
+          </Button>
+          <Button onClick={onBack} variant="outline">
             Voltar
           </Button>
         </div>
       </div>
 
-      <MetricsCards />
-
-      <Tabs defaultValue="vendas" className="space-y-4">
+      <Tabs defaultValue="summary" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="vendas">Vendas</TabsTrigger>
-          <TabsTrigger value="produtos">Produtos</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-          <TabsTrigger value="relatorios">Relatórios Salvos</TabsTrigger>
-          <TabsTrigger value="dashboard">Dashboard Integrado</TabsTrigger>
+          <TabsTrigger value="summary">Resumo</TabsTrigger>
+          <TabsTrigger value="financial">Financeiro</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="vendas" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <RevenueChart 
-              type="daily" 
-              title="Receita Diária" 
-              description="Últimos 30 dias" 
-            />
-            <RevenueChart 
-              type="category" 
-              title="Receita por Categoria" 
-              description="Distribuição por tipo" 
-            />
-          </div>
-          <PaymentReports />
-        </TabsContent>
-
-        <TabsContent value="produtos" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TabsContent value="summary" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Produtos Mais Vendidos</CardTitle>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4" />
-                  Exportar
-                </Button>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Total de Pedidos
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {topProducts.slice(0, 10).map((product) => (
-                    <div key={product.product} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{product.product}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {product.quantity} unidades vendidas
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">
-                          {formatCurrency(product.revenue)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <div className="text-2xl font-bold">{report.summary?.totalOrders || 0}</div>
+                <p className="text-xs text-muted-foreground">Pedidos completados</p>
               </CardContent>
             </Card>
-            
+
             <Card>
-              <CardHeader>
-                <CardTitle>Vendas por Categoria</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Receita Total
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(metrics.categoryBreakdown).map(([category, revenue]) => {
-                    const percentage = metrics.totalRevenue > 0 ? ((revenue / metrics.totalRevenue) * 100).toFixed(1) : '0';
-                    const categoryNames = {
-                      'restaurante': 'Restaurante',
-                      'lanchonete': 'Lanchonete', 
-                      'confeitaria': 'Confeitaria',
-                      'bar': 'Bar',
-                      'japonesa': 'Japonesa',
-                      'cafeteria': 'Cafeteria'
-                    };
-                    return (
-                      <div key={category} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{categoryNames[category as keyof typeof categoryNames] || category}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {percentage}% do total
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-primary">
-                            {formatCurrency(revenue)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(report.summary?.totalRevenue || 0)}
                 </div>
+                <p className="text-xs text-muted-foreground">Receita líquida</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Ticket Médio
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(report.summary?.averageTicket || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">Por pedido</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Lucro
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  {formatCurrency(report.summary?.profit || 0)}
+                </div>
+                <p className="text-xs text-muted-foreground">Receita - Despesas</p>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="financeiro" className="space-y-4">
+        <TabsContent value="financial" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Formas de Pagamento</CardTitle>
+                <CardTitle>Receitas</CardTitle>
+                <CardDescription>Breakdown de receitas</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {Object.entries(metrics.paymentMethodBreakdown).map(([method, value]) => {
-                  const percentage = ((value / metrics.totalRevenue) * 100).toFixed(1);
-                  const methodNames = {
-                    'pix': 'PIX',
-                    'cartao_credito': 'Cartão de Crédito',
-                    'cartao_debito': 'Cartão de Débito',
-                    'dinheiro': 'Dinheiro'
-                  };
-                  return (
-                    <div key={method} className="flex justify-between">
-                      <span>{methodNames[method as keyof typeof methodNames] || method}</span>
-                      <div className="text-right">
-                        <span className="font-bold">{percentage}%</span>
-                        <div className="text-xs text-muted-foreground">
-                          {formatCurrency(value)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Receita Bruta:</span>
+                  <span className="font-bold">{formatCurrency(report.financial?.grossRevenue || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Taxas:</span>
+                  <span className="font-bold text-red-600">-{formatCurrency(report.financial?.totalFees || 0)}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="font-medium">Receita Líquida:</span>
+                  <span className="font-bold text-green-600">{formatCurrency(report.financial?.netRevenue || 0)}</span>
+                </div>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>Resumo Financeiro</CardTitle>
+                <CardTitle>Métodos de Pagamento</CardTitle>
+                <CardDescription>Distribuição por forma</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(report.financial?.paymentsByMethod || {}).map(([method, amount]) => (
+                  <div key={method} className="flex justify-between">
+                    <span className="capitalize">{method.replace('_', ' ')}:</span>
+                    <span className="font-bold">{formatCurrency(amount as number)}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Receita por Período</CardTitle>
+                <CardDescription>Breakdown temporal</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span>Receita Bruta</span>
-                  <span className="font-bold text-green-600">{formatCurrency(currentData.total / 0.97)}</span>
+                  <span className="text-muted-foreground">Hoje:</span>
+                  <span className="font-bold">{formatCurrency(report.analytics?.dailyRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Taxas de Pagamento</span>
-                  <span className="font-bold text-red-600">{formatCurrency((currentData.total / 0.97) * 0.03)}</span>
+                  <span className="text-muted-foreground">Este Mês:</span>
+                  <span className="font-bold">{formatCurrency(report.analytics?.monthlyRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Impostos Estimados</span>
-                  <span className="font-bold text-orange-600">{formatCurrency(currentData.total * 0.08)}</span>
-                </div>
-                <hr />
-                <div className="flex justify-between">
-                  <span className="font-bold">Receita Líquida</span>
-                  <span className="font-bold text-primary">{formatCurrency(currentData.total)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-bold">Lucro Estimado</span>
-                  <span className="font-bold text-green-600">{formatCurrency(currentData.total * 0.92)}</span>
+                  <span className="text-muted-foreground">Total:</span>
+                  <span className="font-bold text-primary">{formatCurrency(report.analytics?.totalRevenue || 0)}</span>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
 
-        <TabsContent value="relatorios" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Relatórios Gerados</h3>
-            <div className="flex gap-2">
-              <Button 
-                variant="success" 
-                onClick={() => {
-                  syncAllData(); // Sincronizar antes de gerar
-                  const today = new Date();
-                  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-                  const report = reportsDatabase.generateReport('daily', startOfDay, endOfDay);
-                  loadReports();
-                  alert(`Relatório diário gerado! Receita: ${formatCurrency(report.metrics.netRevenue)}`);
-                }}
-              >
-                <FileText className="h-4 w-4" />
-                Gerar Diário
-              </Button>
-              <Button 
-                variant="info" 
-                onClick={() => {
-                  syncAllData(); // Sincronizar antes de gerar
-                  const today = new Date();
-                  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                  const report = reportsDatabase.generateReport('monthly', startOfMonth, endOfMonth);
-                  loadReports();
-                  alert(`Relatório mensal gerado! Receita: ${formatCurrency(report.metrics.netRevenue)}`);
-                }}
-              >
-                <Calendar className="h-4 w-4" />
-                Gerar Mensal
-              </Button>
-            </div>
-          </div>
-          
-          <div className="grid gap-4">
-            {reports.map((report) => (
-              <Card key={report.id} className="cursor-pointer hover:shadow-md" onClick={() => setSelectedReport(report)}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="capitalize">
-                        Relatório {report.type === 'daily' ? 'Diário' : report.type === 'monthly' ? 'Mensal' : report.type}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Período: {report.period}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-primary">
-                        {formatCurrency(report.metrics.netRevenue)}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {report.metrics.totalOrders} pedidos
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Receita Bruta:</span>
-                      <div className="font-bold">{formatCurrency(report.metrics.grossRevenue)}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Taxas:</span>
-                      <div className="font-bold text-red-600">{formatCurrency(report.metrics.totalFees)}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Ticket Médio:</span>
-                      <div className="font-bold">{formatCurrency(report.metrics.averageTicket)}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Lucro:</span>
-                      <div className="font-bold text-green-600">{formatCurrency(report.metrics.profit)}</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {selectedReport && (
-            <Card className="mt-6">
+            <Card>
               <CardHeader>
-                <CardTitle>Detalhes do Relatório</CardTitle>
-                <Button variant="outline" onClick={() => setSelectedReport(null)}>Fechar</Button>
+                <CardTitle>Receita por Categoria</CardTitle>
+                <CardDescription>Top categorias</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="font-semibold mb-2">Métodos de Pagamento</h4>
-                    {Object.entries(selectedReport.paymentBreakdown).map(([method, amount]) => (
-                      <div key={method} className="flex justify-between">
-                        <span className="capitalize">{method.replace('_', ' ')}</span>
-                        <span className="font-bold">{formatCurrency(amount as number)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Top Produtos</h4>
-                    {selectedReport.topProducts.slice(0, 5).map((product) => (
-                      <div key={product.product} className="flex justify-between">
-                        <span>{product.product}</span>
-                        <span className="font-bold">{formatCurrency(product.revenue)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <CardContent className="space-y-3">
+                {Object.entries(report.analytics?.categoryBreakdown || {})
+                  .sort(([, a], [, b]) => (b as number) - (a as number))
+                  .slice(0, 5)
+                  .map(([category, amount]) => (
+                    <div key={category} className="flex justify-between">
+                      <span className="capitalize">{category}:</span>
+                      <span className="font-bold">{formatCurrency(amount as number)}</span>
+                    </div>
+                  ))}
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="dashboard" className="space-y-4">
-          <FinancialDashboard />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
