@@ -1,0 +1,11 @@
+﻿{
+  "name": "meu-projeto",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "scripts": {
+    "start:mcp": "npx -y @netlify/mcp"
+  }
+}

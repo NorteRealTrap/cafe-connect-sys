@@ -1,0 +1,19 @@
+{
+  "recommendations": [
+    "danielsanmedium.dscodegpt",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "bradlc.vscode-tailwindcss",
+    "csstools.postcss",
+    "vivaxy.vscode-conventional-commits",
+    "ms-playwright.playwright",
+    "vitest.explorer",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens",
+    "zixuanchen.vitest-explorer",
+    "formulahendry.auto-rename-tag",
+    "wix.vscode-import-cost",
+    "naumovs.color-highlight"
+  ]
+}
