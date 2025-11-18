@@ -1,0 +1,13 @@
+# Configurações do Git para aplicar após instalação
+# Execute estes comandos após instalar o Git:
+
+git config --global user.name "GabrielSp14"
+git config --global user.email "gbiel.sp@gmail.com"
+
+# Verificar configurações:
+git config --global user.name
+git config --global user.email
+
+
+
+

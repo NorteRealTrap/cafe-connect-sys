@@ -1,0 +1,14 @@
+{
+  "name": "cafe-connect-sys-landing",
+  "version": "1.0.0",
+  "description": "Landing page para Café Connect Sys",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "start": "npx serve ."
+  },
+  "keywords": ["cafe", "restaurant", "management", "system"],
+  "author": "Café Connect Sys",
+  "license": "MIT"
+}
