@@ -6,10 +6,10 @@ import { DashboardGrid } from "@/components/dashboard/DashboardGrid";
 import { OrdersPanel } from "@/components/orders/OrdersPanel";
 import { MenuPanel } from "@/components/menu/MenuPanel";
 import { ConfigPanel } from "@/components/config/ConfigPanel";
-import { UsersPanel } from "@/components/users/UsersPanel";
+// import { UsersPanel } from "@/components/users/UsersPanel";
 import { TablesPanel } from "@/components/tables/TablesPanel";
 import { PaymentsPanel } from "@/components/payments/PaymentsPanel";
-import { ReportsPanel } from "@/components/reports/ReportsPanel";
+// import { ReportsPanel } from "@/components/reports/ReportsPanel";
 import { CategoriesPanel } from "@/components/categories/CategoriesPanel";
 import { InventoryPanel } from "@/components/inventory/InventoryPanel";
 import { StatusPanel } from "@/components/status/StatusPanel";
@@ -17,7 +17,7 @@ import { WebOrdersPanel } from "@/components/web-orders/WebOrdersPanel";
 import { DeliveryPanel } from "@/components/delivery/DeliveryPanel";
 import { CommunicationPanel } from "@/components/communication/CommunicationPanel";
 import { OperationsPanel } from "@/components/operations/OperationsPanel";
-import { DatabaseStatusPanel } from "@/components/debug/DatabaseStatus";
+// import { DatabaseStatusPanel } from "@/components/debug/DatabaseStatus";
 
 import { UserRole } from "@/components/auth/LoginForm";
 
@@ -106,13 +106,13 @@ export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }:
       case "configuracoes":
         return <ConfigPanel onBack={handleBackToDashboard} userRole={userRole} />;
       case "usuarios":
-        return <UsersPanel onBack={handleBackToDashboard} />;
+        return <div className="p-6"><h2>Usuários - Em desenvolvimento</h2></div>;
       case "mesas":
         return <TablesPanel onBack={handleBackToDashboard} />;
       case "pagamentos":
         return <PaymentsPanel onBack={handleBackToDashboard} />;
       case "relatorios":
-        return <ReportsPanel onBack={handleBackToDashboard} />;
+        return <div className="p-6"><h2>Relatórios - Em desenvolvimento</h2></div>;
       case "categorias":
         return <CategoriesPanel onBack={handleBackToDashboard} />;
       case "estoque":
@@ -126,7 +126,7 @@ export const Dashboard = ({ userRole: initialRole, businessCategory, onLogout }:
       case "operacoes":
         return <OperationsPanel onBack={handleBackToDashboard} />;
       case "debug":
-        return <DatabaseStatusPanel onBack={handleBackToDashboard} />;
+        return <div className="p-6"><h2>Debug - Em desenvolvimento</h2></div>;
       case "dashboard":
       default:
         return <DashboardGrid userRole={userRole} onModuleClick={handleModuleClick} />;

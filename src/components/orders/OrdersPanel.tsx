@@ -5,10 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, RefreshCw, Package, Clock, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { notifyOrderUpdate } from "@/hooks/useOrderSync";
-import { revenueSync } from "@/lib/revenue-sync";
+// import { revenueSync } from "@/lib/revenue-sync";
 import { deliverySync } from "@/lib/delivery-sync";
 
-const STORAGE_KEY = 'cafe-connect-orders';
+const STORAGE_KEY = (() => {
+  const key = process.env.REACT_APP_STORAGE_KEY;
+  if (!key) {
+    console.error('REACT_APP_STORAGE_KEY não configurada');
+    return `orders_${Date.now()}`;
+  }
+  return key;
+})();
 
 interface OrdersPanelProps {
   onBack: () => void;
@@ -26,8 +33,9 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       ) : [];
       setOrders(sorted);
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Load orders error:', error);
       setOrders([]);
+      toast.error('Erro ao carregar pedidos');
     }
   };
 
@@ -35,7 +43,7 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
     loadOrders();
   }, []);
 
-  const updateStatus = (id: string, newStatus: string) => {
+  const updateStatus = async (id: string, newStatus: string) => {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       const parsed = data ? JSON.parse(data) : [];
@@ -70,14 +78,34 @@ export const OrdersPanel = ({ onBack }: OrdersPanelProps) => {
       // Notificar outras abas/janelas
       notifyOrderUpdate();
       
-      // Sincronizar com sistema financeiro se entregue
+      // Sistema financeiro temporariamente desabilitado
       if (newStatus === 'entregue') {
-        setTimeout(() => revenueSync.syncOrderToFinancial(id), 500);
+        console.info('Pedido finalizado');
+      }
+      
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
+        await fetch('/api/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: id,
+            status: newStatus,
+            timestamp: new Date().toISOString()
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+      } catch (apiError) {
+        console.error('API sync error:', apiError);
       }
       
       loadOrders();
       toast.success('Status atualizado!');
     } catch (error) {
+      console.error('Update status error:', error);
       toast.error('Erro ao atualizar');
     }
   };

@@ -33,7 +33,7 @@ export const DomainSettings = () => {
     }
 
     // Validar formato do domínio
-    const domainRegex = /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
+    const domainRegex = /^[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,}$/i;
     if (!domainRegex.test(customDomain)) {
       toast.error('Formato de domínio inválido');
       return;

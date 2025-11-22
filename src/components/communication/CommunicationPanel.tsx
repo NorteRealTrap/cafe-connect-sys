@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, MessageSquare, Instagram, Phone, Mail, Send, Settings } from "lucide-react";
-import { MessagingSetup } from "./MessagingSetup";
-import { credentialsManager } from "@/lib/multi-tenant-messaging";
+// import { MessagingSetup } from "./MessagingSetup";
+// import { credentialsManager } from "@/lib/multi-tenant-messaging";
 
 interface CommunicationPanelProps {
   onBack: () => void;
@@ -53,10 +53,16 @@ export const CommunicationPanel = ({ onBack }: CommunicationPanelProps) => {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showSetup, setShowSetup] = useState(false);
   const userId = localStorage.getItem('current-user-id') || 'default-user';
-  const hasCredentials = credentialsManager.hasCredentials(userId);
+  const hasCredentials = false; // Temporariamente desabilitado
 
   if (showSetup) {
-    return <MessagingSetup userId={userId} onBack={() => setShowSetup(false)} />;
+    return (
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">Configuração de Mensagens</h2>
+        <p className="text-muted-foreground mb-4">Em desenvolvimento</p>
+        <Button onClick={() => setShowSetup(false)}>Voltar</Button>
+      </div>
+    );
   }
 
   const getPlatformIcon = (platform: Message["platform"]) => {

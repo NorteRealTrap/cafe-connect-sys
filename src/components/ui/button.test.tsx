@@ -1,4 +1,6 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock button component since we don't have the actual implementation
 const Button = ({ 

@@ -8,7 +8,8 @@ export const useProducts = () => {
     try {
       const data = localStorage.getItem('ccpservices-products');
       setProducts(data ? JSON.parse(data) : []);
-    } catch {
+    } catch (error) {
+      console.error('Error loading products:', error);
       setProducts([]);
     }
   };
@@ -18,28 +19,43 @@ export const useProducts = () => {
   }, []);
 
   const addProduct = (product: any) => {
-    const newProduct = {
-      ...product,
-      id: `prod_${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    const updated = [...products, newProduct];
-    localStorage.setItem('ccpservices-products', JSON.stringify(updated));
-    setProducts(updated);
-    return newProduct;
+    try {
+      const newProduct = {
+        ...product,
+        id: `prod_${Date.now()}`,
+        createdAt: new Date().toISOString()
+      };
+      const updated = [...products, newProduct];
+      localStorage.setItem('ccpservices-products', JSON.stringify(updated));
+      setProducts(updated);
+      return newProduct;
+    } catch (error) {
+      console.error('Error adding product:', error);
+      throw error;
+    }
   };
 
   const updateProduct = (id: string, updates: any) => {
-    const updated = products.map(p => p.id === id ? { ...p, ...updates } : p);
-    localStorage.setItem('ccpservices-products', JSON.stringify(updated));
-    setProducts(updated);
-    return updated.find(p => p.id === id);
+    try {
+      const updated = products.map(p => p.id === id ? { ...p, ...updates } : p);
+      localStorage.setItem('ccpservices-products', JSON.stringify(updated));
+      setProducts(updated);
+      return updated.find(p => p.id === id);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
   };
 
   const deleteProduct = (id: string) => {
-    const updated = products.filter(p => p.id !== id);
-    localStorage.setItem('ccpservices-products', JSON.stringify(updated));
-    setProducts(updated);
+    try {
+      const updated = products.filter(p => p.id !== id);
+      localStorage.setItem('ccpservices-products', JSON.stringify(updated));
+      setProducts(updated);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
   };
 
   return { products, addProduct, updateProduct, deleteProduct };
@@ -53,7 +69,8 @@ export const useCategories = () => {
     try {
       const data = localStorage.getItem('ccpservices-categories');
       setCategories(data ? JSON.parse(data) : ['Bebidas', 'Lanches', 'Doces', 'Bar']);
-    } catch {
+    } catch (error) {
+      console.error('Error loading categories:', error);
       setCategories(['Bebidas', 'Lanches', 'Doces', 'Bar']);
     }
   }, []);
@@ -69,7 +86,8 @@ export const useInventory = () => {
     try {
       const data = localStorage.getItem('ccpservices-inventory');
       setInventory(data ? JSON.parse(data) : []);
-    } catch {
+    } catch (error) {
+      console.error('Error loading inventory:', error);
       setInventory([]);
     }
   };
@@ -79,23 +97,38 @@ export const useInventory = () => {
   }, []);
 
   const addItem = (item: any) => {
-    const newItem = { ...item, id: `inv_${Date.now()}` };
-    const updated = [...inventory, newItem];
-    localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
-    setInventory(updated);
-    return newItem;
+    try {
+      const newItem = { ...item, id: `inv_${Date.now()}` };
+      const updated = [...inventory, newItem];
+      localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
+      setInventory(updated);
+      return newItem;
+    } catch (error) {
+      console.error('Error adding item:', error);
+      throw error;
+    }
   };
 
   const updateItem = (id: string, updates: any) => {
-    const updated = inventory.map(i => i.id === id ? { ...i, ...updates } : i);
-    localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
-    setInventory(updated);
+    try {
+      const updated = inventory.map(i => i.id === id ? { ...i, ...updates } : i);
+      localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
+      setInventory(updated);
+    } catch (error) {
+      console.error('Error updating item:', error);
+      throw error;
+    }
   };
 
   const deleteItem = (id: string) => {
-    const updated = inventory.filter(i => i.id !== id);
-    localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
-    setInventory(updated);
+    try {
+      const updated = inventory.filter(i => i.id !== id);
+      localStorage.setItem('ccpservices-inventory', JSON.stringify(updated));
+      setInventory(updated);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      throw error;
+    }
   };
 
   return { inventory, addItem, updateItem, deleteItem };

@@ -1,4 +1,6 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react'
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { Dashboard } from './Dashboard'
 import { UserRole } from '@/components/auth/LoginForm'
 
@@ -17,7 +19,7 @@ vi.mock('@/components/dashboard/DashboardHeader', () => ({
 }))
 
 vi.mock('@/components/dashboard/DashboardGrid', () => ({
-  DashboardGrid: ({ userRole, onModuleClick }: { userRole: UserRole; onModuleClick: (id: string) => void }) => (
+  DashboardGrid: ({ userRole, onModuleClick }: { userRole: UserRole; onModuleClick: (_id: string) => void }) => (
     <div data-testid="dashboard-grid">
       <button onClick={() => onModuleClick('pedidos')}>Pedidos</button>
       <button onClick={() => onModuleClick('cardapio')}>Cardápio</button>

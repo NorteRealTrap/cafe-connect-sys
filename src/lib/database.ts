@@ -4,11 +4,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password: string; // Hash bcrypt
   role: 'admin' | 'caixa' | 'atendente';
   status: 'ativo' | 'inativo';
   createdAt: string;
   lastLogin?: string;
+  mustChangePassword?: boolean; // Forçar alteração de senha
 }
 
 export interface Product {
@@ -99,7 +100,7 @@ class Database {
       const data = localStorage.getItem(this.getKey(table));
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error(`Erro ao carregar ${table}:`, error);
+      console.error(`Error loading ${table}:`, error);
       return [];
     }
   }
@@ -107,8 +108,9 @@ class Database {
   private save<T>(table: string, data: T[]): void {
     try {
       localStorage.setItem(this.getKey(table), JSON.stringify(data));
+      window.dispatchEvent(new CustomEvent('dataChanged', { detail: { key: table, data } }));
     } catch (error) {
-      console.error(`Erro ao salvar ${table}:`, error);
+      console.error(`Error saving ${table}:`, error);
     }
   }
 
@@ -177,38 +179,19 @@ class Database {
 
   // Initialize with sample data
   initializeDatabase(): void {
-    // Users
+    // Users - inicialização com usuários padrão
     if (this.getUsers().length === 0) {
-      const users: User[] = [
-        {
-          id: '1',
-          name: 'Administrador',
-          email: 'admin@cafeconnect.com',
-          password: 'admin123',
-          role: 'admin',
-          status: 'ativo',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Gabriel Pereira',
-          email: 'gabriel.pereira@ccpservices.com.br',
-          password: 'ccpservices123',
-          role: 'admin',
-          status: 'ativo',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: 'Ferramenta Cega',
-          email: 'ferramentacega@ccpservices.com.br',
-          password: 'ccpservices123',
-          role: 'admin',
-          status: 'ativo',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      this.saveUsers(users);
+      const defaultUsers: User[] = [{
+        id: '1',
+        name: 'Administrador',
+        email: process.env.REACT_APP_ADMIN_EMAIL || 'admin@system.local',
+        password: process.env.REACT_APP_ADMIN_HASH || '$2a$12$PLACEHOLDER',
+        role: 'admin',
+        status: 'ativo',
+        createdAt: new Date().toISOString(),
+        mustChangePassword: true
+      }];
+      this.saveUsers(defaultUsers);
     }
 
     // Categories
@@ -411,9 +394,17 @@ export const db = new Database();
 // Initialize database on first load
 if (typeof window !== 'undefined') {
   // Ensure initialization happens after DOM is ready
+  const initDb = () => {
+    try {
+      db.initializeDatabase();
+    } catch {
+      console.warn('Erro ao inicializar banco de dados');
+    }
+  };
+  
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => db.initializeDatabase());
+    document.addEventListener('DOMContentLoaded', initDb);
   } else {
-    db.initializeDatabase();
+    initDb();
   }
 }

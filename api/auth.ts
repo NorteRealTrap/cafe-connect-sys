@@ -1,58 +1,108 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import * as jwt from 'jsonwebtoken';
 
-const hashPassword = (password: string): string => {
-  return btoa(password + 'pdv-salt-2024');
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET não configurado');
+}
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+const USERS: Record<string, { password: string; user: User }> = {
+  'admin@cafe.com': {
+    password: 'admin123',
+    user: { id: '1', email: 'admin@cafe.com', name: 'Administrador', role: 'admin' }
+  },
+  'garcom@cafe.com': {
+    password: 'garcom123',
+    user: { id: '2', email: 'garcom@cafe.com', name: 'Garçom', role: 'waiter' }
+  }
 };
 
-const verifyPassword = (password: string, hash: string): boolean => {
-  return hashPassword(password) === hash;
-};
+const rateLimits = new Map<string, number[]>();
+
+function rateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxRequests = 20;
+  
+  const requests = (rateLimits.get(ip) || []).filter(t => t > now - windowMs);
+  
+  if (requests.length >= maxRequests) {
+    return false;
+  }
+  
+  requests.push(now);
+  rateLimits.set(ip, requests);
+  return true;
+}
+
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido' });
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] as string) || 'unknown';
+  if (!rateLimit(ip)) {
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, password }: LoginRequest = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, error: 'Email e senha obrigatórios' });
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    // Usuários padrão
-    const users = [
-      { id: '1', name: 'Administrador', email: 'admin@cafeconnect.com', password_hash: hashPassword('admin123'), role: 'admin', status: 'ativo' },
-      { id: '2', name: 'Gabriel Pereira', email: 'gabriel.pereira@ccpservices.com.br', password_hash: hashPassword('ccpservices123'), role: 'admin', status: 'ativo' },
-      { id: '3', name: 'Ferramenta Cega', email: 'ferramentacega@ccpservices.com.br', password_hash: hashPassword('ccpservices123'), role: 'admin', status: 'ativo' }
-    ];
+    const userData = USERS[email.toLowerCase()];
 
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase().trim() && u.status === 'ativo');
-
-    if (!user || !verifyPassword(password, user.password_hash)) {
-      return res.status(401).json({ success: false, error: 'Email ou senha inválidos' });
+    if (!userData || userData.password !== password) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
     }
+
+    const token = jwt.sign(
+      {
+        userId: userData.user.id,
+        email: userData.user.email,
+        role: userData.user.role
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return res.status(200).json({
       success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status
-      }
+      token,
+      user: userData.user
     });
+
   } catch (error) {
-    console.error('Erro na autenticação:', error);
-    return res.status(500).json({ success: false, error: 'Erro interno do servidor' });
+    console.error('Erro no login:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }

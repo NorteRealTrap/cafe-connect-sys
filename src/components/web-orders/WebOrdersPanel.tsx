@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, Check, X, Clock, ExternalLink, Copy, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCrossDeviceSync } from '@/lib/sync';
-import { ordersDB } from '@/lib/orders-db';
+// import { ordersDB } from '@/lib/orders-db';
 
 import { OrderTrackingInfo } from './OrderTrackingInfo';
 
@@ -42,11 +42,15 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   useEffect(() => {
     loadWebOrders();
     
-    // Verificar novos pedidos e status a cada 2 segundos
     const interval = setInterval(async () => {
       try {
-        // Verificar novos pedidos
-        const ordersResponse = await fetch('/api/orders');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
+        const ordersResponse = await fetch('/api/orders', { signal: controller.signal });
+        clearTimeout(timeout);
+        
+        if (!ordersResponse.ok) throw new Error('API error');
         const apiOrders = await ordersResponse.json();
         
         const localOrders = JSON.parse(localStorage.getItem('ccpservices-web-orders') || '[]');
@@ -60,8 +64,13 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           toast.success(`${newOrders.length} novo(s) pedido(s) recebido(s)!`);
         }
         
-        // Verificar atualizações de status
-        const statusResponse = await fetch('/api/status');
+        const statusController = new AbortController();
+        const statusTimeout = setTimeout(() => statusController.abort(), 5000);
+        
+        const statusResponse = await fetch('/api/status', { signal: statusController.signal });
+        clearTimeout(statusTimeout);
+        
+        if (!statusResponse.ok) throw new Error('Status API error');
         const apiStatuses = await statusResponse.json();
         
         let statusUpdated = false;
@@ -100,6 +109,11 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
         
         loadWebOrders();
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.warn('Request timeout');
+        } else {
+          console.error('Sync error:', error);
+        }
         loadWebOrders();
       }
     }, 2000);
@@ -127,8 +141,13 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
     try {
       const now = new Date();
       
-      // Criar novo pedido usando ordersDB para garantir formato correto
-      const newOrder = ordersDB.create({
+      // Criar novo pedido no sistema principal
+      const orders = JSON.parse(localStorage.getItem('cafe-connect-orders') || '[]');
+      const nextNumber = orders.length + 1;
+      
+      const newOrder = {
+        id: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        numero: nextNumber,
         tipo: 'delivery',
         cliente: webOrder.customerName,
         telefone: webOrder.customerPhone,
@@ -141,15 +160,21 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           observacoes: ''
         })),
         total: Number(webOrder.total),
+        status: 'aceito',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
         observacoes: `Pedido Web #${webOrder.id} - Aceito em ${now.toLocaleString('pt-BR')}`
-      });
+      };
       
-      const nextNumber = newOrder.numero;
+      orders.unshift(newOrder);
+      localStorage.setItem('cafe-connect-orders', JSON.stringify(orders));
       
       updateWebOrderStatus(webOrder.id, 'aceito');
       
-      // Sincronizar status via API
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
         await fetch('/api/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -157,10 +182,12 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
             orderId: webOrder.id,
             status: 'aceito',
             timestamp: now.toISOString()
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(timeout);
       } catch (error) {
-        console.log('Erro ao sincronizar status');
+        console.error('Status sync error:', error);
       }
       
       // Adicionar referência cruzada
@@ -211,8 +238,10 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
   const rejectWebOrder = async (orderId: string) => {
     updateWebOrderStatus(orderId, 'rejeitado');
     
-    // Sincronizar status via API
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      
       await fetch('/api/status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,10 +249,12 @@ export const WebOrdersPanel: React.FC<WebOrdersPanelProps> = ({ onBack }) => {
           orderId,
           status: 'rejeitado',
           timestamp: new Date().toISOString()
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeout);
     } catch (error) {
-      console.log('Erro ao sincronizar status');
+      console.error('Status sync error:', error);
     }
     
     window.dispatchEvent(new CustomEvent('orderStatusChanged', { 

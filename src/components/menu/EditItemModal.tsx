@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import type { Product } from "@/lib/database";
 interface EditItemModalProps {
   open: boolean;
   onClose: () => void;
-  onSave: (id: string, updates: Partial<Product>) => void;
+  onSave: (_id: string, _updates: Partial<Product>) => void;
   item: Product | null;
 }
 

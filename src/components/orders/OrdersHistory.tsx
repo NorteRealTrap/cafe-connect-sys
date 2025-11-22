@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,14 +68,16 @@ export const OrdersHistory = ({ onBack }: OrdersHistoryProps) => {
         switch (dateFilter) {
           case "hoje":
             return orderDate >= today;
-          case "semana":
+          case "semana": {
             const weekAgo = new Date(today);
             weekAgo.setDate(weekAgo.getDate() - 7);
             return orderDate >= weekAgo;
-          case "mes":
+          }
+          case "mes": {
             const monthAgo = new Date(today);
             monthAgo.setMonth(monthAgo.getMonth() - 1);
             return orderDate >= monthAgo;
+          }
           default:
             return true;
         }
@@ -282,3 +286,4 @@ export const OrdersHistory = ({ onBack }: OrdersHistoryProps) => {
     </div>
   );
 };
+>>>>>>> Incoming (Background Agent changes)

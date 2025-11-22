@@ -37,7 +37,7 @@ class OrdersDatabase {
       
       const orders = JSON.parse(stored);
       if (!Array.isArray(orders)) {
-        console.error('Dados de pedidos corrompidos, resetando...');
+        console.warn('Dados corrompidos, resetando');
         localStorage.removeItem(this.storageKey);
         return [];
       }
@@ -50,13 +50,13 @@ class OrdersDatabase {
             updatedAt: new Date(order.updatedAt),
             completedAt: order.completedAt ? new Date(order.completedAt) : undefined
           };
-        } catch (err) {
-          console.error('Erro ao processar pedido:', err);
+        } catch {
+          console.warn('Erro ao processar pedido');
           return null;
         }
       }).filter(Boolean) as Order[];
-    } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
+    } catch {
+      console.warn('Erro ao carregar pedidos');
       localStorage.removeItem(this.storageKey);
       return [];
     }
@@ -65,16 +65,14 @@ class OrdersDatabase {
   private saveOrders(orders: Order[]): void {
     try {
       if (!Array.isArray(orders)) {
-        console.error('Tentativa de salvar dados inválidos');
+        console.warn('Dados inválidos');
         return;
       }
       const data = JSON.stringify(orders);
       localStorage.setItem(this.storageKey, data);
-      
-      // Disparar evento para atualizar outras abas
       window.dispatchEvent(new CustomEvent('ordersUpdated', { detail: { orders } }));
     } catch (error) {
-      console.error('Erro ao salvar pedidos:', error);
+      console.warn('Erro ao salvar pedidos');
       if (error instanceof Error && error.message.includes('quota')) {
         alert('Armazenamento cheio. Limpe dados antigos.');
       }
@@ -88,9 +86,9 @@ class OrdersDatabase {
       const next = current + 1;
       localStorage.setItem(this.counterKey, next.toString());
       return next;
-    } catch (error) {
-      console.error('Erro ao gerar número do pedido:', error);
-      return Date.now() % 10000; // Fallback
+    } catch {
+      console.warn('Erro ao gerar número');
+      return Date.now() % 10000;
     }
   }
 
@@ -117,11 +115,6 @@ class OrdersDatabase {
     return orders.find(order => order.id === id) || null;
   }
 
-  getOrderByNumber(numero: number): Order | null {
-    const orders = this.getOrders();
-    return orders.find(order => order.numero === numero) || null;
-  }
-
   createOrder(orderData: Omit<Order, 'id' | 'numero' | 'status' | 'createdAt' | 'updatedAt'>): Order {
     const orders = this.getOrders();
     const now = new Date();
@@ -137,8 +130,7 @@ class OrdersDatabase {
 
     orders.unshift(newOrder);
     this.saveOrders(orders);
-    
-    console.log(`Pedido #${newOrder.numero} criado com sucesso`);
+    console.info('Pedido criado');
     return newOrder;
   }
 
@@ -147,7 +139,7 @@ class OrdersDatabase {
     const index = orders.findIndex(order => order.id === id);
     
     if (index === -1) {
-      console.error(`Pedido com ID ${id} não encontrado`);
+      console.warn('Pedido não encontrado');
       return null;
     }
 
@@ -160,27 +152,7 @@ class OrdersDatabase {
     };
 
     this.saveOrders(orders);
-    console.log(`Status do pedido #${orders[index].numero} atualizado para: ${status}`);
-    return orders[index];
-  }
-
-  updateOrder(id: string, updates: Partial<Omit<Order, 'id' | 'numero' | 'createdAt'>>): Order | null {
-    const orders = this.getOrders();
-    const index = orders.findIndex(order => order.id === id);
-    
-    if (index === -1) {
-      console.error(`Pedido com ID ${id} não encontrado`);
-      return null;
-    }
-
-    orders[index] = {
-      ...orders[index],
-      ...updates,
-      updatedAt: new Date()
-    };
-
-    this.saveOrders(orders);
-    console.log(`Pedido #${orders[index].numero} atualizado`);
+    console.info('Status atualizado');
     return orders[index];
   }
 
@@ -189,38 +161,14 @@ class OrdersDatabase {
     const order = orders.find(o => o.id === id);
     
     if (!order) {
-      console.error(`Pedido com ID ${id} não encontrado`);
+      console.warn('Pedido não encontrado');
       return false;
     }
 
     const filteredOrders = orders.filter(order => order.id !== id);
     this.saveOrders(filteredOrders);
-    console.log(`Pedido #${order.numero} removido`);
+    console.info('Pedido removido');
     return true;
-  }
-
-  // Verificar se já existe pedido similar (mesmo cliente, mesmos itens, mesmo horário)
-  checkDuplicateOrder(cliente: string, itens: OrderItem[], timeWindow: number = 5): Order | null {
-    const orders = this.getOrders();
-    const now = new Date();
-    
-    return orders.find(order => {
-      const timeDiff = (now.getTime() - order.createdAt.getTime()) / (1000 * 60); // em minutos
-      
-      if (timeDiff > timeWindow) return false;
-      if (order.cliente !== cliente) return false;
-      if (order.itens.length !== itens.length) return false;
-      
-      // Verificar se os itens são idênticos
-      const sameItems = order.itens.every(orderItem => 
-        itens.some(newItem => 
-          newItem.nome === orderItem.nome && 
-          newItem.quantidade === orderItem.quantidade
-        )
-      );
-      
-      return sameItems;
-    }) || null;
   }
 
   getOrdersStats() {
@@ -235,27 +183,8 @@ class OrdersDatabase {
       today: todayOrders.length,
       active: orders.filter(order => !['entregue', 'retirado', 'cancelado'].includes(order.status)).length,
       completed: orders.filter(order => ['entregue', 'retirado'].includes(order.status)).length,
-      cancelled: orders.filter(order => order.status === 'cancelado').length,
-      byStatus: {
-        aceito: orders.filter(order => order.status === 'aceito').length,
-        preparando: orders.filter(order => order.status === 'preparando').length,
-        pronto: orders.filter(order => order.status === 'pronto').length,
-        entregue: orders.filter(order => order.status === 'entregue').length,
-        retirado: orders.filter(order => order.status === 'retirado').length,
-        cancelado: orders.filter(order => order.status === 'cancelado').length
-      },
-      byType: {
-        local: orders.filter(order => order.tipo === 'local').length,
-        delivery: orders.filter(order => order.tipo === 'delivery').length,
-        retirada: orders.filter(order => order.tipo === 'retirada').length
-      }
+      cancelled: orders.filter(order => order.status === 'cancelado').length
     };
-  }
-
-  // Limpar pedidos antigos (mais de 30 dias) - DESABILITADO para evitar perda de dados
-  cleanOldOrders(daysToKeep: number = 30): number {
-    // Não limpar pedidos automaticamente para evitar perda de dados
-    return 0;
   }
 }
 

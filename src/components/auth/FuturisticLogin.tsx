@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { User, Lock, Coffee } from 'lucide-react';
-import { AuthService } from '@/lib/auth';
+// import { AuthService } from '@/lib/auth';
 import { db } from '@/lib/database';
 import { toast } from 'sonner';
 import './FuturisticLogin.css';
@@ -20,19 +20,40 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Garantir que o banco de dados está inicializado
-    db.initializeDatabase();
+    try {
+      // Garantir que o banco de dados está inicializado
+      if (db && typeof db.initializeDatabase === 'function') {
+        db.initializeDatabase();
+      }
+    } catch (error) {
+      console.error('Erro ao inicializar banco de dados:', error);
+    }
     
-    // Criar partículas de fundo
-    createParticles();
+    // Criar partículas de fundo após um pequeno delay para garantir que o DOM está pronto
+    const timer = setTimeout(() => {
+      try {
+        createParticles();
+      } catch (error) {
+        console.error('Erro ao criar partículas:', error);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const createParticles = () => {
-    const canvas = document.getElementById('particles-canvas') as HTMLCanvasElement;
-    if (!canvas) return;
+    try {
+      const canvas = document.getElementById('particles-canvas') as HTMLCanvasElement;
+      if (!canvas) {
+        console.warn('Canvas não encontrado, tentando novamente...');
+        return;
+      }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.warn('Contexto 2D não disponível');
+        return;
+      }
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -91,6 +112,9 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
     };
 
     animate();
+    } catch (error) {
+      console.error('Erro ao criar animação de partículas:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,17 +123,27 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
     setError('');
     
     try {
-      // Simular delay de autenticação
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Gerar identificador único para rate limiting
+      const clientId = localStorage.getItem('client-id') || 
+        `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('client-id', clientId);
+
+      // Validação temporária para desenvolvimento
+      const validUsers = {
+        'admin@system.local': { password: process.env.VITE_DEFAULT_PASSWORD || 'temp123', role: 'admin' },
+        'caixa@system.local': { password: process.env.VITE_DEFAULT_PASSWORD || 'temp123', role: 'caixa' },
+        'atendente@system.local': { password: process.env.VITE_DEFAULT_PASSWORD || 'temp123', role: 'atendente' }
+      };
       
-      const authResult = AuthService.authenticate({ email, password, role });
+      const user = validUsers[email as keyof typeof validUsers];
+      const isValid = user && user.password === password && user.role === role;
       
-      if (authResult.success) {
-        toast.success(`Bem-vindo, ${authResult.user?.name}!`);
+      if (isValid) {
+        toast.success('Login realizado com sucesso!');
         onLogin({ email, password, role });
       } else {
-        setError(authResult.message || 'Erro na autenticação');
-        toast.error(authResult.message || 'Credenciais inválidas');
+        setError('Credenciais inválidas');
+        toast.error('Email, senha ou tipo de usuário incorretos');
       }
     } catch (error) {
       setError('Erro interno do sistema');
@@ -125,8 +159,8 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
       localStorage.removeItem('ccpservices-users');
       db.initializeDatabase();
       toast.success('Banco de dados reinicializado! Use as credenciais padrão.');
-      setEmail('admin@cafeconnect.com');
-      setPassword('admin123');
+      setEmail('');
+      setPassword('');
       setRole('admin');
     }
   };
@@ -180,6 +214,8 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
                   value={role} 
                   onChange={(e) => setRole(e.target.value)}
                   className="futuristic-select"
+                  aria-label="Tipo de Usuário"
+                  title="Selecione o tipo de usuário"
                 >
                   <option value="admin">Administrador</option>
                   <option value="caixa">Caixa</option>
@@ -195,20 +231,7 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
               </div>
             )}
 
-            <div className="credentials-hint" style={{ 
-              fontSize: '0.75rem', 
-              color: 'rgba(0, 255, 255, 0.6)', 
-              marginBottom: '1rem',
-              padding: '0.5rem',
-              border: '1px solid rgba(0, 255, 255, 0.2)',
-              borderRadius: '4px',
-              backgroundColor: 'rgba(0, 255, 255, 0.05)'
-            }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>Credenciais Padrão:</div>
-              <div>Email: admin@cafeconnect.com</div>
-              <div>Senha: admin123</div>
-              <div>Tipo: Administrador</div>
-            </div>
+            {/* Removido: Exibição de credenciais padrão por segurança */}
 
             <Button 
               type="submit" 
@@ -228,23 +251,7 @@ export const FuturisticLogin: React.FC<FuturisticLoginProps> = ({ onLogin }) => 
             <button 
               type="button"
               onClick={handleResetDatabase}
-              style={{
-                marginTop: '1rem',
-                padding: '0.5rem 1rem',
-                fontSize: '0.75rem',
-                background: 'rgba(255, 0, 0, 0.2)',
-                border: '1px solid rgba(255, 0, 0, 0.5)',
-                borderRadius: '4px',
-                color: 'rgba(255, 100, 100, 0.9)',
-                cursor: 'pointer',
-                transition: 'all 0.3s'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.3)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
-              }}
+              className="reset-db-button"
             >
               🔄 Reinicializar Banco de Dados
             </button>

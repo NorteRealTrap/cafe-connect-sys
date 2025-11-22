@@ -1,10 +1,10 @@
+import React, { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
 import OrderTracking from "./pages/OrderTracking";
@@ -20,6 +20,20 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  const [Analytics, setAnalytics] = useState<React.ComponentType | null>(null);
+
+  // Carregar Analytics dinamicamente se disponível
+  useEffect(() => {
+    import("@vercel/analytics/react")
+      .then((module) => {
+        setAnalytics(() => module.Analytics);
+      })
+      .catch(() => {
+        // Analytics não disponível - não é crítico
+        console.warn("Vercel Analytics não disponível");
+      });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider
@@ -37,7 +51,7 @@ const App = () => {
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <Analytics />
+          {Analytics && <Analytics />}
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

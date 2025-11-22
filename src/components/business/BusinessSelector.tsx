@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,6 @@ import {
   Fish,
   UtensilsCrossed,
   ChefHat,
-  Sparkles,
   ArrowRight,
   Zap
 } from "lucide-react";
@@ -27,7 +26,7 @@ interface BusinessCategory {
 }
 
 interface BusinessSelectorProps {
-  onSelect: (category: BusinessCategory) => void;
+  onSelect: (_category: BusinessCategory) => void;
   onBack: () => void;
 }
 

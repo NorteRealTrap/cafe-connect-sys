@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -15,8 +16,8 @@ import {
   Truck
 } from "lucide-react";
 import { UserRole } from "@/components/auth/LoginForm";
-import { MetricsCards } from "@/components/analytics/MetricsCards";
-import { RevenueChart } from "@/components/analytics/RevenueChart";
+// import { MetricsCards } from "@/components/analytics/MetricsCards";
+// import { RevenueChart } from "@/components/analytics/RevenueChart";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 
 interface DashboardModule {
@@ -160,7 +161,14 @@ export const DashboardGrid = ({ userRole, onModuleClick }: DashboardGridProps) =
         <h2 className="text-2xl font-bold">Visão Geral</h2>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <MetricsCards />
+            <Card>
+              <CardHeader>
+                <CardTitle>Métricas do Sistema</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Analytics em desenvolvimento</p>
+              </CardContent>
+            </Card>
           </div>
           <div>
             <QuickActions onModuleClick={onModuleClick} />
@@ -170,16 +178,24 @@ export const DashboardGrid = ({ userRole, onModuleClick }: DashboardGridProps) =
       
       {/* Revenue Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RevenueChart 
-          type="daily" 
-          title="Receita Diária" 
-          description="Últimos 30 dias" 
-        />
-        <RevenueChart 
-          type="category" 
-          title="Receita por Categoria" 
-          description="Distribuição por tipo" 
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Receita Diária</CardTitle>
+            <CardDescription>Últimos 30 dias</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Gráficos em desenvolvimento</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Receita por Categoria</CardTitle>
+            <CardDescription>Distribuição por tipo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Gráficos em desenvolvimento</p>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Modules Grid */}

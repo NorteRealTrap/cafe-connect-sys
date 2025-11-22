@@ -85,7 +85,6 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
   const [newDriver, setNewDriver] = useState({ name: '', phone: '', vehicle: '' });
 
   useEffect(() => {
-    // Carregar deliveries do localStorage se existirem
     const storedDeliveries = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
     if (storedDeliveries.length === 0) {
       setDeliveries(mockDeliveries);
@@ -96,7 +95,6 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
       setDrivers(mockDrivers);
     }
     
-    // Escutar eventos de criação de delivery
     const handleDeliveryCreated = () => {
       const updated = JSON.parse(localStorage.getItem('ccpservices-deliveries') || '[]');
       setDeliveries(updated);
@@ -105,7 +103,6 @@ export const DeliveryPanel = ({ onBack }: DeliveryPanelProps) => {
     window.addEventListener('deliveryCreated', handleDeliveryCreated);
     window.addEventListener('orderStatusChanged', handleDeliveryCreated);
     
-    // Atualizar status em tempo real
     const statusInterval = setInterval(async () => {
       try {
         const response = await fetch('/api/status');

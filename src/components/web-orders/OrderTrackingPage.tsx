@@ -99,13 +99,11 @@ export const OrderTrackingPage: React.FC = () => {
   };
 
   useEffect(() => {
-    // Carregar dados do cliente e último pedido
     const customerData = localStorage.getItem('customer-data');
     if (customerData) {
       const data = JSON.parse(customerData);
       if (data.lastOrderId) {
         setOrderId(data.lastOrderId);
-        // Auto-buscar o pedido
         setTimeout(() => {
           const input = document.querySelector('input[placeholder*="código"]') as HTMLInputElement;
           if (input) {
@@ -116,7 +114,6 @@ export const OrderTrackingPage: React.FC = () => {
       }
     }
 
-    // Verificar URL params
     const urlParams = new URLSearchParams(window.location.search);
     const idFromUrl = urlParams.get('id');
     if (idFromUrl) {
@@ -125,7 +122,6 @@ export const OrderTrackingPage: React.FC = () => {
     }
   }, []);
 
-  // Sincronização em tempo real entre abas
   const handleSync = useCallback(() => {
     if (orderId) {
       searchOrder(true);
@@ -142,7 +138,7 @@ export const OrderTrackingPage: React.FC = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [orderId]);
+  }, [orderId, order]);
 
   const getStatusInfo = (status: string, tipo?: string) => {
     const isRetirada = tipo === 'retirada';

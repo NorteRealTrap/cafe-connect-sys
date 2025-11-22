@@ -1,64 +1,67 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw, Trash2, CheckCircle } from "lucide-react";
-import { systemRepair } from "@/lib/system-repair";
+import { AlertTriangle, Database, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { db } from "@/lib/database";
 
 export const SystemRepairPanel = () => {
-  const handleFullRepair = () => {
-    if (confirm('⚠️ Isso irá LIMPAR TODOS OS DADOS e reinicializar o sistema. Continuar?')) {
-      systemRepair.fullRepair();
-      toast.success('Sistema reparado! Recarregando...');
+  const handleRepairDatabase = () => {
+    try {
+      db.initializeDatabase();
+      toast.success('Banco de dados reparado');
+    } catch (error) {
+      toast.error('Erro ao reparar banco de dados');
+    }
+  };
+
+  const handleClearCache = () => {
+    const confirmed = confirm('Isso irá limpar todo o cache. Continuar?');
+    if (confirmed) {
+      localStorage.clear();
+      toast.success('Cache limpo');
       setTimeout(() => window.location.reload(), 1000);
     }
   };
 
-  const handleValidate = () => {
-    systemRepair.validateAndFix();
-    toast.success('Dados validados e corrigidos!');
-  };
-
-  const handleCreateSamples = () => {
-    systemRepair.createSampleProducts();
-    toast.success('Produtos de exemplo criados!');
-    setTimeout(() => window.location.reload(), 500);
+  const handleResetSystem = () => {
+    const confirmed = confirm('⚠️ Isso irá resetar todo o sistema. Continuar?');
+    if (confirmed) {
+      localStorage.clear();
+      db.initializeDatabase();
+      toast.success('Sistema resetado');
+      setTimeout(() => window.location.reload(), 1000);
+    }
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
+          <AlertTriangle className="h-5 w-5 text-yellow-500" />
           Reparo do Sistema
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Use estas ferramentas para corrigir problemas no sistema.
-        </p>
-
-        <div className="grid gap-2">
-          <Button variant="outline" onClick={handleValidate} className="justify-start">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Validar e Corrigir Dados
+        <div className="space-y-2">
+          <Button variant="outline" className="w-full" onClick={handleRepairDatabase}>
+            <Database className="h-4 w-4 mr-2" />
+            Reparar Banco de Dados
           </Button>
-
-          <Button variant="outline" onClick={handleCreateSamples} className="justify-start">
+          
+          <Button variant="outline" className="w-full" onClick={handleClearCache}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            Criar Produtos de Exemplo
+            Limpar Cache
           </Button>
-
-          <Button variant="destructive" onClick={handleFullRepair} className="justify-start">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Reparo Completo (Limpa Tudo)
+          
+          <Button variant="destructive" className="w-full" onClick={handleResetSystem}>
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Resetar Sistema Completo
           </Button>
         </div>
-
-        <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t">
-          <p><strong>Validar:</strong> Corrige dados corrompidos sem apagar</p>
-          <p><strong>Produtos:</strong> Adiciona produtos de exemplo</p>
-          <p><strong>Reparo Completo:</strong> Limpa tudo e reinicia do zero</p>
-        </div>
+        
+        <p className="text-xs text-muted-foreground">
+          Use estas ferramentas apenas se houver problemas no sistema
+        </p>
       </CardContent>
     </Card>
   );

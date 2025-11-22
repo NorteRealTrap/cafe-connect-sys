@@ -18,6 +18,8 @@ const mockMatchMedia = (matches: boolean) => {
   })
 }
 
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+
 describe('useIsMobile', () => {
   beforeEach(() => {
     vi.clearAllMocks()

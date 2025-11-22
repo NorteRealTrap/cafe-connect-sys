@@ -60,7 +60,7 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Carregando...</p>
@@ -70,7 +70,29 @@ const Index = () => {
   }
 
   if (!user) {
-    return <FuturisticLogin onLogin={handleLogin} />;
+    try {
+      return <FuturisticLogin onLogin={handleLogin} />;
+    } catch (error) {
+      console.error('Erro ao renderizar FuturisticLogin:', error);
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="max-w-md w-full bg-card border border-border rounded-lg p-6 shadow-lg">
+            <h1 className="text-2xl font-bold text-destructive mb-4">
+              Erro ao carregar tela de login
+            </h1>
+            <p className="text-muted-foreground mb-4">
+              Ocorreu um erro ao carregar a tela de login. Por favor, recarregue a página.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Recarregar Página
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (!businessCategory) {

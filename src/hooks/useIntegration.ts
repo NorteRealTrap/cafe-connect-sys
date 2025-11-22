@@ -45,8 +45,12 @@ export const useIntegration = () => {
 // Hook para escutar eventos do sistema
 export const useSystemEvents = (callback: (event: SystemEvent) => void) => {
   useEffect(() => {
-    const handler = (e: CustomEvent) => callback(e.detail);
-    window.addEventListener('system-event', handler as EventListener);
-    return () => window.removeEventListener('system-event', handler as EventListener);
+    const handler = (e: Event) => {
+      if (e instanceof CustomEvent) {
+        callback(e.detail);
+      }
+    };
+    window.addEventListener('system-event', handler);
+    return () => window.removeEventListener('system-event', handler);
   }, [callback]);
 };

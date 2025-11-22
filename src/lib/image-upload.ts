@@ -1,44 +1,22 @@
-// Sistema de Upload e Gerenciamento de Imagens
-
-export interface ImageUploadResult {
-  success: boolean;
-  dataUrl?: string;
-  error?: string;
-}
-
 export const imageUpload = {
-  // Converte arquivo para base64
-  fileToBase64: (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
+  uploadImage: async (file: File): Promise<{ success: boolean; dataUrl?: string; error?: string }> => {
+    if (file.size > 2 * 1024 * 1024) {
+      return { success: false, error: 'Arquivo muito grande (máx 2MB)' };
+    }
+
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onload = (e) => {
+        resolve({ success: true, dataUrl: e.target?.result as string });
+      };
+      reader.onerror = () => {
+        resolve({ success: false, error: 'Erro ao ler arquivo' });
+      };
       reader.readAsDataURL(file);
     });
   },
 
-  // Valida e processa upload de imagem
-  uploadImage: async (file: File): Promise<ImageUploadResult> => {
-    // Validar tipo
-    if (!file.type.startsWith('image/')) {
-      return { success: false, error: 'Arquivo deve ser uma imagem' };
-    }
-
-    // Validar tamanho (máx 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      return { success: false, error: 'Imagem deve ter no máximo 2MB' };
-    }
-
-    try {
-      const dataUrl = await imageUpload.fileToBase64(file);
-      return { success: true, dataUrl };
-    } catch (error) {
-      return { success: false, error: 'Erro ao processar imagem' };
-    }
-  },
-
-  // Redimensiona imagem mantendo proporção
-  resizeImage: (dataUrl: string, maxWidth: number, maxHeight: number): Promise<string> => {
+  resizeImage: async (dataUrl: string, maxWidth: number, maxHeight: number): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {

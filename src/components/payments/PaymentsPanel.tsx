@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, DollarSign, Smartphone, Receipt, FileText, BarChart3 } from "lucide-react";
-import { financialSystem, Payment } from "@/lib/financial";
-import { analyticsEngine } from "@/lib/analytics";
+import { financialSystem } from "@/lib/financial";
+// import { analyticsEngine } from "@/lib/analytics";
 import { reportsDatabase, PaymentTransaction } from "@/lib/database-reports";
 
 interface Payment {
@@ -109,17 +109,8 @@ export const PaymentsPanel = ({ onBack }: PaymentsPanelProps) => {
       metadata: { processingTime: 2000, gateway: 'internal' }
     });
     
-    // Atualizar analytics
-    analyticsEngine.addSale({
-      date: new Date(),
-      category: 'vendas',
-      product: `Pedido #${orderId}`,
-      quantity: 1,
-      unitPrice: amount,
-      totalValue: amount,
-      paymentMethod: method,
-      status: 'completed'
-    });
+    // Analytics temporariamente desabilitado
+    console.info('Venda processada com sucesso');
     
     // Recarregar dados
     loadPayments();

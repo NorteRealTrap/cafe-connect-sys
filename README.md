@@ -26,6 +26,73 @@ git config --global user.name "Seu Nome"
 git config --global user.email "seu-email@exemplo.com"
 ```
 
+### 4. Setup do projeto
+
+```bash
+# Executar script de setup (opcional)
+npm run setup
+
+# Instalar dependências
+npm i
+
+# Iniciar o servidor de desenvolvimento
+npm run dev
+```
+
+## Security Setup
+
+IMPORTANTE: Antes de publicar em produção:
+
+1. Execute o script de setup: npm run setup
+2. Atualize o arquivo .env com credenciais seguras
+3. Revise SECURITY.md (checklist completo de segurança)
+4. Altere senhas padrão em produção
+5. Configure JWT_SECRET com um valor aleatório e forte
+
+Credenciais de desenvolvimento padrão:
+- Admin: admin@system.local
+- Caixa: caixa@system.local  
+- Atendente: atendente@system.local
+- Senha: ver VITE_DEFAULT_PASSWORD no .env
+
+## Tecnologias utilizadas
+
+### Frontend
+- Vite 5.0
+- React 18.2
+- TypeScript 5.2
+- shadcn-ui
+- Tailwind CSS 3.3
+- React Router 6.20
+- TanStack Query 5.8
+- Recharts 2.8
+
+### Backend
+- Vercel Serverless Functions
+- Node.js
+
+### Integrações
+- WhatsApp Business API
+- Instagram API
+- Neon Database (PostgreSQL)
+
+## Deploy
+
+Este projeto é deployado na Vercel.
+
+### Variáveis de Ambiente (Vercel)
+
+Configure no painel da Vercel:
+
+```env
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_ACCESS_TOKEN=
+WEBHOOK_VERIFY_TOKEN=
+INSTAGRAM_PAGE_ID=
+INSTAGRAM_ACCESS_TOKEN=
+DATABASE_URL=
+```
+
 ## Fluxo de Trabalho Diário
 
 ### Antes de fazer alterações:
@@ -52,9 +119,9 @@ git push origin minha-feature
 ## Criar Pull Request
 
 1. Vá no GitHub → Seu repositório
-2. Clique em **"Compare & pull request"**
+2. Clique em "Compare & pull request"
 3. Descreva suas alterações
-4. Marque **@NorteRealTrap** para revisão
+4. Marque @NorteRealTrap para revisão
 
 ## Comandos Importantes
 
@@ -83,22 +150,71 @@ git branch
 git checkout main
 ```
 
-## Configurações Recomendadas
+## Serverless Functions
 
-### Proteger a Branch Main (Opcional)
+Localizadas no diretório /api:
+- /api/orders - Order management
+- /api/status - Order status sync
+- /api/auth - Authentication (JWT)
+- /api/verify-token - Token verification
+- /api/webhook - WhatsApp/Instagram webhooks
 
-**Settings → Branches → Add branch protection rule**
+## Documentação
 
-- ✓ Require pull request reviews before merging
-- ✓ Require status checks to pass
+- Security Checklist: ./SECURITY_CHECKLIST.md
+- Performance Optimization: ./PERFORMANCE_OPTIMIZATION.md
+- Development Guidelines: ./.amazonq/rules/memory-bank/guidelines.md
+- Project Structure: ./.amazonq/rules/memory-bank/structure.md
+- Tech Stack: ./.amazonq/rules/memory-bank/tech.md
 
-### Criar Issues para Organizar Tarefas
+## Recursos
 
-1. Vá em **Issues → New issue**
-2. Atribua para colegas específicos
-3. Use labels como "bug", "enhancement", "help wanted"
+### Funcionalidades
+- Processamento de pedidos em tempo real
+- Painel operacional e financeiro
+- Integrações WhatsApp/Instagram
+- Gestão de mesas, estoque e pagamentos
 
-## Links Úteis
+### Desenvolvimento
 
-- [Repositório no GitHub](https://github.com/NorteRealTrap/cafe-connect-sys)
+Scripts disponíveis:
 
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run deploy
+```
+
+### Estrutura do Projeto
+
+```
+cafe-connect-sys/
+├── src/
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   ├── pages/
+│   └── main.tsx
+├── api/
+│   ├── auth.ts
+│   ├── orders.ts
+│   └── webhook.ts
+└── public/
+```
+
+## Segurança
+
+Implementado:
+- JWT (backend)
+- Rate limiting
+- Sanitização de entrada
+- Variáveis de ambiente
+- HTTPS enforcement
+
+Pendente:
+- bcrypt hashing
+- CSRF
+- Audit logging
+- CSP

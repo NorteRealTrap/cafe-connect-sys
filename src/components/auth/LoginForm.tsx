@@ -1,15 +1,14 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Eye, EyeOff, Zap, User, Lock, Sparkles, Rocket, Globe, AlertCircle } from "lucide-react";
-import { db } from "@/lib/database";
 
 export type UserRole = 'admin' | 'caixa' | 'atendente';
 
 interface LoginFormProps {
-  onLogin: (role: UserRole) => void;
+  onLogin: (_role: UserRole) => void;
 }
 
 export const LoginForm = ({ onLogin }: LoginFormProps) => {
@@ -26,39 +25,24 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      // Simular delay de autenticação
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Importar AuthService dinamicamente
+      const { AuthService } = await import('@/lib/auth');
       
-      // Buscar usuários do banco de dados
-      const users = db.getUsers();
+      // Gerar identificador único para rate limiting
+      const clientId = localStorage.getItem('client-id') || 
+        `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('client-id', clientId);
+
+      const authResult = await AuthService.authenticate({ email, password, role }, clientId);
       
-      // Validar se campos estão preenchidos
-      if (!email.trim() || !password.trim()) {
-        setError("Email e senha são obrigatórios.");
-        return;
-      }
-      
-      // Validar credenciais
-      // Super admin pode acessar com qualquer role
-      const isSuperAdmin = email.toLowerCase().trim() === 'admin@cafeconnect.com';
-      
-      const user = users.find(u => 
-        u.email.toLowerCase() === email.toLowerCase().trim() && 
-        u.password === password &&
-        (isSuperAdmin || u.role === role) &&
-        u.status === 'ativo'
-      );
-      
-      if (user) {
-        // Atualizar último login
-        const updatedUsers = users.map(u => 
-          u.id === user.id ? { ...u, lastLogin: new Date().toISOString() } : u
-        );
-        db.saveUsers(updatedUsers);
-        
+      if (authResult.success && authResult.user) {
+        // Armazenar token se disponível
+        if (authResult.token) {
+          localStorage.setItem('auth-token', authResult.token);
+        }
         onLogin(role);
       } else {
-        setError("Credenciais inválidas. Verifique email, senha e nível de acesso.");
+        setError(authResult.message || "Credenciais inválidas. Verifique email, senha e nível de acesso.");
       }
     } catch (err) {
       setError("Erro interno do sistema. Tente novamente.");

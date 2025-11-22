@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import { imageUpload } from "@/lib/image-upload";
@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface ImageUploadProps {
   value?: string;
-  onChange: (imageUrl: string | undefined) => void;
+  onChange: (_imageUrl: string | undefined) => void;
   label?: string;
 }
 

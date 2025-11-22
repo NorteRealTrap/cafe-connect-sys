@@ -21,7 +21,14 @@ interface TablesPanelProps {
   onBack: () => void;
 }
 
-const STORAGE_KEY = 'ccpservices-tables';
+const STORAGE_KEY = (() => {
+  const key = process.env.REACT_APP_TABLES_STORAGE_KEY;
+  if (!key) {
+    console.warn('REACT_APP_TABLES_STORAGE_KEY não configurada');
+    return `tables_${Date.now()}`;
+  }
+  return key;
+})();
 
 export const TablesPanel = ({ onBack }: TablesPanelProps) => {
   const [tables, setTables] = useState<Table[]>([]);

@@ -32,7 +32,14 @@ interface StatusPanelProps {
   onBack: () => void;
 }
 
-const STORAGE_KEY = 'ccpservices-orders';
+const STORAGE_KEY = (() => {
+  const key = process.env.REACT_APP_STATUS_STORAGE_KEY;
+  if (!key) {
+    console.warn('REACT_APP_STATUS_STORAGE_KEY não configurada');
+    return `status_${Date.now()}`;
+  }
+  return key;
+})();
 
 const getInitialOrders = (): Order[] => {
   try {
