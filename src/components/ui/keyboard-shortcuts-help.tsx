@@ -1,4 +1,4 @@
-git pull origin mainimport { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Keyboard } from "lucide-react";
 
@@ -20,8 +20,12 @@ export const KeyboardShortcutsHelp = ({ open, onClose }: KeyboardShortcutsHelpPr
     { keys: ['F5'], description: 'Atualizar' },
   ];
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
