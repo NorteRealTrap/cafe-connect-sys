@@ -33,7 +33,7 @@ export const logger = {
     logFn(JSON.stringify(logEntry));
 
     // Em produção, enviar para Sentry/DataDog
-    if (level === 'error' && typeof window !== 'undefined') {
+    if (level === 'error' && typeof globalThis !== 'undefined' && 'window' in globalThis) {
       // Integração com Sentry aqui
     }
   },
