@@ -2,9 +2,11 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { neon } from '@neondatabase/serverless';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
+import { Resend } from 'resend';
 
 const sql = neon(process.env.DATABASE_URL || process.env.NEON_DB_DATABASE_URL!);
 const JWT_SECRET = process.env.JWT_SECRET!;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const setCors = (res: VercelResponse) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -107,16 +109,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
 
       // URL de reset
-      const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+      const resetUrl = `${process.env.APP_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
 
-      // TODO: Enviar email com o link
-      // Por enquanto, apenas retornar o link (em produção, enviar por email)
-      console.log('Reset URL:', resetUrl);
+      // Enviar email
+      try {
+        await resend.emails.send({
+          from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+          to: user.email,
+          subject: '🔐 Reset de Senha - Café Connect',
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .button { display: inline-block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>☕ Café Connect</h1>
+                  <p>Reset de Senha</p>
+                </div>
+                <div class="content">
+                  <p>Olá, <strong>${user.name}</strong>!</p>
+                  <p>Recebemos uma solicitação para resetar a senha da sua conta.</p>
+                  <p>Clique no botão abaixo para criar uma nova senha:</p>
+                  <center>
+                    <a href="${resetUrl}" class="button">Resetar Senha</a>
+                  </center>
+                  <p><small>Ou copie e cole este link no navegador:</small><br>
+                  <code>${resetUrl}</code></p>
+                  <p><strong>⚠️ Este link expira em 1 hora.</strong></p>
+                  <p>Se você não solicitou este reset, ignore este email.</p>
+                </div>
+                <div class="footer">
+                  <p>© ${new Date().getFullYear()} Café Connect. Todos os direitos reservados.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        });
+      } catch (emailError) {
+        console.error('Email error:', emailError);
+        // Não falhar se email não enviar
+      }
 
       return res.status(200).json({ 
         success: true, 
-        message: 'Link de reset enviado',
-        resetUrl // Remover em produção
+        message: 'Se o email existir, você receberá um link de reset'
       });
     }
 

@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import { OrderList } from "@/components/orders/OrderList";
 import { ResetPassword } from "@/components/auth/ResetPassword";
 import { Login } from "@/components/auth/Login";
+import { ForgotPassword } from "@/components/auth/ForgotPassword";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,10 +52,11 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/web-order" element={<WebOrder />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/orders" element={<OrderList />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {Analytics && <Analytics />}
