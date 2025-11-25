@@ -1,34 +1,38 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as jwt from 'jsonwebtoken';
+import { neon } from '@neondatabase/serverless';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const DATABASE_URL = process.env.NEON_DB_DATABASE_URL;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET não configurado');
 }
 
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL não configurado');
+}
+
+const sql = neon(DATABASE_URL);
+
 interface LoginRequest {
   email: string;
   password: string;
+  role?: string;
 }
 
 interface User {
   id: string;
   email: string;
-  name: string;
   role: string;
 }
 
-const USERS: Record<string, { password: string; user: User }> = {
-  'admin@cafe.com': {
-    password: 'admin123',
-    user: { id: '1', email: 'admin@cafe.com', name: 'Administrador', role: 'admin' }
-  },
-  'garcom@cafe.com': {
-    password: 'garcom123',
-    user: { id: '2', email: 'garcom@cafe.com', name: 'Garçom', role: 'waiter' }
-  }
-};
+function verifyPassword(password: string, storedHash: string): boolean {
+  const [salt, hash] = storedHash.split(':');
+  const verifyHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex');
+  return hash === verifyHash;
+}
 
 const rateLimits = new Map<string, number[]>();
 
@@ -73,23 +77,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { email, password }: LoginRequest = req.body;
+    const { email, password, role }: LoginRequest = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    const userData = USERS[email.toLowerCase()];
+    const users = await sql`
+      SELECT id, email, password_hash, role 
+      FROM users 
+      WHERE email = ${email.toLowerCase()}
+    `;
 
-    if (!userData || userData.password !== password) {
+    if (users.length === 0) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const user = users[0];
+
+    if (!verifyPassword(password, user.password_hash)) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    if (role && user.role !== role) {
+      return res.status(403).json({ error: 'Nível de acesso incorreto' });
     }
 
     const token = jwt.sign(
       {
-        userId: userData.user.id,
-        email: userData.user.email,
-        role: userData.user.role
+        userId: user.id,
+        email: user.email,
+        role: user.role
       },
       JWT_SECRET,
       { expiresIn: '7d' }
@@ -98,7 +116,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       token,
-      user: userData.user
+      user: {
+        id: user.id.toString(),
+        email: user.email,
+        role: user.role
+      }
     });
 
   } catch (error) {
