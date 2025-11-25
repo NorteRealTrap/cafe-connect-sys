@@ -25,20 +25,35 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        localStorage.setItem('auth-token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onLogin(role);
+      // Desenvolvimento local: usar autenticação local
+      if (window.location.hostname === 'localhost') {
+        const { authenticateLocal } = await import('@/lib/auth-local');
+        const result = authenticateLocal(email, password, role);
+        
+        if (result.success) {
+          localStorage.setItem('auth-token', result.token);
+          localStorage.setItem('user', JSON.stringify(result.user));
+          onLogin(role);
+        } else {
+          setError(result.error);
+        }
       } else {
-        setError(data.error || "Credenciais inválidas");
+        // Produção: usar API
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, role })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+          localStorage.setItem('auth-token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          onLogin(role);
+        } else {
+          setError(data.error || "Credenciais inválidas");
+        }
       }
     } catch (err) {
       setError("Erro ao conectar com servidor");
