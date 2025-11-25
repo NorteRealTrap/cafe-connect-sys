@@ -10,6 +10,7 @@ import WebOrder from "./pages/WebOrder";
 import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 import { OrderList } from "@/components/orders/OrderList";
+import { ResetPassword } from "@/components/auth/ResetPassword";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ const App = () => {
             <Route path="/web-order" element={<WebOrder />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/orders" element={<OrderList />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {Analytics && <Analytics />}
