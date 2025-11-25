@@ -1,50 +1,34 @@
-# Dependencies
-node_modules/
-.pnp
+# dependencies
+/node_modules
+/.pnp
 .pnp.js
 
-# Testing
-coverage/
+# testing
+/coverage
 
-# Next.js
-.next/
-out/
-build/
-dist/
+# next.js
+/.next/
+/out/
 
-# Production
-*.log
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment
+# local env files
+.env*.local
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-# Vercel
+# vercel
 .vercel
 
-# TypeScript
+# typescript
 *.tsbuildinfo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-
-# Prisma
-prisma/migrations/
-
-# Temporary
-*.tmp
-*.temp
-
-# Cafe Connect Web (duplicate project)
-cafe-connect-web/
+next-env.d.ts
