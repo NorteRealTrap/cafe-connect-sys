@@ -25,27 +25,23 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setIsLoading(true);
     
     try {
-      // Importar AuthService dinamicamente
-      const { AuthService } = await import('@/lib/auth');
-      
-      // Gerar identificador único para rate limiting
-      const clientId = localStorage.getItem('client-id') || 
-        `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('client-id', clientId);
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
 
-      const authResult = await AuthService.authenticate({ email, password, role }, clientId);
+      const data = await response.json();
       
-      if (authResult.success && authResult.user) {
-        // Armazenar token se disponível
-        if (authResult.token) {
-          localStorage.setItem('auth-token', authResult.token);
-        }
+      if (response.ok && data.success) {
+        localStorage.setItem('auth-token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         onLogin(role);
       } else {
-        setError(authResult.message || "Credenciais inválidas. Verifique email, senha e nível de acesso.");
+        setError(data.error || "Credenciais inválidas");
       }
     } catch (err) {
-      setError("Erro interno do sistema. Tente novamente.");
+      setError("Erro ao conectar com servidor");
     } finally {
       setIsLoading(false);
     }
