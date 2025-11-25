@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
-
 export const metadata: Metadata = {
-  title: 'CCPServices - Sistema de Gestão',
-  description: 'Sistema de gestão comercial',
+  title: 'Café Connect - Sistema de Gerenciamento',
+  description: 'Sistema completo para gerenciar sua cafeteria',
 }
 
 export default function RootLayout({
@@ -16,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   )
 }
