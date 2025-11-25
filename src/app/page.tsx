@@ -13,16 +13,16 @@ export default function Home() {
         
         <div className="flex gap-4 justify-center mt-8">
           <Link 
-            href="/admin/products"
+            href="/dashboard"
             className="px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold"
           >
-            Acessar Sistema
+            Acessar Dashboard
           </Link>
           <Link 
-            href="/admin/orders"
+            href="/admin/products"
             className="px-6 py-3 border border-amber-600 text-amber-600 hover:bg-amber-50 rounded-lg font-semibold"
           >
-            Ver Pedidos
+            Gerenciar Produtos
           </Link>
         </div>
       </div>
