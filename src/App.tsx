@@ -11,6 +11,7 @@ import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 import { OrderList } from "@/components/orders/OrderList";
 import { ResetPassword } from "@/components/auth/ResetPassword";
+import { Login } from "@/components/auth/Login";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ const App = () => {
           <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/web-order" element={<WebOrder />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/orders" element={<OrderList />} />
