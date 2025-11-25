@@ -3,12 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import WebOrder from "./pages/WebOrder";
 import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
+import { OrderList } from "@/components/orders/OrderList";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/web-order" element={<WebOrder />} />
             <Route path="/order-tracking" element={<OrderTracking />} />
+            <Route path="/orders" element={<OrderList />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           {Analytics && <Analytics />}
