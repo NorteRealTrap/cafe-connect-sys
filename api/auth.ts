@@ -4,7 +4,7 @@ import { neon } from '@neondatabase/serverless';
 import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const DATABASE_URL = process.env.NEON_DB_DATABASE_URL;
+const DATABASE_URL = process.env.NEON_DB_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET não configurado');
