@@ -1,158 +1,203 @@
-# ☕ Café Connect - Sistema de Gestão
+# 🏪 MultiPDV - Sistema Multi-Estabelecimentos
 
-Sistema completo de gerenciamento para cafeterias desenvolvido com Next.js 14, Prisma e Neon Database.
+Sistema completo de PDV para gerenciar múltiplos tipos de estabelecimentos: padarias, lanchonetes, bares, adegas, confeitarias, restaurantes, bistrôs e muito mais.
 
-## 🚀 Quick Start
+## 🚀 Funcionalidades
 
+### ✅ Multi-Estabelecimentos
+- Suporte para 10+ tipos de estabelecimentos
+- Gestão centralizada de múltiplas unidades
+- Configurações específicas por estabelecimento
+
+### ✅ Pedidos Completos
+- **Pedidos Locais**: Atendimento presencial com mesas
+- **Pedidos Web**: Recebimento online de clientes
+- **Delivery**: Gestão de entregas
+- **Takeaway**: Pedidos para retirada
+
+### ✅ Controle de Estoque
+- Movimentação automática de estoque
+- Alertas de estoque baixo
+- Histórico completo de movimentações
+- Ajustes manuais com auditoria
+
+### ✅ Sistema de Impressão
+- Cupons térmicos
+- Impressão para cozinha/bar
+- Comprovantes fiscais
+- Múltiplas impressoras por estabelecimento
+
+### ✅ Gestão Completa
+- Usuários com diferentes permissões
+- Relatórios e analytics
+- Controle de mesas
+- Múltiplas formas de pagamento
+
+## 🛠️ Tecnologias
+
+- **Framework**: Next.js 14 (App Router)
+- **Database**: PostgreSQL (Neon)
+- **ORM**: Prisma
+- **Auth**: NextAuth.js
+- **UI**: Tailwind CSS + shadcn/ui
+- **Language**: TypeScript
+
+## 📦 Instalação
+
+### 1. Clone o repositório
 ```bash
-# 1. Instalar dependências
+git clone <repository-url>
+cd cafe-connect-sys-main
+```
+
+### 2. Instale as dependências
+```bash
 npm install
+```
 
-# 2. Configurar .env.local com sua connection string do Neon
-# (veja .env.example)
+### 3. Configure o banco de dados
+```bash
+# Copie o arquivo de ambiente
+cp .env.example .env
 
-# 3. Setup database
-npx prisma generate
+# Configure suas variáveis no .env
+# DATABASE_URL e DIRECT_URL com suas credenciais do Neon
+```
+
+### 4. Execute as migrações
+```bash
 npx prisma db push
-npm run db:seed
+npx prisma generate
+```
 
-# 4. Rodar
+### 5. Popule o banco com dados iniciais
+```bash
+npm run db:seed
+```
+
+### 6. Inicie o servidor
+```bash
 npm run dev
 ```
 
-**Acesse:** http://localhost:3000
+## 🔑 Credenciais de Teste
 
-**Login:** admin@cafeconnect.com / admin123
+Após executar o seed, use estas credenciais:
 
-## 📚 Documentação
+- **Admin**: admin@multipdv.com / admin123
+- **Gerente**: gerente@multipdv.com / gerente123  
+- **Caixa**: caixa@multipdv.com / caixa123
 
-- **[QUICK_START.md](QUICK_START.md)** - Setup em 5 minutos
-- **[PRISMA_SETUP.md](PRISMA_SETUP.md)** - Guia completo do Prisma
-- **[MIGRATION.md](MIGRATION.md)** - Guia de migração detalhado
-- **[SETUP.md](SETUP.md)** - Setup geral do projeto
+## 🏪 Estabelecimentos Criados
 
-## ✨ Funcionalidades
+O seed cria 5 estabelecimentos de exemplo:
 
-- ✅ Dashboard com estatísticas em tempo real
-- ✅ Gerenciamento de produtos (CRUD completo)
-- ✅ Sistema de pedidos com status
-- ✅ Controle de estoque automático
-- ✅ Autenticação com NextAuth
-- ✅ Interface responsiva com Tailwind CSS
-- ✅ 10 produtos pré-cadastrados
+1. **Padaria Pão Quente** (BAKERY)
+2. **Lanchonete Sabor & Arte** (COFFEE_SHOP)
+3. **Bar do Zé** (BAR)
+4. **Adega Vinhos Finos** (WINE_SHOP)
+5. **Confeitaria Doce Sabor** (CONFECTIONERY)
 
-## 🛠️ Stack Tecnológica
+## 📊 Estrutura do Banco
 
-- **Framework:** Next.js 14 (App Router)
-- **Database:** Neon PostgreSQL (Serverless)
-- **ORM:** Prisma
-- **Auth:** NextAuth.js
-- **Styling:** Tailwind CSS
-- **Language:** TypeScript
-- **Deploy:** Vercel
+### Principais Tabelas
+- `establishments` - Estabelecimentos
+- `users` - Usuários do sistema
+- `establishment_users` - Relacionamento usuário-estabelecimento
+- `products` - Produtos/cardápio
+- `categories` - Categorias de produtos
+- `orders` - Pedidos
+- `order_items` - Itens dos pedidos
+- `tables` - Mesas dos estabelecimentos
+- `payments` - Pagamentos
+- `stock_movements` - Movimentações de estoque
+- `web_orders` - Pedidos web/delivery
+- `print_configs` - Configurações de impressão
 
-## 📦 Estrutura do Projeto
-
-```
-cafe-connect-sys-main/
-├── src/
-│   ├── app/
-│   │   ├── api/          # API Routes
-│   │   ├── dashboard/    # Dashboard page
-│   │   ├── admin/        # Admin pages
-│   │   └── page.tsx      # Homepage
-│   ├── lib/
-│   │   └── prisma.ts     # Prisma client
-│   └── types/
-│       └── index.ts      # TypeScript types
-├── prisma/
-│   ├── schema.prisma     # Database schema
-│   └── seed.ts           # Seed data
-├── .env.local            # Environment variables
-└── package.json
-```
-
-## 🔧 Comandos Disponíveis
+## 🔧 Scripts Disponíveis
 
 ```bash
-# Desenvolvimento
-npm run dev              # Iniciar servidor de desenvolvimento
-npm run build            # Build para produção
-npm run start            # Iniciar servidor de produção
-
-# Database
-npm run db:generate      # Gerar Prisma Client
-npm run db:push          # Criar/atualizar tabelas
-npm run db:seed          # Popular banco com dados
-npm run db:studio        # Abrir Prisma Studio
-npm run db:reset         # Resetar e popular banco
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build de produção
+npm run start        # Servidor de produção
+npm run lint         # Análise de código
+npm run db:generate  # Gerar Prisma Client
+npm run db:push      # Aplicar schema ao banco
+npm run db:studio    # Abrir Prisma Studio
+npm run db:seed      # Popular banco com dados
+npm run db:reset     # Resetar e popular banco
 ```
 
-## 🗄️ Schema do Banco
+## 🌐 Deploy
 
-### Tabelas
-- **users** - Usuários do sistema
-- **products** - Produtos/itens do menu
-- **orders** - Pedidos
-- **order_items** - Itens dos pedidos
-
-### Enums
-- **UserRole:** ADMIN, MANAGER, BARISTA, CUSTOMER
-- **OrderStatus:** PENDING, CONFIRMED, PREPARING, READY, COMPLETED, CANCELLED
-- **ProductCategory:** COFFEE, TEA, PASTRY, SANDWICH, DESSERT, OTHER
-
-## 🌱 Dados Iniciais (Seed)
-
-O seed cria automaticamente:
-- 1 usuário admin
-- 10 produtos (5 cafés, 2 padaria, 1 sobremesa, 1 sanduíche, 1 chá)
-
-## 🚀 Deploy na Vercel
-
-1. Push para GitHub
-2. Conecte o repositório na Vercel
-3. Configure as variáveis de ambiente:
+### Vercel
+1. Conecte seu repositório no Vercel
+2. Configure as variáveis de ambiente:
    - `DATABASE_URL`
    - `DIRECT_URL`
    - `NEXTAUTH_SECRET`
-4. Deploy automático!
+   - `NEXTAUTH_URL`
+3. Deploy automático!
 
-## 🔐 Credenciais Padrão
+## 📱 Funcionalidades por Tipo de Estabelecimento
 
-**Admin:**
-- Email: admin@cafeconnect.com
-- Senha: admin123
+### Padarias
+- Controle de pães e produtos de panificação
+- Gestão de estoque de ingredientes
+- Vendas por peso e unidade
 
-⚠️ **IMPORTANTE:** Altere as credenciais em produção!
+### Lanchonetes/Coffee Shops
+- Cardápio de lanches e bebidas
+- Controle de mesas
+- Pedidos para viagem
 
-## 🆘 Troubleshooting
+### Bares
+- Gestão de bebidas alcoólicas
+- Controle de comandas
+- Petiscos e porções
 
-### Erro de conexão com banco
-```bash
-# Verifique .env.local
-# Certifique-se que o Neon está ativo
-```
+### Adegas
+- Catálogo de vinhos
+- Controle de safras e fornecedores
+- Vendas especializadas
 
-### Banco vazio
-```bash
-npm run db:seed
-```
+### Confeitarias
+- Produtos doces e salgados finos
+- Encomendas especiais
+- Controle de ingredientes especiais
 
-### Erro de módulos
-```bash
-npm install
-npx prisma generate
-```
+### Restaurantes/Bistrôs
+- Cardápio completo
+- Gestão de mesas e reservas
+- Controle de cozinha
+
+## 🔒 Segurança
+
+- Autenticação JWT com NextAuth
+- Middleware de proteção de rotas
+- Criptografia de senhas com bcrypt
+- Headers de segurança HTTP
+- Validação de dados com Zod
+
+## 📈 Performance
+
+- Server-side rendering com Next.js
+- Otimização de imagens
+- Lazy loading de componentes
+- Cache de dados com React Query
+
+## 🆘 Suporte
+
+Para dúvidas e suporte:
+1. Verifique a documentação
+2. Consulte os logs de erro
+3. Execute `npm run db:studio` para verificar dados
 
 ## 📄 Licença
 
-Este projeto é privado e proprietário.
-
-## 👥 Contribuidores
-
-- Desenvolvido para Café Connect System
+Sistema proprietário - Todos os direitos reservados.
 
 ---
 
-**Versão:** 1.0.0  
-**Última atualização:** 2024
+**Versão**: 2.0.0  
+**Última atualização**: 2024

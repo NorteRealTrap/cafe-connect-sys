@@ -1,4 +1,4 @@
-import { UserRole, OrderStatus, ProductCategory } from '@prisma/client';
+import { UserRole, OrderStatus } from '@prisma/client';
 
 export interface User {
   id: string;
@@ -10,29 +10,21 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
-  description: string | null;
+  description?: string;
   price: number;
-  category: ProductCategory;
-  image: string | null;
+  category: string;
+  image?: string;
   stock: number;
   isActive: boolean;
 }
 
 export interface Order {
   id: string;
-  customerId: string;
+  orderNumber: string;
+  customerName?: string;
   total: number;
   status: OrderStatus;
-  notes: string | null;
   createdAt: Date;
-  items: OrderItem[];
-  customer?: User;
 }
 
-export interface OrderItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  product?: Product;
-}
+export type { UserRole, OrderStatus }

@@ -1,19 +1,29 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { NextAuthProvider } from '@/components/providers/NextAuthProvider'
+import { Toaster } from '@/components/ui/sonner'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Café Connect - Sistema de Gerenciamento',
-  description: 'Sistema completo para gerenciar sua cafeteria',
-};
+  title: 'MultiPDV - Sistema Multi-Estabelecimentos',
+  description: 'Sistema completo para gerenciar múltiplos estabelecimentos',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="pt-BR">
-      <body className="antialiased">{children}</body>
+      <body className={inter.className}>
+        <NextAuthProvider>
+          {children}
+          <Toaster />
+        </NextAuthProvider>
+      </body>
     </html>
-  );
+  )
 }

@@ -19,7 +19,12 @@ export async function PATCH(
             product: true
           }
         },
-        customer: true
+        createdBy: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
       }
     });
     

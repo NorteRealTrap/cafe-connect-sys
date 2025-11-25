@@ -9,77 +9,376 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(CUSTOMER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(CASHIER)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   
-  orders Order[]
+  establishments EstablishmentUser[]
+  createdOrders  Order[]   @relation("OrderCreatedBy")
+  updatedOrders  Order[]   @relation("OrderUpdatedBy")
   
   @@map("users")
   @@index([email])
+  @@index([role])
+}
+
+model Establishment {
+  id              String          @id @default(cuid())
+  name            String
+  tradingName     String?
+  document        String?
+  email           String?
+  phone           String?
+  address         String?
+  type            EstablishmentType
+  logo            String?
+  isActive        Boolean         @default(true)
+  openingTime     String?
+  closingTime     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  users           EstablishmentUser[]
+  tables          Table[]
+  categories      Category[]
+  products        Product[]
+  orders          Order[]
+  paymentMethods  PaymentMethod[]
+  printConfigs    PrintConfig[]
+  webOrders       WebOrder[]
+
+  @@map("establishments")
+  @@index([name])
+  @@index([type])
+}
+
+model EstablishmentUser {
+  id               String         @id @default(cuid())
+  userId           String
+  establishmentId  String
+  role             EstablishmentUserRole
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id])
+  establishment   Establishment  @relation(fields: [establishmentId], references: [id])
+
+  @@unique([userId, establishmentId])
+  @@map("establishment_users")
+}
+
+model Table {
+  id               String        @id @default(cuid())
+  number           String
+  name             String?
+  capacity         Int           @default(4)
+  status           TableStatus   @default(AVAILABLE)
+  establishmentId  String
+  currentOrderId   String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  establishment    Establishment @relation(fields: [establishmentId], references: [id])
+  orders           Order[]       @relation("TableOrders")
+
+  @@map("tables")
+  @@index([establishmentId])
+  @@index([status])
+}
+
+model Category {
+  id               String        @id @default(cuid())
+  name             String
+  description      String?
+  image            String?
+  color            String?
+  order            Int           @default(0)
+  isActive         Boolean       @default(true)
+  establishmentId  String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  establishment    Establishment @relation(fields: [establishmentId], references: [id])
+  products         Product[]
+
+  @@map("categories")
+  @@index([establishmentId])
+  @@index([order])
 }
 
 model Product {
-  id          String          @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  category    ProductCategory
-  image       String?
-  stock       Int             @default(0)
-  isActive    Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  
-  orderItems OrderItem[]
-  
+  id               String        @id @default(cuid())
+  name             String
+  description      String?
+  price            Decimal       @db.Decimal(10,2)
+  cost             Decimal?      @db.Decimal(10,2)
+  categoryId       String
+  image            String?
+  barcode          String?
+  sku              String?
+  stock            Int           @default(0)
+  minStock         Int           @default(0)
+  isActive         Boolean       @default(true)
+  preparationTime  Int?
+  establishmentId  String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  category         Category      @relation(fields: [categoryId], references: [id])
+  establishment    Establishment @relation(fields: [establishmentId], references: [id])
+  orderItems       OrderItem[]
+  stockMovements   StockMovement[]
+
   @@map("products")
-  @@index([category])
+  @@index([categoryId])
+  @@index([establishmentId])
   @@index([isActive])
 }
 
 model Order {
-  id         String      @id @default(cuid())
-  customerId String
-  total      Float
-  status     OrderStatus @default(PENDING)
-  notes      String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id               String          @id @default(cuid())
+  orderNumber      String          @unique
+  type             OrderType       @default(LOCAL)
+  status           OrderStatus     @default(PENDING)
+  source           OrderSource     @default(POS)
   
-  customer User        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  items    OrderItem[]
+  customerName     String?
+  customerPhone    String?
+  customerAddress  String?
   
+  tableId          String?
+  tableNumber      String?
+  
+  subtotal         Decimal         @db.Decimal(10,2)
+  discount         Decimal         @db.Decimal(10,2) @default(0)
+  tax              Decimal         @db.Decimal(10,2) @default(0)
+  serviceCharge    Decimal         @db.Decimal(10,2) @default(0)
+  total            Decimal         @db.Decimal(10,2)
+  
+  notes            String?
+  kitchenNotes     String?
+  
+  estimatedTime    Int?
+  preparationTime  Int?
+  completedAt      DateTime?
+  
+  createdById      String
+  updatedById      String?
+  establishmentId  String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  createdBy        User            @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  updatedBy        User?           @relation("OrderUpdatedBy", fields: [updatedById], references: [id])
+  establishment    Establishment   @relation(fields: [establishmentId], references: [id])
+  table            Table?          @relation("TableOrders", fields: [tableId], references: [id])
+  items            OrderItem[]
+  payments         Payment[]
+  prints           OrderPrint[]
+
   @@map("orders")
-  @@index([customerId])
+  @@index([orderNumber])
   @@index([status])
-  @@index([createdAt])
+  @@index([establishmentId])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Float
+  id               String          @id @default(cuid())
+  orderId          String
+  productId        String
+  quantity         Int
+  unitPrice        Decimal         @db.Decimal(10,2)
+  totalPrice       Decimal         @db.Decimal(10,2)
+  notes            String?
+  status           OrderItemStatus @default(PENDING)
   
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
-  
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product          Product         @relation(fields: [productId], references: [id])
+
   @@map("order_items")
   @@index([orderId])
   @@index([productId])
 }
 
+model WebOrder {
+  id               String          @id @default(cuid())
+  externalId       String?
+  customerName     String
+  customerPhone    String
+  customerEmail    String?
+  customerAddress  String?
+  deliveryType     DeliveryType    @default(DELIVERY)
+  deliveryFee      Decimal         @db.Decimal(10,2) @default(0)
+  status           WebOrderStatus  @default(PENDING)
+  estimatedTime    Int?
+  notes            String?
+  establishmentId  String
+  orderId          String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  establishment    Establishment   @relation(fields: [establishmentId], references: [id])
+  items            WebOrderItem[]
+
+  @@map("web_orders")
+  @@index([establishmentId])
+  @@index([status])
+}
+
+model WebOrderItem {
+  id               String          @id @default(cuid())
+  webOrderId       String
+  productName      String
+  quantity         Int
+  unitPrice        Decimal         @db.Decimal(10,2)
+  totalPrice       Decimal         @db.Decimal(10,2)
+  notes            String?
+  
+  webOrder         WebOrder        @relation(fields: [webOrderId], references: [id], onDelete: Cascade)
+
+  @@map("web_order_items")
+  @@index([webOrderId])
+}
+
+model Payment {
+  id               String          @id @default(cuid())
+  orderId          String
+  method           PaymentMethodType
+  amount           Decimal         @db.Decimal(10,2)
+  status           PaymentStatus   @default(PENDING)
+  reference        String?
+  change           Decimal?        @db.Decimal(10,2)
+  processedAt      DateTime?
+  createdAt        DateTime        @default(now())
+
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+  @@index([orderId])
+  @@index([method])
+}
+
+model PaymentMethod {
+  id               String          @id @default(cuid())
+  name             String
+  type             PaymentMethodType
+  isActive         Boolean         @default(true)
+  establishmentId  String
+
+  establishment    Establishment   @relation(fields: [establishmentId], references: [id])
+
+  @@map("payment_methods")
+  @@index([establishmentId])
+}
+
+model PrintConfig {
+  id               String          @id @default(cuid())
+  establishmentId  String
+  type             PrintType       @default(KITCHEN)
+  printerName      String?
+  printerAddress   String?
+  printerPort      Int?
+  copies           Int             @default(1)
+  header           String?
+  footer           String?
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  establishment    Establishment   @relation(fields: [establishmentId], references: [id])
+
+  @@map("print_configs")
+  @@index([establishmentId])
+}
+
+model OrderPrint {
+  id               String          @id @default(cuid())
+  orderId          String
+  type             PrintType
+  content          String          @db.Text
+  printedAt        DateTime        @default(now())
+  success          Boolean         @default(true)
+  error            String?
+
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_prints")
+  @@index([orderId])
+}
+
+model StockMovement {
+  id               String            @id @default(cuid())
+  productId        String
+  type             StockMovementType
+  quantity         Int
+  previousStock    Int
+  newStock         Int
+  reason           String?
+  reference        String?
+  createdAt        DateTime          @default(now())
+
+  product          Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("stock_movements")
+  @@index([productId])
+  @@index([type])
+}
+
 enum UserRole {
   ADMIN
   MANAGER
-  BARISTA
-  CUSTOMER
+  CASHIER
+  KITCHEN
+  WAITER
+}
+
+enum EstablishmentType {
+  BAKERY
+  COFFEE_SHOP
+  BAR
+  WINE_SHOP
+  CONFECTIONERY
+  RESTAURANT
+  BISTRO
+  PIZZERIA
+  ICE_CREAM
+  FAST_FOOD
+}
+
+enum EstablishmentUserRole {
+  OWNER
+  MANAGER
+  CASHIER
+  WAITER
+  KITCHEN
+  DELIVERY
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+}
+
+enum OrderType {
+  LOCAL
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderSource {
+  POS
+  WEB
+  WHATSAPP
+  PHONE
 }
 
 enum OrderStatus {
@@ -91,11 +390,59 @@ enum OrderStatus {
   CANCELLED
 }
 
-enum ProductCategory {
-  COFFEE
-  TEA
-  PASTRY
-  SANDWICH
-  DESSERT
-  OTHER
+enum OrderItemStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  DELIVERY
+  PICKUP
+}
+
+enum WebOrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  IN_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethodType {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  MEAL_VOUCHER
+  FOOD_VOUCHER
+  DIGITAL_WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PrintType {
+  KITCHEN
+  BAR
+  CASHIER
+  FISCAL
+  DELIVERY
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  LOSS
+  RETURN
 }

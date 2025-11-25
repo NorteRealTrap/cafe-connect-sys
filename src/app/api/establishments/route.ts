@@ -1,0 +1,84 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const establishments = await prisma.establishment.findMany({
+      where: { isActive: true },
+      include: {
+        users: {
+          where: { userId: session.user.id },
+          include: { user: true }
+        },
+        _count: {
+          select: {
+            products: true,
+            orders: true,
+            tables: true
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(establishments)
+  } catch (error) {
+    console.error('Error fetching establishments:', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const body = await request.json()
+    const { 
+      name, 
+      tradingName, 
+      document, 
+      email, 
+      phone, 
+      address, 
+      type, 
+      openingTime, 
+      closingTime 
+    } = body
+
+    const establishment = await prisma.establishment.create({
+      data: {
+        name,
+        tradingName,
+        document,
+        email,
+        phone,
+        address,
+        type,
+        openingTime,
+        closingTime,
+        users: {
+          create: {
+            userId: session.user.id,
+            role: 'OWNER'
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(establishment)
+  } catch (error) {
+    console.error('Error creating establishment:', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}
