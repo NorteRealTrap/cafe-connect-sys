@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import * as jwt from 'jsonwebtoken';
 import { neon } from '@neondatabase/serverless';
-import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const DATABASE_URL = process.env.NEON_DB_DATABASE_URL || process.env.DATABASE_URL;
@@ -28,10 +27,9 @@ interface User {
   role: string;
 }
 
-function verifyPassword(password: string, storedHash: string): boolean {
-  const [salt, hash] = storedHash.split(':');
-  const verifyHash = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha256').toString('hex');
-  return hash === verifyHash;
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.compare(password, storedHash);
 }
 
 const rateLimits = new Map<string, number[]>();
@@ -95,7 +93,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const user = users[0];
 
-    if (!verifyPassword(password, user.password_hash)) {
+    const isValidPassword = await verifyPassword(password, user.password_hash);
+    if (!isValidPassword) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
