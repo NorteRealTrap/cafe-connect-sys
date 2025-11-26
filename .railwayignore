@@ -1,6 +1,9 @@
-node_modules
-.next
-.git
+MCPServer/
+ACEServer/
+node_modules/
+.next/
+.git/
 .env.local
 *.log
 .DS_Store
+.amazonq/

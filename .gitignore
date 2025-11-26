@@ -33,4 +33,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# Ignore MCP and ACE servers
+MCPServer/
+ACEServer/
