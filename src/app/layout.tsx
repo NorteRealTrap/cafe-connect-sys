@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { NextAuthProvider } from '@/components/providers/NextAuthProvider'
-import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
+import { NextAuthProvider } from '@/components/providers/NextAuthProvider'
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'MultiPDV - Sistema Multi-Estabelecimentos',
-  description: 'Sistema completo para gerenciar múltiplos estabelecimentos',
+  title: 'Café Connect - Sistema Multi-PDV',
+  description: 'Sistema completo de PDV para múltiplos estabelecimentos',
 }
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <NextAuthProvider>
           {children}
-          <Toaster />
+          <Toaster position="top-right" richColors />
         </NextAuthProvider>
       </body>
     </html>

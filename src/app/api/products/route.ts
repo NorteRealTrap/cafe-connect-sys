@@ -1,29 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
+import { createProductSchema } from '@/lib/validations/product'
+import { z } from 'zod'
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const establishmentId = searchParams.get('establishmentId')
-
-    if (!establishmentId) {
-      return new NextResponse('Establishment ID required', { status: 400 })
-    }
+    const categoryId = searchParams.get('categoryId')
+    const search = searchParams.get('search')
 
     const products = await prisma.product.findMany({
-      where: { 
-        establishmentId,
-        isActive: true 
+      where: {
+        ...(establishmentId && { establishmentId }),
+        ...(categoryId && { categoryId }),
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } }
+          ]
+        }),
+        active: true
       },
       include: {
-        category: true
+        category: true,
+        establishment: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: {
         name: 'asc'
@@ -33,56 +46,47 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(products)
   } catch (error) {
     console.error('Error fetching products:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
-      return new NextResponse('Unauthorized', { status: 401 })
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
     const body = await request.json()
-    const { 
-      name, 
-      description, 
-      price, 
-      cost,
-      categoryId, 
-      image, 
-      barcode,
-      sku,
-      stock,
-      minStock,
-      preparationTime,
-      establishmentId 
-    } = body
+    const validatedData = createProductSchema.parse(body)
+
+    // Verificar se categoria existe
+    const category = await prisma.category.findUnique({
+      where: { id: validatedData.categoryId }
+    })
+
+    if (!category) {
+      return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
+    }
 
     const product = await prisma.product.create({
-      data: {
-        name,
-        description,
-        price: parseFloat(price),
-        cost: cost ? parseFloat(cost) : null,
-        categoryId,
-        image,
-        barcode,
-        sku,
-        stock: parseInt(stock) || 0,
-        minStock: parseInt(minStock) || 0,
-        preparationTime: preparationTime ? parseInt(preparationTime) : null,
-        establishmentId
-      },
+      data: validatedData,
       include: {
-        category: true
+        category: true,
+        establishment: true
       }
     })
 
-    return NextResponse.json(product)
+    return NextResponse.json(product, { status: 201 })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+    }
     console.error('Error creating product:', error)
-    return new NextResponse('Internal Error', { status: 500 })
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

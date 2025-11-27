@@ -1,0 +1,94 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { prisma } from '@/lib/prisma'
+import { createTableSchema } from '@/lib/validations/table'
+import { z } from 'zod'
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const establishmentId = searchParams.get('establishmentId')
+    const status = searchParams.get('status')
+
+    if (!establishmentId) {
+      return NextResponse.json({ error: 'establishmentId é obrigatório' }, { status: 400 })
+    }
+
+    const where: any = { establishmentId }
+    if (status) where.status = status
+
+    const tables = await prisma.table.findMany({
+      where,
+      include: {
+        orders: {
+          where: { status: { notIn: ['COMPLETED', 'CANCELLED'] } },
+          include: {
+            items: {
+              include: {
+                product: { select: { id: true, name: true, price: true } }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { number: 'asc' }
+    })
+
+    const tablesWithInfo = tables.map(table => ({
+      ...table,
+      currentOrder: table.orders[0] || null,
+      totalOrders: table.orders.length,
+      totalAmount: table.orders.reduce((sum, order) => sum + order.total.toNumber(), 0)
+    }))
+
+    return NextResponse.json(tablesWithInfo)
+  } catch (error) {
+    console.error('Error fetching tables:', error)
+    return NextResponse.json({ error: 'Erro ao buscar mesas' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    if (!['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Sem permissão para criar mesas' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const validatedData = createTableSchema.parse(body)
+
+    const existing = await prisma.table.findFirst({
+      where: {
+        establishmentId: validatedData.establishmentId,
+        number: validatedData.number
+      }
+    })
+
+    if (existing) {
+      return NextResponse.json({ error: 'Já existe uma mesa com este número' }, { status: 409 })
+    }
+
+    const table = await prisma.table.create({
+      data: { ...validatedData, status: 'AVAILABLE' }
+    })
+
+    return NextResponse.json(table, { status: 201 })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Dados inválidos', details: error.errors }, { status: 400 })
+    }
+    console.error('Error creating table:', error)
+    return NextResponse.json({ error: 'Erro ao criar mesa' }, { status: 500 })
+  }
+}
