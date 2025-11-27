@@ -1,59 +1,30 @@
-import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
 
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token
-    const pathname = req.nextUrl.pathname
+    const path = req.nextUrl.pathname
 
-    // Redirecionar para login se não autenticado
-    if (!token && pathname.startsWith('/dashboard')) {
-      const loginUrl = new URL('/login', req.url)
-      loginUrl.searchParams.set('callbackUrl', req.url)
-      return NextResponse.redirect(loginUrl)
+    if (path.startsWith('/login') || path.startsWith('/api/auth')) {
+      return NextResponse.next()
     }
 
-    // Proteção de rotas baseada em roles
-    if (token) {
-      // Apenas ADMIN e MANAGER podem acessar configurações e estoque
-      if (
-        (pathname.startsWith('/dashboard/admin') || 
-         pathname.startsWith('/dashboard/stock') ||
-         pathname.startsWith('/dashboard/establishments')) && 
-        !['ADMIN', 'MANAGER'].includes(token.role)
-      ) {
-        return new NextResponse('Acesso negado', { status: 403 })
-      }
-
-      // Apenas ADMIN pode acessar usuários
-      if (pathname.startsWith('/dashboard/users') && token.role !== 'ADMIN') {
-        return new NextResponse('Acesso negado', { status: 403 })
-      }
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', req.url))
     }
 
     return NextResponse.next()
   },
   {
     callbacks: {
-      authorized: ({ token, req }) => {
-        // Rotas públicas
-        const publicPaths = ['/login', '/register', '/api/auth']
-        if (publicPaths.some(path => req.nextUrl.pathname.startsWith(path))) {
-          return true
-        }
-
-        // Rotas protegidas
-        return !!token
-      }
+      authorized: ({ token }) => !!token
     }
   }
 )
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/api/:path*',
-    '/login',
-    '/register'
+    '/((?!_next/static|_next/image|favicon.ico|public|login|api/auth).*)',
   ]
 }
