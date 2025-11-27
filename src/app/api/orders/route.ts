@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createOrderSchema } from '@/lib/validations/order'
+import { OrderStatus } from '@prisma/client'
 import { z } from 'zod'
 
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
     const orders = await prisma.order.findMany({
       where: {
         ...(establishmentId && { establishmentId }),
-        ...(status && status !== 'ALL' && { status })
+        ...(status && status !== 'ALL' && { status: status as OrderStatus })
       },
       include: {
         table: true,
