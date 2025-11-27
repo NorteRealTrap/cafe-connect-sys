@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const categories = await prisma.category.findMany({
       where: {
         ...(establishmentId && { establishmentId }),
-        active: true
+        isActive: true
       },
       orderBy: {
         name: 'asc'
