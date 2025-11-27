@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
             status: { in: ['COMPLETED', 'PREPARING', 'READY'] }
           }
         },
-        _sum: { quantity: true, subtotal: true },
+        _sum: { quantity: true, totalPrice: true },
         orderBy: { _sum: { quantity: 'desc' } },
         take: 5
       }),
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     const topProductsWithDetails = topProducts.map(item => {
       const product = products.find(p => p.id === item.productId)
-      return { ...product, quantitySold: item._sum.quantity, revenue: item._sum.subtotal }
+      return { ...product, quantitySold: item._sum.quantity, revenue: item._sum.totalPrice }
     })
 
     const averageTicket = totalOrders > 0 ? (totalRevenue._sum.total?.toNumber() || 0) / totalOrders : 0
