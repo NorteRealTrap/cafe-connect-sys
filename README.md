@@ -1,8 +1,200 @@
-# 🏪 MultiPDV - Sistema Multi-Estabelecimentos
+# 🏪 Cafe Connect - Sistema Multi-Estabelecimentos
 
-Sistema completo de PDV para gerenciar múltiplos tipos de estabelecimentos: padarias, lanchonetes, bares, adegas, confeitarias, restaurantes, bistrôs e muito mais.
+Sistema completo de PDV para gerenciar múltiplos tipos de estabelecimentos: padarias, lanchonetes, bares, adegas, confeitarias, restaurantes e bistrôs.
 
-## 🚀 Funcionalidades
+## 🚀 Stack Tecnológica
+
+- **Framework:** Next.js 14 (App Router)
+- **Database:** PostgreSQL (Railway)
+- **ORM:** Prisma
+- **Auth:** NextAuth.js
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Language:** TypeScript
+- **Deploy:** Railway
+
+## 📁 Estrutura do Projeto
+
+```
+cafe-connect-sys-main/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/               # API Routes
+│   │   │   ├── auth/          # NextAuth endpoints
+│   │   │   ├── products/      # Products CRUD
+│   │   │   ├── orders/        # Orders CRUD
+│   │   │   └── health/        # Health check
+│   │   ├── dashboard/         # Dashboard protegido
+│   │   ├── login/             # Página de login
+│   │   ├── layout.tsx         # Layout raiz
+│   │   ├── page.tsx           # Homepage
+│   │   └── globals.css        # Estilos globais
+│   ├── components/            # Componentes React
+│   │   ├── auth/             # Componentes de autenticação
+│   │   ├── ui/               # Componentes UI (shadcn)
+│   │   └── providers/        # Context providers
+│   ├── lib/                   # Bibliotecas e configurações
+│   │   ├── prisma.ts         # Prisma client
+│   │   ├── auth.ts           # NextAuth config
+│   │   └── utils.ts          # Utilitários
+│   ├── hooks/                 # Custom React hooks
+│   ├── types/                 # TypeScript types
+│   └── middleware.ts          # Next.js middleware
+├── prisma/
+│   ├── schema.prisma         # Database schema
+│   └── seed.ts               # Seed data
+├── public/                    # Assets estáticos
+├── .env.example              # Template de variáveis
+├── railway.json              # Railway config
+├── next.config.js            # Next.js config
+└── package.json              # Dependencies
+
+```
+
+## 🔧 Configuração
+
+### 1. Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz:
+
+```env
+# Database (Railway PostgreSQL)
+DATABASE_URL="postgresql://user:pass@host:port/database"
+DIRECT_URL="postgresql://user:pass@host:port/database"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+
+# App
+NODE_ENV="development"
+```
+
+### 2. Instalação
+
+```bash
+# Instalar dependências
+npm install
+
+# Gerar Prisma Client
+npx prisma generate
+
+# Criar tabelas no banco
+npx prisma db push
+
+# Popular dados iniciais
+npm run db:seed
+```
+
+### 3. Desenvolvimento
+
+```bash
+npm run dev
+```
+
+Acesse: http://localhost:3000
+
+## 🚀 Deploy no Railway
+
+### 1. Criar Projeto
+
+1. Acesse [railway.app](https://railway.app)
+2. Crie novo projeto
+3. Adicione PostgreSQL database
+4. Conecte seu repositório GitHub
+
+### 2. Configurar Variáveis
+
+No Railway dashboard, adicione:
+
+```
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+DIRECT_URL=${{Postgres.DATABASE_URL}}
+NEXTAUTH_URL=https://seu-app.railway.app
+NEXTAUTH_SECRET=seu-secret-aqui
+NODE_ENV=production
+```
+
+### 3. Deploy
+
+```bash
+# Push para main branch
+git push origin main
+
+# Railway fará deploy automático
+```
+
+### 4. Executar Migrations
+
+No Railway dashboard:
+
+```bash
+npx prisma db push
+npm run db:seed
+```
+
+## 📦 Scripts Disponíveis
+
+```bash
+npm run dev              # Servidor de desenvolvimento
+npm run build            # Build para produção
+npm run start            # Servidor de produção
+npm run lint             # Lint código
+
+# Database
+npm run db:generate      # Gerar Prisma Client
+npm run db:push          # Criar/atualizar tabelas
+npm run db:studio        # Prisma Studio (GUI)
+npm run db:seed          # Popular dados
+```
+
+## 🗄️ Schema do Banco
+
+### Tabelas Principais
+
+- **users** - Usuários do sistema
+- **establishments** - Estabelecimentos
+- **products** - Produtos/cardápio
+- **categories** - Categorias de produtos
+- **orders** - Pedidos
+- **order_items** - Itens dos pedidos
+- **tables** - Mesas
+- **payments** - Pagamentos
+
+### Enums
+
+- **UserRole:** ADMIN, MANAGER, BARISTA, CUSTOMER
+- **OrderStatus:** PENDING, CONFIRMED, PREPARING, READY, COMPLETED, CANCELLED
+- **ProductCategory:** COFFEE, TEA, PASTRY, SANDWICH, DESSERT, OTHER
+
+## 🔐 Credenciais Padrão
+
+**Admin:**
+- Email: admin@multipdv.com
+- Senha: admin123
+
+⚠️ **IMPORTANTE:** Alterar em produção!
+
+## 🏪 Tipos de Estabelecimentos
+
+- ✅ Padarias (BAKERY)
+- ✅ Lanchonetes (COFFEE_SHOP)
+- ✅ Bares (BAR)
+- ✅ Adegas (WINE_SHOP)
+- ✅ Confeitarias (CONFECTIONERY)
+- ✅ Restaurantes (RESTAURANT)
+- ✅ Bistrôs (BISTRO)
+
+## 🔒 Segurança
+
+- ✅ Autenticação JWT com NextAuth
+- ✅ Senhas hasheadas (bcrypt)
+- ✅ Proteção CSRF
+- ✅ SQL Injection protection (Prisma)
+- ✅ Input validation (Zod)
+- ✅ Rate limiting
+- ✅ CORS configurado
+
+## 📊 Funcionalidades
 
 ### ✅ Multi-Estabelecimentos
 - Suporte para 10+ tipos de estabelecimentos
@@ -10,22 +202,22 @@ Sistema completo de PDV para gerenciar múltiplos tipos de estabelecimentos: pad
 - Configurações específicas por estabelecimento
 
 ### ✅ Pedidos Completos
-- **Pedidos Locais**: Atendimento presencial com mesas
-- **Pedidos Web**: Recebimento online de clientes
-- **Delivery**: Gestão de entregas
-- **Takeaway**: Pedidos para retirada
+- Pedidos locais (presencial)
+- Pedidos web (online)
+- Delivery
+- Takeaway
 
 ### ✅ Controle de Estoque
-- Movimentação automática de estoque
+- Movimentação automática
 - Alertas de estoque baixo
-- Histórico completo de movimentações
+- Histórico de movimentações
 - Ajustes manuais com auditoria
 
 ### ✅ Sistema de Impressão
 - Cupons térmicos
 - Impressão para cozinha/bar
 - Comprovantes fiscais
-- Múltiplas impressoras por estabelecimento
+- Múltiplas impressoras
 
 ### ✅ Gestão Completa
 - Usuários com diferentes permissões
@@ -33,171 +225,45 @@ Sistema completo de PDV para gerenciar múltiplos tipos de estabelecimentos: pad
 - Controle de mesas
 - Múltiplas formas de pagamento
 
-## 🛠️ Tecnologias
+## 🆘 Troubleshooting
 
-- **Framework**: Next.js 14 (App Router)
-- **Database**: PostgreSQL (Neon)
-- **ORM**: Prisma
-- **Auth**: NextAuth.js
-- **UI**: Tailwind CSS + shadcn/ui
-- **Language**: TypeScript
+### Erro de conexão com banco
 
-## 📦 Instalação
-
-### 1. Clone o repositório
 ```bash
-git clone <repository-url>
-cd cafe-connect-sys-main
+# Verificar variáveis de ambiente
+echo $DATABASE_URL
+
+# Testar conexão
+npx prisma db pull
 ```
 
-### 2. Instale as dependências
+### Erro no build
+
 ```bash
+# Limpar cache
+rm -rf .next node_modules
 npm install
+npm run build
 ```
 
-### 3. Configure o banco de dados
-```bash
-# Copie o arquivo de ambiente
-cp .env.example .env
+### Prisma não encontrado
 
-# Configure suas variáveis no .env
-# DATABASE_URL e DIRECT_URL com suas credenciais do Neon
-```
-
-### 4. Execute as migrações
 ```bash
-npx prisma db push
 npx prisma generate
 ```
-
-### 5. Popule o banco com dados iniciais
-```bash
-npm run db:seed
-```
-
-### 6. Inicie o servidor
-```bash
-npm run dev
-```
-
-## 🔑 Credenciais de Teste
-
-Após executar o seed, use estas credenciais:
-
-- **Admin**: admin@multipdv.com / admin123
-- **Gerente**: gerente@multipdv.com / gerente123  
-- **Caixa**: caixa@multipdv.com / caixa123
-
-## 🏪 Estabelecimentos Criados
-
-O seed cria 5 estabelecimentos de exemplo:
-
-1. **Padaria Pão Quente** (BAKERY)
-2. **Lanchonete Sabor & Arte** (COFFEE_SHOP)
-3. **Bar do Zé** (BAR)
-4. **Adega Vinhos Finos** (WINE_SHOP)
-5. **Confeitaria Doce Sabor** (CONFECTIONERY)
-
-## 📊 Estrutura do Banco
-
-### Principais Tabelas
-- `establishments` - Estabelecimentos
-- `users` - Usuários do sistema
-- `establishment_users` - Relacionamento usuário-estabelecimento
-- `products` - Produtos/cardápio
-- `categories` - Categorias de produtos
-- `orders` - Pedidos
-- `order_items` - Itens dos pedidos
-- `tables` - Mesas dos estabelecimentos
-- `payments` - Pagamentos
-- `stock_movements` - Movimentações de estoque
-- `web_orders` - Pedidos web/delivery
-- `print_configs` - Configurações de impressão
-
-## 🔧 Scripts Disponíveis
-
-```bash
-npm run dev          # Servidor de desenvolvimento
-npm run build        # Build de produção
-npm run start        # Servidor de produção
-npm run lint         # Análise de código
-npm run db:generate  # Gerar Prisma Client
-npm run db:push      # Aplicar schema ao banco
-npm run db:studio    # Abrir Prisma Studio
-npm run db:seed      # Popular banco com dados
-npm run db:reset     # Resetar e popular banco
-```
-
-## 🌐 Deploy
-
-### Vercel
-1. Conecte seu repositório no Vercel
-2. Configure as variáveis de ambiente:
-   - `DATABASE_URL`
-   - `DIRECT_URL`
-   - `NEXTAUTH_SECRET`
-   - `NEXTAUTH_URL`
-3. Deploy automático!
-
-## 📱 Funcionalidades por Tipo de Estabelecimento
-
-### Padarias
-- Controle de pães e produtos de panificação
-- Gestão de estoque de ingredientes
-- Vendas por peso e unidade
-
-### Lanchonetes/Coffee Shops
-- Cardápio de lanches e bebidas
-- Controle de mesas
-- Pedidos para viagem
-
-### Bares
-- Gestão de bebidas alcoólicas
-- Controle de comandas
-- Petiscos e porções
-
-### Adegas
-- Catálogo de vinhos
-- Controle de safras e fornecedores
-- Vendas especializadas
-
-### Confeitarias
-- Produtos doces e salgados finos
-- Encomendas especiais
-- Controle de ingredientes especiais
-
-### Restaurantes/Bistrôs
-- Cardápio completo
-- Gestão de mesas e reservas
-- Controle de cozinha
-
-## 🔒 Segurança
-
-- Autenticação JWT com NextAuth
-- Middleware de proteção de rotas
-- Criptografia de senhas com bcrypt
-- Headers de segurança HTTP
-- Validação de dados com Zod
-
-## 📈 Performance
-
-- Server-side rendering com Next.js
-- Otimização de imagens
-- Lazy loading de componentes
-- Cache de dados com React Query
-
-## 🆘 Suporte
-
-Para dúvidas e suporte:
-1. Verifique a documentação
-2. Consulte os logs de erro
-3. Execute `npm run db:studio` para verificar dados
 
 ## 📄 Licença
 
 Sistema proprietário - Todos os direitos reservados.
 
+## 👥 Suporte
+
+Para dúvidas e suporte:
+1. Verifique a documentação
+2. Consulte os logs: `npm run logs`
+3. Execute health check: `/api/health`
+
 ---
 
-**Versão**: 2.0.0  
-**Última atualização**: 2024
+**Versão:** 2.0.0  
+**Última atualização:** 2024
