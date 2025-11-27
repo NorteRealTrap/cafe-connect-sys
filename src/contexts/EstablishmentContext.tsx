@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface Establishment {
@@ -8,6 +8,7 @@ interface Establishment {
   name: string
   type: string
   email: string
+  phone?: string
 }
 
 interface EstablishmentContextType {
@@ -28,47 +29,52 @@ export function EstablishmentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === 'loading') return
 
-    if (session?.user?.establishments) {
-      const userEstablishments = session.user.establishments
-      setEstablishments(userEstablishments)
+    if (session?.user?.establishments && Array.isArray(session.user.establishments)) {
+      setEstablishments(session.user.establishments)
       
-      const savedEstablishmentId = localStorage.getItem('currentEstablishmentId')
-      
-      if (savedEstablishmentId) {
-        const savedEstablishment = userEstablishments.find(
-          e => e.id === savedEstablishmentId
-        )
-        if (savedEstablishment) {
-          setCurrentEstablishmentState(savedEstablishment)
-        } else {
-          setCurrentEstablishmentState(userEstablishments[0])
+      try {
+        const savedId = localStorage.getItem('currentEstablishmentId')
+        if (savedId) {
+          const saved = session.user.establishments.find((e: Establishment) => e.id === savedId)
+          if (saved) {
+            setCurrentEstablishmentState(saved)
+            setIsLoading(false)
+            return
+          }
         }
-      } else {
-        setCurrentEstablishmentState(userEstablishments[0])
+      } catch (error) {
+        console.error('Error loading from localStorage:', error)
       }
       
+      if (session.user.establishments.length > 0) {
+        setCurrentEstablishmentState(session.user.establishments[0])
+        try {
+          localStorage.setItem('currentEstablishmentId', session.user.establishments[0].id)
+        } catch (error) {
+          console.error('Error saving to localStorage:', error)
+        }
+      }
+      
+      setIsLoading(false)
+    } else {
       setIsLoading(false)
     }
   }, [session, status])
 
   const setCurrentEstablishment = (establishment: Establishment) => {
     setCurrentEstablishmentState(establishment)
-    localStorage.setItem('currentEstablishmentId', establishment.id)
-    
-    window.dispatchEvent(new CustomEvent('establishmentChanged', { 
-      detail: establishment 
-    }))
+    try {
+      localStorage.setItem('currentEstablishmentId', establishment.id)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('establishmentChanged', { detail: establishment }))
+      }
+    } catch (error) {
+      console.error('Error in setCurrentEstablishment:', error)
+    }
   }
 
   return (
-    <EstablishmentContext.Provider
-      value={{
-        currentEstablishment,
-        establishments,
-        setCurrentEstablishment,
-        isLoading
-      }}
-    >
+    <EstablishmentContext.Provider value={{ currentEstablishment, establishments, setCurrentEstablishment, isLoading }}>
       {children}
     </EstablishmentContext.Provider>
   )
