@@ -1,24 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  swcMinify: true,
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs']
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: false,
+  webpack: (config) => {
+    config.externals.push({
+      'utf-8-validate': 'commonjs utf-8-validate',
+      'bufferutil': 'commonjs bufferutil',
+    })
+    return config
   },
   images: {
-    domains: ['localhost'],
-    unoptimized: process.env.NODE_ENV === 'development',
-  },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('bcrypt');
-    }
-    return config;
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 }
 
