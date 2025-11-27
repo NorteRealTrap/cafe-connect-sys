@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: productIds },
         establishmentId: validatedData.establishmentId,
-        active: true
+        isActive: true
       }
     })
 
