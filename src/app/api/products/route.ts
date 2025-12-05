@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
             { description: { contains: search, mode: 'insensitive' } }
           ]
         }),
-        active: true
+        isActive: true
       },
       include: {
         category: true,

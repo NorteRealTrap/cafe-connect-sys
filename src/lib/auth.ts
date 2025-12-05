@@ -61,13 +61,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null
           }
 
+          const establishments = user.establishmentUsers.map(eu => eu.establishment)
+
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             role: user.role,
-            establishments: user.establishmentUsers.map(eu => eu.establishment)
-          }
+            establishments
+          } as any
         } catch (error) {
           console.error("Auth error:", error)
           return null

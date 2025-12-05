@@ -1,0 +1,33 @@
+
+> multipdv-system@2.0.0 build
+> prisma generate && next build
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 285ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Help us improve the Prisma ORM for everyone. Share your feedback in a short 2-min survey: https://pris.ly/orm/survey/release-5-22
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+  ▲ Next.js 14.2.33
+  - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/contexts/EstablishmentContext.tsx:32:24
+Type error: Property 'establishments' does not exist on type '{ id: string; role: string; } & User'.
+
+[0m [90m 30 |[39m     [36mif[39m (status [33m===[39m [32m'loading'[39m) [36mreturn[39m[0m
+[0m [90m 31 |[39m[0m
+[0m[31m[1m>[22m[39m[90m 32 |[39m     [36mif[39m (session[33m?[39m[33m.[39muser[33m?[39m[33m.[39mestablishments [33m&&[39m [33mArray[39m[33m.[39misArray(session[33m.[39muser[33m.[39mestablishments)) {[0m
+[0m [90m    |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 33 |[39m       setEstablishments(session[33m.[39muser[33m.[39mestablishments)[0m
+[0m [90m 34 |[39m       [0m
+[0m [90m 35 |[39m       [36mtry[39m {[0m
+Next.js build worker exited with code: 1 and signal: null

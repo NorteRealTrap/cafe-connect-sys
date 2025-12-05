@@ -79,14 +79,14 @@ export async function POST(request: NextRequest) {
     let subtotal = 0
     const orderItems = validatedData.items.map(item => {
       const product = products.find(p => p.id === item.productId)!
-      const itemSubtotal = product.price.toNumber() * item.quantity
-      subtotal += itemSubtotal
+      const itemTotal = product.price.toNumber() * item.quantity
+      subtotal += itemTotal
 
       return {
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: product.price,
-        subtotal: itemSubtotal,
+        totalPrice: itemTotal,
         notes: item.notes
       }
     })
@@ -94,8 +94,11 @@ export async function POST(request: NextRequest) {
     const discount = validatedData.discount || 0
     const total = subtotal * (1 - discount / 100)
 
+    const orderNumber = `PED-${Date.now().toString().slice(-8)}`
+
     const order = await prisma.order.create({
       data: {
+        orderNumber,
         establishmentId: validatedData.establishmentId,
         tableId: validatedData.tableId,
         status: 'PENDING',
@@ -105,6 +108,7 @@ export async function POST(request: NextRequest) {
         customerName: validatedData.customerName,
         customerPhone: validatedData.customerPhone,
         notes: validatedData.notes,
+        createdById: session.user.id,
         items: {
           create: orderItems
         }

@@ -2,6 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
