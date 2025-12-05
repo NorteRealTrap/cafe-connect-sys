@@ -15,5 +15,9 @@
     "typescript": "typescript",
     "typescriptreact": "typescriptreact"
   },
-  "codium.codeCompletion.enable": false
+  "codium.codeCompletion.enable": false,
+  "github.copilot.chat.alternateGptPrompt.enabled": false,
+  "github.copilot.chat.anthropic.thinking.enabled": true,
+  "github.copilot.chat.agent.autoFix": true,
+  "github.copilot.chat.agent.currentEditorContext.enabled": false
 }
