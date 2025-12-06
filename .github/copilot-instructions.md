@@ -1,81 +1,171 @@
 # AI Coding Agent Instructions for Cafe Connect System
 
 ## Project Overview
-This project is a web application built with the following technologies:
-- **Vite**: For fast development and build tooling.
-- **TypeScript**: For type-safe JavaScript development.
-- **React**: For building user interfaces.
-- **shadcn-ui**: A component library for consistent UI design.
-- **Tailwind CSS**: For utility-first CSS styling.
-
-The application is structured into feature-based directories under `src/`, with reusable UI components, hooks, and pages. The design emphasizes modularity and reusability.
+This is a **full-stack web application** built with:
+- **Next.js 14**: Server-side rendering and API routes (App Router)
+- **React**: UI components
+- **TypeScript**: Type-safe development
+- **Prisma**: ORM for database access
+- **NextAuth.js v5**: Authentication and authorization
+- **shadcn-ui**: Component library
+- **Tailwind CSS**: Utility-first CSS styling
+- **Zod**: Schema validation
 
 ## Key Directories and Files
-- `src/components/`: Contains feature-specific components.
-  - Example: `dashboard/DashboardHeader.tsx` for the dashboard header.
-- `src/ui/`: Houses reusable UI components (e.g., `button.tsx`, `dialog.tsx`).
-- `src/hooks/`: Custom React hooks (e.g., `use-mobile.tsx`).
-- `src/pages/`: Page-level components for routing (e.g., `Dashboard.tsx`, `NotFound.tsx`).
-- `vite.config.ts`: Configuration for Vite.
-- `tailwind.config.ts`: Tailwind CSS configuration.
+- `src/app/`: Next.js App Router
+  - `src/app/api/`: Backend API routes (all protected by authentication)
+  - `src/app/[pages]/`: Frontend pages and layouts
+- `src/components/`: Feature-specific React components
+- `src/ui/`: Reusable shadcn-ui components
+- `src/hooks/`: Custom React hooks
+- `src/lib/`: Utilities
+  - `src/lib/auth.ts`: NextAuth configuration and handlers
+  - `src/lib/prisma.ts`: Prisma client
+  - `src/lib/validations/`: Zod schemas
+- `src/middleware.ts`: NextAuth middleware for route protection
+- `prisma/`: Database schema and migrations
+- `.env`: Environment variables (NEXTAUTH_SECRET, DATABASE_URL, etc.)
+- `vite.config.ts`: Vite configuration (if used)
+- `tailwind.config.ts`: Tailwind CSS configuration
 
-## Developer Workflows
-### Local Development
-1. Clone the repository.
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
-3. Start the development server:
-   ```sh
-   npm run dev
-   ```
+## ⚠️ CRITICAL: API Route Authentication Pattern
 
-### Build for Production
-To create a production build:
-```sh
-npm run build
+**EVERY API route MUST follow this exact pattern:**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+export const runtime = 'nodejs' // REQUIRED for bcryptjs
+
+export async function GET(request: NextRequest) {
+  const session = await auth()
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Your logic here
+  return NextResponse.json({ data })
+}
 ```
 
-### Linting and Formatting
-Ensure code quality with:
-```sh
+### Key Rules for API Routes:
+1. ✅ Always import `auth` from `@/lib/auth`
+2. ✅ Always add `export const runtime = 'nodejs'` (required for bcryptjs)
+3. ✅ Always check session: `const session = await auth()`
+4. ✅ Always return `NextResponse.json()` for responses
+5. ❌ NEVER use `getServerSession()` - it's deprecated in NextAuth v5
+6. ❌ NEVER import `authOptions` directly in routes
+7. ❌ NEVER use `getServerSession(authOptions)`
+
+## Authentication Setup
+
+- **File**: `src/lib/auth.ts`
+- **Exports**: `{ handlers, auth, authOptions }`
+- **Route Handler**: `src/app/api/auth/[...nextauth]/route.ts`
+- **Middleware**: `src/middleware.ts`
+- **Strategy**: JWT (JSON Web Tokens)
+- **Provider**: Credentials (email/password with bcryptjs)
+- **Session Duration**: 30 days
+
+## Developer Workflows
+
+### Local Development
+```bash
+npm install
+npm run dev
+```
+
+### Build for Production
+```bash
+npm run build
+npm run start
+```
+
+### Database Management
+```bash
+npx prisma migrate dev        # Create and apply migrations
+npx prisma generate           # Generate Prisma Client
+npx prisma studio             # Open Prisma Studio UI
+```
+
+### Linting
+```bash
 npm run lint
 ```
 
-### Testing
-(Currently, no explicit testing setup is mentioned. Add details here if testing is configured.)
-
 ## Project-Specific Conventions
-- **Component Structure**: Components are organized by feature or reusability. Reusable components reside in `src/ui/`.
-- **Styling**: Tailwind CSS is used for styling. Follow utility-first principles.
-- **State Management**: State is managed locally within components or through React Context API. No external state management library is currently used.
-- **TypeScript**: Use strict typing for all components and utilities.
 
-## Integration Points
-- **External Services**: The project integrates with [Lovable](https://lovable.dev) for deployment and domain management.
-- **Custom Domains**: Domains can be configured via the Lovable dashboard.
+- **Component Structure**: Organized by feature in `src/components/`
+- **Styling**: Tailwind CSS with utility-first approach
+- **State Management**: React Context API (no external library)
+- **Validation**: Zod schemas in `src/lib/validations/`
+- **Error Handling**: Try-catch blocks with proper HTTP status codes
+- **TypeScript**: Strict mode enabled - use proper types always
 
-## Examples of Common Patterns
-### Creating a New Page
-1. Add a new file in `src/pages/` (e.g., `NewPage.tsx`).
-2. Define the component and export it.
-3. Update the router configuration to include the new page.
+## Common Patterns
 
-### Adding a New UI Component
-1. Create the component in `src/ui/`.
-2. Use Tailwind CSS for styling.
-3. Export the component and document its usage.
+### Checking Authentication in a Component
+```typescript
+'use client'
 
-### Communication Between Components
-- Use props to pass data between parent and child components.
-- Utilize React Context for global state sharing when necessary.
+import { useSession } from 'next-auth/react'
+
+export function MyComponent() {
+  const { data: session, status } = useSession()
+  
+  if (status === 'loading') return <div>Loading...</div>
+  if (!session) return <div>Access Denied</div>
+  
+  return <div>Welcome, {session.user.email}</div>
+}
+```
+
+### Fetching Data from API Routes
+```typescript
+const response = await fetch('/api/orders?establishmentId=123')
+if (!response.ok) throw new Error('Failed to fetch')
+const data = await response.json()
+```
+
+### Creating a Protected API Route
+See pattern above in "API Route Authentication Pattern"
+
+### Database Queries
+```typescript
+// Always use prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
+
+const items = await prisma.table.findMany({
+  where: { establishmentId },
+  include: { /* relationships */ }
+})
+```
+
+## Environment Variables Required
+
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here (generate with: openssl rand -base64 32)
+DATABASE_URL=postgresql://user:password@localhost:5432/cafe-connect
+```
+
+## Important Files to NEVER Modify Incorrectly
+
+- `src/lib/auth.ts`: Core authentication configuration
+- `src/app/api/auth/[...nextauth]/route.ts`: NextAuth route handler
+- `src/middleware.ts`: Route protection middleware
+- `prisma/schema.prisma`: Database schema
 
 ## Notes for AI Agents
-- Follow the existing directory structure and naming conventions.
-- Use examples from `src/ui/` for creating new reusable components.
-- Refer to `vite.config.ts` and `tailwind.config.ts` for build and styling configurations.
-- Ensure all new code is type-safe and adheres to TypeScript best practices.
-- When adding new features, ensure consistency with the modular design principles.
 
-For further details, consult the `README.md` or the project maintainers.
+1. **Always verify imports** - Use `auth` from `@/lib/auth`, not `getServerSession`
+2. **API routes require authentication** - Check session first in every route
+3. **Follow NextAuth v5 syntax** - Use `await auth()` pattern
+4. **Add `runtime = 'nodejs'`** - Required for all API routes using bcryptjs
+5. **Maintain consistency** - Follow existing code patterns
+6. **Type safety first** - Always use TypeScript strictly
+7. **Database access** - Always use Prisma from `@/lib/prisma`
+
+For further details, consult the project maintainers.

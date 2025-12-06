@@ -1,4 +1,4 @@
-﻿import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaAdapter } from "@auth/prisma-adapter"
 import { compare } from "bcryptjs"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -23,16 +23,12 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
-        
         const user = await prisma.user.findUnique({
           where: { email: credentials.email }
         })
-        
         if (!user?.password) return null
-        
         const isValid = await compare(credentials.password, user.password)
         if (!isValid) return null
-        
         return {
           id: user.id,
           email: user.email,
@@ -52,7 +48,7 @@ export const authOptions: NextAuthOptions = {
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        (session.user as any).id = token.id
         (session.user as any).role = token.role
       }
       return session
