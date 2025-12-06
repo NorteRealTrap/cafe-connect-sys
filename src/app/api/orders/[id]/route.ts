@@ -1,7 +1,8 @@
+import { auth } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+
+export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

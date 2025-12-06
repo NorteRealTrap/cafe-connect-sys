@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateTableStatusSchema } from '@/lib/validations/table'
 import { z } from 'zod'
+
+export const runtime = 'nodejs'
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {

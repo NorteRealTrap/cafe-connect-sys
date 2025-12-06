@@ -1,3 +1,98 @@
-﻿import { auth } from '@/lib/auth'
+import { auth } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
 export const runtime = 'nodejs'
-import { NextRequest, NextResponse } from 'next/server'   import { prisma } from '@/lib/prisma'  export async function GET(request: NextRequest) {   try {     const session = await auth()     if (!session) {       return new NextResponse('Unauthorized', { status: 401 })     }      const { searchParams } = new URL(request.url)     const establishmentId = searchParams.get('establishmentId')     const productId = searchParams.get('productId')      const where: any = {}     if (establishmentId) {       where.product = { establishmentId }     }     if (productId) {       where.productId = productId     }      const movements = await prisma.stockMovement.findMany({       where,       include: {         product: {           select: {             name: true,             establishment: {               select: { name: true }             }           }         }       },       orderBy: {         createdAt: 'desc'       },       take: 100     })      return NextResponse.json(movements)   } catch (error) {     console.error('Error fetching stock movements:', error)     return new NextResponse('Internal Error', { status: 500 })   } }  export async function POST(request: NextRequest) {   try {     const session = await auth()     if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {       return new NextResponse('Unauthorized', { status: 401 })     }      const body = await request.json()     const { productId, adjustment, reason } = body      const product = await prisma.product.findUnique({       where: { id: productId }     })      if (!product) {       return new NextResponse('Product not found', { status: 404 })     }      const newStock = Math.max(0, product.stock + adjustment)     const movementType = adjustment >= 0 ? 'IN' : 'OUT'      // Atualizar estoque do produto     await prisma.product.update({       where: { id: productId },       data: { stock: newStock }     })      // Registrar movimentaÃ§Ã£o     const movement = await prisma.stockMovement.create({       data: {         productId,         type: movementType,         quantity: Math.abs(adjustment),         previousStock: product.stock,         newStock,         reason       },       include: {         product: {           select: { name: true }         }       }     })      return NextResponse.json({ success: true, movement, newStock })   } catch (error) {     console.error('Error adjusting stock:', error)     return new NextResponse('Internal Error', { status: 500 })   } } 
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth()
+    if (!session) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const establishmentId = searchParams.get('establishmentId')
+    const productId = searchParams.get('productId')
+
+    const where: any = {}
+    if (establishmentId) {
+      where.product = { establishmentId }
+    }
+    if (productId) {
+      where.productId = productId
+    }
+
+    const movements = await prisma.stockMovement.findMany({
+      where,
+      include: {
+        product: {
+          select: {
+            name: true,
+            establishment: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 100
+    })
+
+    return NextResponse.json(movements)
+  } catch (error) {
+    console.error('Error fetching stock movements:', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth()
+    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+      return new NextResponse('Unauthorized', { status: 401 })
+    }
+
+    const body = await request.json()
+    const { productId, adjustment, reason } = body
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId }
+    })
+
+    if (!product) {
+      return new NextResponse('Product not found', { status: 404 })
+    }
+
+    const newStock = Math.max(0, product.stock + adjustment)
+    const movementType = adjustment >= 0 ? 'IN' : 'OUT'
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: { stock: newStock }
+    })
+
+    const movement = await prisma.stockMovement.create({
+      data: {
+        productId,
+        type: movementType,
+        quantity: Math.abs(adjustment),
+        previousStock: product.stock,
+        newStock,
+        reason
+      },
+      include: {
+        product: {
+          select: { name: true }
+        }
+      }
+    })
+
+    return NextResponse.json({ success: true, movement, newStock })
+  } catch (error) {
+    console.error('Error adjusting stock:', error)
+    return new NextResponse('Internal Error', { status: 500 })
+  }
+}
