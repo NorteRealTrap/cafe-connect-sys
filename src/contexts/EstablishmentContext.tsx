@@ -29,33 +29,42 @@ export function EstablishmentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === 'loading') return
 
-    if (session?.user?.establishments && Array.isArray(session.user.establishments)) {
-      setEstablishments(session.user.establishments)
-      
-      try {
-        const savedId = localStorage.getItem('currentEstablishmentId')
-        if (savedId) {
-          const saved = session.user.establishments.find((e: Establishment) => e.id === savedId)
-          if (saved) {
-            setCurrentEstablishmentState(saved)
-            setIsLoading(false)
-            return
+    if (session?.user) {
+      // Fetch establishments from API
+      fetch('/api/establishments')
+        .then(res => res.json())
+        .then(data => {
+          setEstablishments(data)
+          
+          try {
+            const savedId = localStorage.getItem('currentEstablishmentId')
+            if (savedId) {
+              const saved = data.find((e: Establishment) => e.id === savedId)
+              if (saved) {
+                setCurrentEstablishmentState(saved)
+                setIsLoading(false)
+                return
+              }
+            }
+          } catch (error) {
+            console.error('Error loading from localStorage:', error)
           }
-        }
-      } catch (error) {
-        console.error('Error loading from localStorage:', error)
-      }
-      
-      if (session.user.establishments.length > 0) {
-        setCurrentEstablishmentState(session.user.establishments[0])
-        try {
-          localStorage.setItem('currentEstablishmentId', session.user.establishments[0].id)
-        } catch (error) {
-          console.error('Error saving to localStorage:', error)
-        }
-      }
-      
-      setIsLoading(false)
+          
+          if (data.length > 0) {
+            setCurrentEstablishmentState(data[0])
+            try {
+              localStorage.setItem('currentEstablishmentId', data[0].id)
+            } catch (error) {
+              console.error('Error saving to localStorage:', error)
+            }
+          }
+          
+          setIsLoading(false)
+        })
+        .catch(error => {
+          console.error('Error fetching establishments:', error)
+          setIsLoading(false)
+        })
     } else {
       setIsLoading(false)
     }
