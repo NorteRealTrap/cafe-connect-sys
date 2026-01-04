@@ -40,12 +40,12 @@ if ($deployType -eq "2") {
     vercel
 }
 
-Write-Host "`n✅ DEPLOY CONCLUÍDO!" -ForegroundColor Green
-Write-Host "`n📋 PRÓXIMOS PASSOS:" -ForegroundColor Cyan
+Write-Host "`nDEPLOY CONCLUIDO!" -ForegroundColor Green
+Write-Host "`nPROXIMOS PASSOS:" -ForegroundColor Cyan
 Write-Host "1. Configure as variáveis de ambiente no dashboard da Vercel" -ForegroundColor White
 Write-Host "2. Execute o seed do banco: npm run db:seed" -ForegroundColor White
 Write-Host "3. Acesse seu domínio e faça login" -ForegroundColor White
-Write-Host "`n🔑 Credenciais de teste:" -ForegroundColor Cyan
+Write-Host "`nCredenciais de teste:" -ForegroundColor Cyan
 Write-Host "   Admin: admin@multipdv.com / admin123" -ForegroundColor White
 Write-Host "   Gerente: gerente@multipdv.com / gerente123" -ForegroundColor White
 Write-Host "   Caixa: caixa@multipdv.com / caixa123" -ForegroundColor White
