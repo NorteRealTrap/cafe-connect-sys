@@ -11,14 +11,11 @@ export async function GET() {
       database: 'connected'
     });
   } catch (error) {
-    // Return 200 so platform healthchecks don't fail the deployment while
-    // we investigate DB connectivity. Include database status in the body
-    // so operators can see the issue without failing the container startup.
     return NextResponse.json({
-      status: 'degraded',
+      status: 'unhealthy',
       timestamp: new Date().toISOString(),
       database: 'disconnected',
       error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 200 });
+    }, { status: 503 });
   }
 }
