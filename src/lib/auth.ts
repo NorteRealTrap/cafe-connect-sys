@@ -7,7 +7,7 @@ import { prisma } from "./prisma"
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
     maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
