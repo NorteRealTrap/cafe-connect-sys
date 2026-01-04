@@ -5,6 +5,8 @@ import NextAuth from "next-auth"
 import { prisma } from "./prisma"
 
 export const authOptions = {
+  // Allow requests coming from the platform/internal hostnames (Railway proxy)
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt" as const,
