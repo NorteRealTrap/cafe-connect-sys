@@ -20,13 +20,13 @@ export const authOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: any) {
         if (!credentials?.email || !credentials?.password) return null
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email as string }
         })
         if (!user?.password) return null
-        const isValid = await compare(credentials.password, user.password)
+        const isValid = await compare(credentials.password as string, user.password)
         if (!isValid) return null
         return {
           id: user.id,
